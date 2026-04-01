@@ -1524,3 +1524,124 @@ input[type="range"] {
 .sidebar-overlay.show {
   display: block;
 }
+/* ============================================================
+   Web App Shell / PWA
+   ============================================================ */
+body.webapp-enabled {
+  min-height: 100vh;
+  overscroll-behavior-y: contain;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.install-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  width: min(680px, calc(100vw - 32px));
+  background: rgba(13, 27, 42, 0.94);
+  border: 1px solid rgba(0, 174, 255, 0.28);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  padding: 14px;
+  z-index: 220;
+  backdrop-filter: blur(14px);
+}
+
+.install-banner__body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.install-banner__body strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.install-banner__body span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.install-banner__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  background: rgba(26, 39, 64, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+  padding: 8px;
+  z-index: 180;
+  backdrop-filter: blur(14px);
+}
+
+.mobile-bottom-nav__item {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  border-radius: 14px;
+  padding: 10px 6px;
+  cursor: pointer;
+}
+
+.mobile-bottom-nav__item.active {
+  background: rgba(0, 174, 255, 0.14);
+  color: var(--accent);
+}
+
+.mobile-bottom-nav__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mobile-bottom-nav__label {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .page-body {
+    padding-bottom: 104px;
+  }
+
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  .install-banner {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+  }
+
+  .install-banner__body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .install-banner__actions {
+    width: 100%;
+  }
+
+  .install-banner__actions .btn {
+    flex: 1;
+  }
+}
