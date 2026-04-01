@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>장비 상세 - 도로 열선 통합관제 시스템</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .label { color: var(--text-muted); font-size: 13px; }
+    .info-row .value { font-weight: 600; }
+
+    .big-status {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: var(--bg-dark);
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+    }
+
+    .big-status .icon { font-size: 48px; }
+    .big-status .info {}
+    .big-status .title { font-size: 22px; font-weight: 800; }
+    .big-status .sub { font-size: 13px; color: var(--text-secondary); }
+
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+    }
+
+    .sensor-item {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      text-align: center;
+    }
+
+    .sensor-item .s-icon { font-size: 22px; margin-bottom: 4px; }
+    .sensor-item .s-val { font-size: 20px; font-weight: 800; line-height: 1; }
+    .sensor-item .s-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    .ctrl-section {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .ctrl-section-header {
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.03);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ctrl-section-body { padding: 14px; }
+
+    /* 히터 대형 버튼 */
+    .heater-main-btn {
+      width: 100%;
+      padding: 20px;
+      border-radius: var(--radius-sm);
+      border: 2px solid;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+
+    .heater-main-btn.on {
+      background: rgba(249,115,22,0.12);
+      border-color: rgba(249,115,22,0.4);
+      color: #fb923c;
+    }
+
+    .heater-main-btn.on:hover {
+      background: rgba(249,115,22,0.2);
+    }
+
+    .heater-main-btn.off {
+      background: rgba(59,130,246,0.1);
+      border-color: rgba(59,130,246,0.3);
+      color: #60a5fa;
+    }
+
+    .heater-main-btn.off:hover {
+      background: rgba(59,130,246,0.18);
+    }
+
+    .mode-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .mode-btn {
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active-auto {
+      background: rgba(0,174,255,0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .mode-btn.inactive-auto {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+
+    .mode-btn.active-manual {
+      background: rgba(245,158,11,0.15);
+      border-color: var(--warning);
+      color: var(--warning);
+    }
+
+    .mode-btn.inactive-manual {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+
+    .mode-btn:hover { opacity: 0.85; }
+
+    /* AS 진행 바 */
+    .as-bar-container {
+      background: var(--bg-dark);
+      border-radius: 99px;
+      height: 10px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+
+    .as-bar {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.8s ease;
+    }
+
+    .command-history-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .command-history-item:last-child { border-bottom: none; }
+
+    .cmd-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+    .cmd-body { flex: 1; }
+    .cmd-name { font-weight: 600; color: var(--text-primary); }
+    .cmd-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .page-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .page-back-btn:hover { color: var(--text-primary); }
+
+    .detail-header-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .detail-main-info { flex: 1; min-width: 260px; }
+    .detail-main-info h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .detail-main-info .addr { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; }
+
+    .detail-quick-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .quick-stat {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      text-align: center;
+      min-width: 80px;
+    }
+
+    .quick-stat .qs-val { font-size: 18px; font-weight: 800; }
+    .quick-stat .qs-lbl { font-size: 11px; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+
+  <div class="app-layout">
+    <div class="main-content">
+      <div id="header-placeholder"></div>
+
+      <div class="page-body">
+        <button class="page-back-btn" onclick="history.back()">
+          ← 목록으로
+        </button>
+
+        <!-- 장비 헤더 카드 -->
+        <div class="detail-header-card" id="device-header">
+          <div style="text-align:center;padding:20px;color:#64748b">로딩 중...</div>
+        </div>
+
+        <!-- 메인 그리드 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px" id="main-grid">
+
+          <!-- 좌측: 영상 + 상태 -->
+          <div>
+            <!-- 영상 -->
+            <div class="detail-card" style="margin-bottom:16px">
+              <div class="detail-card-header">
+                <span class="icon">📹</span> 실시간 영상
+                <span id="camera-badge" style="margin-left:auto;font-size:12px"></span>
+              </div>
+              <div class="video-area" id="video-area">
+                <div class="video-placeholder">
+                  <span class="icon">📷</span>
+                  <div>카메라를 연결 중...</div>
+                  <div style="font-size:12px;margin-top:6px;color:#64748b">
+                    실제 배포 시 Raspberry Pi 스트림 URL 연결
+                  </div>
+                </div>
+              </div>
+              <div style="
+                padding: 10px 16px;
+                display: flex;
+                gap: 8px;
+                background: rgba(0,0,0,0.3);
+                font-size: 12px;
+                color: #64748b;
+              ">
+                <span id="video-info">대기 중</span>
+                <span style="margin-left:auto" id="last-snapshot">-</span>
+              </div>
+            </div>
+
+            <!-- 센서 상태 -->
+            <div class="detail-card">
+              <div class="detail-card-header">
+                <span class="icon">📊</span> 실시간 센서
+                <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="refreshSensorData()">🔄</button>
+              </div>
+              <div class="detail-card-body">
+                <div class="sensor-grid" id="sensor-grid">
+                  <div style="color:#64748b;font-size:14px;grid-column:1/-1;text-align:center;padding:20px">로딩 중...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 우측: 원격 제어 + 장비 정보 -->
+          <div>
+            <!-- 원격 제어 -->
+            <div class="detail-card" style="margin-bottom:16px">
+              <div class="detail-card-header">
+                <span class="icon">🎮</span> 원격 제어
+                <span id="control-mode-badge" style="margin-left:auto"></span>
+              </div>
+              <div class="detail-card-body">
+                <div id="control-panel">
+                  <div style="color:#64748b;font-size:14px;text-align:center;padding:20px">로딩 중...</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AS 정보 -->
+            <div class="detail-card" style="margin-bottom:16px">
+              <div class="detail-card-header">
+                <span class="icon">📅</span> AS (유지보수) 정보
+              </div>
+              <div class="detail-card-body" id="as-panel">
+                <div style="color:#64748b;font-size:14px;text-align:center;padding:20px">로딩 중...</div>
+              </div>
+            </div>
+
+            <!-- 장비 정보 -->
+            <div class="detail-card">
+              <div class="detail-card-header">
+                <span class="icon">ℹ️</span> 장비 정보
+              </div>
+              <div class="detail-card-body" id="device-info-panel">
+                <div style="color:#64748b;font-size:14px;text-align:center;padding:20px">로딩 중...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 하단: 제어 이력 + 이벤트 로그 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <!-- 제어 이력 -->
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <span class="icon">📜</span> 제어 이력
+              <span style="margin-left:auto;font-size:12px;color:#94a3b8">최근 10건</span>
+            </div>
+            <div class="detail-card-body" id="control-log-panel">
+              <div style="color:#64748b;font-size:14px;text-align:center;padding:20px">로딩 중...</div>
+            </div>
+          </div>
+
+          <!-- 이벤트 로그 -->
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <span class="icon">🔔</span> 이벤트 로그
+              <span style="margin-left:auto;font-size:12px;color:#94a3b8">최근 10건</span>
+            </div>
+            <div class="detail-card-body" id="event-log-panel">
+              <div style="color:#64748b;font-size:14px;text-align:center;padding:20px">로딩 중...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 임계값 변경 모달 -->
+  <div id="threshold-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ 눈 감지 임계값 변경</div>
+        <button class="modal-close" onclick="closeModal('threshold-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:16px;color:#94a3b8;font-size:14px">
+          임계값이 낮을수록 눈 감지가 민감해집니다.<br>
+          권장 범위: 0.6 ~ 0.95
+        </div>
+        <div class="threshold-control">
+          <label>임계값</label>
+          <div class="value-display" id="threshold-display">0.80</div>
+          <input type="range" id="threshold-slider" min="0.5" max="0.99" step="0.01" value="0.80"
+            oninput="document.getElementById('threshold-display').textContent = parseFloat(this.value).toFixed(2)">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b">
+            <span>0.50 (민감)</span>
+            <span>0.99 (둔감)</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('threshold-modal')">취소</button>
+        <button class="btn btn-primary" onclick="applyThreshold()">적용</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 확인 모달 -->
+  <div id="confirm-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title confirm-title">확인</div>
+        <button class="modal-close" onclick="closeModal('confirm-modal')">✕</button>
+      </div>
+      <div class="modal-body confirm-modal" style="text-align:center;padding:30px 24px">
+        <span class="icon" style="font-size:48px;display:block;margin-bottom:12px">❓</span>
+        <p class="confirm-msg" style="color:#94a3b8;font-size:15px"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">취소</button>
+        <button class="btn btn-danger" id="confirm-ok-btn">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="js/app.js"></script>
+  <script>
+    let session = null;
+    let ctrl = null;
+    let customer = null;
+    let controllerId = null;
+    let refreshTimer = null;
+
+    async function init() {
+      session = Auth.requireAuth();
+      if (!session) return;
+
+      const params = new URLSearchParams(window.location.search);
+      controllerId = params.get('id');
+
+      if (!controllerId) {
+        Utils.toast('오류', '장비 ID가 없습니다.', 'danger');
+        setTimeout(() => history.back(), 1500);
+        return;
+      }
+
+      document.getElementById('sidebar-placeholder').innerHTML = renderSidebar(session, 'controllers');
+
+      await loadControllerData();
+
+      document.getElementById('header-placeholder').innerHTML = renderHeader(
+        ctrl ? ctrl.controller_name : '장비 상세',
+        ctrl ? Utils.getStatusBadge(ctrl.status) : '',
+        []
+      );
+
+      startClock();
+      renderAll();
+
+      // 30초마다 자동 갱신
+      refreshTimer = setInterval(async () => {
+        await loadControllerData();
+        renderSensorGrid();
+        renderControlPanel();
+        renderControlLog();
+        renderEventLog();
+      }, 30000);
+    }
+
+    async function loadControllerData() {
+      const all = await API.getAll(APP.TABLES.CONTROLLERS);
+
+      // 권한 체크: 고객이면 자기 장비만
+      let ctrlData = all.find(c => c.id === controllerId);
+
+      if (ctrlData && session.role === 'customer') {
+        if (ctrlData.customer_id !== session.customerId) {
+          Utils.toast('접근 불가', '해당 장비에 접근 권한이 없습니다.', 'danger');
+          setTimeout(() => location.href = 'controllers.html', 1500);
+          return;
+        }
+      }
+
+      ctrl = ctrlData;
+
+      if (!ctrl) {
+        Utils.toast('오류', '장비 정보를 찾을 수 없습니다.', 'danger');
+        return;
+      }
+
+      const customers = await API.getCustomers();
+      customer = customers.find(c => c.id === ctrl.customer_id) || null;
+    }
+
+    function renderAll() {
+      if (!ctrl) return;
+      renderDeviceHeader();
+      renderVideoArea();
+      renderSensorGrid();
+      renderControlPanel();
+      renderAsPanel();
+      renderDeviceInfoPanel();
+      renderControlLog();
+      renderEventLog();
+    }
+
+    function renderDeviceHeader() {
+      const statusIcon = ctrl.status === 'online' ? '🟢' : ctrl.status === 'offline' ? '⚫' : '🟡';
+      const snowIcon = ctrl.snow_detected ? '❄️' : '☀️';
+      const heaterIcon = ctrl.heater_on ? '🔥' : '';
+
+      document.getElementById('device-header').innerHTML = `
+        <div class="detail-main-info">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            ${Utils.getStatusBadge(ctrl.status)}
+            ${Utils.getModeBadge(ctrl.heater_mode)}
+            ${ctrl.snow_detected ? '<span class="badge badge-snow">❄️ 눈 감지</span>' : ''}
+            ${ctrl.heater_on ? '<span class="badge badge-heater">🔥 히터 ON</span>' : ''}
+          </div>
+          <h1>${ctrl.controller_name}</h1>
+          <div class="addr">📍 ${ctrl.install_address || ctrl.install_location || '-'}</div>
+          <div style="font-size:13px;color:#64748b">
+            ${customer ? '🏢 ' + customer.company_name + ' &nbsp;|&nbsp; ' : ''}
+            🔢 ${ctrl.serial_no || '-'}
+            &nbsp;|&nbsp; 마지막 통신: ${Utils.timeAgo(ctrl.last_seen_at)}
+          </div>
+        </div>
+        <div class="detail-quick-stats">
+          <div class="quick-stat">
+            <div class="qs-val" style="color:${Utils.getTempColor(ctrl.temperature)}">
+              ${ctrl.temperature !== null && ctrl.temperature !== undefined ? ctrl.temperature + '°' : '-'}
+            </div>
+            <div class="qs-lbl">온도</div>
+          </div>
+          <div class="quick-stat">
+            <div class="qs-val" style="color:#60a5fa">${ctrl.humidity || '-'}${ctrl.humidity ? '%' : ''}</div>
+            <div class="qs-lbl">습도</div>
+          </div>
+          <div class="quick-stat">
+            <div class="qs-val" style="color:${ctrl.snow_detected ? '#93c5fd' : '#10b981'}">
+              ${ctrl.snow_detected ? '감지' : '맑음'}
+            </div>
+            <div class="qs-lbl">눈</div>
+          </div>
+          <div class="quick-stat">
+            <div class="qs-val" style="color:${ctrl.heater_on ? '#fb923c' : '#60a5fa'}">
+              ${ctrl.heater_on ? 'ON' : 'OFF'}
+            </div>
+            <div class="qs-lbl">히터</div>
+          </div>
+          <div class="quick-stat">
+            <div class="qs-val" style="font-size:14px">${ctrl.snow_threshold ? (ctrl.snow_threshold * 100).toFixed(0) + '%' : '-'}</div>
+            <div class="qs-lbl">임계값</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderVideoArea() {
+      const area = document.getElementById('video-area');
+      const badge = document.getElementById('camera-badge');
+
+      if (ctrl.status === 'offline') {
+        area.innerHTML = `
+          <div class="video-placeholder">
+            <span class="icon" style="opacity:0.3">📵</span>
+            <div>장비 오프라인</div>
+            <div style="font-size:12px;margin-top:6px;color:#64748b">장비가 오프라인 상태입니다.</div>
+          </div>`;
+        badge.innerHTML = '<span class="video-badge offline">⚫ 오프라인</span>';
+        return;
+      }
+
+      if (ctrl.camera_url) {
+        area.innerHTML = `
+          <div class="video-overlay">
+            <span class="video-badge live">🔴 LIVE</span>
+          </div>
+          <video controls playsinline webkit-playsinline autoplay muted style="width:100%;height:100%;object-fit:cover">
+            <source src="${ctrl.camera_url}" type="video/mp4">
+          </video>`;
+        badge.innerHTML = '<span class="video-badge live">🔴 LIVE</span>';
+        document.getElementById('video-info').textContent = '실시간 스트림 연결됨';
+      } else {
+        area.innerHTML = `
+          <div class="video-overlay">
+            <span class="video-badge live" style="background:rgba(59,130,246,0.85)">📡 대기</span>
+          </div>
+          <div class="video-placeholder">
+            <span class="icon">📷</span>
+            <div style="font-weight:600;margin-bottom:4px">카메라 스트림 미설정</div>
+            <div style="font-size:12px;color:#64748b">
+              Pi에서 snow_live.py 실행 후<br>
+              카메라 URL을 장비 정보에 등록해주세요.
+            </div>
+            <div style="margin-top:12px;font-size:11px;background:rgba(0,0,0,0.4);padding:8px 12px;border-radius:6px;color:#94a3b8;font-family:monospace">
+              예: http://192.168.75.235:8080/video
+            </div>
+          </div>`;
+        badge.innerHTML = '<span class="video-badge offline" style="background:rgba(59,130,246,0.7)">📷 미설정</span>';
+        document.getElementById('video-info').textContent = 'Raspberry Pi 5 카메라 대기중';
+      }
+
+      document.getElementById('last-snapshot').textContent =
+        '최근 통신: ' + Utils.timeAgo(ctrl.last_seen_at);
+    }
+
+    function renderSensorGrid() {
+      const grid = document.getElementById('sensor-grid');
+      const tempColor = Utils.getTempColor(ctrl.temperature);
+
+      grid.innerHTML = `
+        <div class="sensor-item">
+          <div class="s-icon">🌡️</div>
+          <div class="s-val" style="color:${tempColor}">
+            ${ctrl.temperature !== null && ctrl.temperature !== undefined ? ctrl.temperature + '°C' : '-'}
+          </div>
+          <div class="s-lbl">온도</div>
+        </div>
+        <div class="sensor-item">
+          <div class="s-icon">💧</div>
+          <div class="s-val" style="color:#60a5fa">
+            ${ctrl.humidity !== null && ctrl.humidity !== undefined ? ctrl.humidity + '%' : '-'}
+          </div>
+          <div class="s-lbl">습도</div>
+        </div>
+        <div class="sensor-item">
+          <div class="s-icon">${ctrl.snow_detected ? '❄️' : '☀️'}</div>
+          <div class="s-val" style="color:${ctrl.snow_detected ? '#93c5fd' : '#10b981'}">
+            ${ctrl.snow_detected ? '감지' : '맑음'}
+          </div>
+          <div class="s-lbl">눈 감지</div>
+        </div>
+        <div class="sensor-item">
+          <div class="s-icon">${ctrl.heater_on ? '🔥' : '❄️'}</div>
+          <div class="s-val" style="color:${ctrl.heater_on ? '#fb923c' : '#60a5fa'}">
+            ${ctrl.heater_on ? 'ON' : 'OFF'}
+          </div>
+          <div class="s-lbl">히터</div>
+        </div>
+        <div class="sensor-item">
+          <div class="s-icon">🎯</div>
+          <div class="s-val" style="color:#e2e8f0;font-size:16px">
+            ${ctrl.snow_threshold ? (ctrl.snow_threshold * 100).toFixed(0) + '%' : '-'}
+          </div>
+          <div class="s-lbl">감지 임계값</div>
+        </div>
+        <div class="sensor-item">
+          <div class="s-icon">⚙️</div>
+          <div class="s-val" style="color:${ctrl.heater_mode === 'auto' ? '#00aeff' : '#f59e0b'};font-size:14px">
+            ${ctrl.heater_mode === 'auto' ? '자동' : '수동'}
+          </div>
+          <div class="s-lbl">제어 모드</div>
+        </div>
+      `;
+    }
+
+    function renderControlPanel() {
+      const panel = document.getElementById('control-panel');
+      const modeBadge = document.getElementById('control-mode-badge');
+
+      modeBadge.innerHTML = Utils.getModeBadge(ctrl.heater_mode);
+
+      if (ctrl.status === 'offline') {
+        panel.innerHTML = `
+          <div style="text-align:center;padding:30px;color:#64748b">
+            <div style="font-size:36px;margin-bottom:8px">⚫</div>
+            <div>장비가 오프라인 상태입니다.<br>제어 불가.</div>
+          </div>`;
+        return;
+      }
+
+      panel.innerHTML = `
+        <!-- 히터 제어 -->
+        <div class="ctrl-section" style="margin-bottom:14px">
+          <div class="ctrl-section-header">🔥 히터 제어</div>
+          <div class="ctrl-section-body">
+            <button class="heater-main-btn on" onclick="executeCmd('HEATER_ON', true)">
+              <span style="font-size:28px">🔥</span>
+              <div>
+                <div>히터 켜기</div>
+                <div style="font-size:12px;opacity:0.7;font-weight:400">도로 열선 가열 시작</div>
+              </div>
+            </button>
+            <button class="heater-main-btn off" onclick="executeCmd('HEATER_OFF', false)">
+              <span style="font-size:28px">❄️</span>
+              <div>
+                <div>히터 끄기</div>
+                <div style="font-size:12px;opacity:0.7;font-weight:400">도로 열선 가열 중지</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 제어 모드 -->
+        <div class="ctrl-section" style="margin-bottom:14px">
+          <div class="ctrl-section-header">⚙️ 제어 모드</div>
+          <div class="ctrl-section-body">
+            <div class="mode-btns">
+              <button class="mode-btn ${ctrl.heater_mode === 'auto' ? 'active-auto' : 'inactive-auto'}"
+                      onclick="executeCmd('AUTO_MODE', 'auto')">
+                ⚙️ 자동 모드<br>
+                <span style="font-size:11px;font-weight:400;opacity:0.7">AI 감지 기반 자동 제어</span>
+              </button>
+              <button class="mode-btn ${ctrl.heater_mode === 'manual' ? 'active-manual' : 'inactive-manual'}"
+                      onclick="executeCmd('MANUAL_MODE', 'manual')">
+                🖱️ 수동 모드<br>
+                <span style="font-size:11px;font-weight:400;opacity:0.7">관리자 직접 제어</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 고급 설정 -->
+        <div class="ctrl-section">
+          <div class="ctrl-section-header">🛠️ 고급</div>
+          <div class="ctrl-section-body" style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-secondary btn-sm btn-block" onclick="openThresholdModal()">
+              🎯 눈 감지 임계값 변경 (현재: ${ctrl.snow_threshold ? (ctrl.snow_threshold * 100).toFixed(0) + '%' : '-'})
+            </button>
+            <button class="btn btn-danger btn-sm btn-block" onclick="confirmReboot()">
+              🔄 제어기 재부팅
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAsPanel() {
+      const panel = document.getElementById('as-panel');
+      const days = Utils.calcAsRemaining(ctrl.as_expire_at);
+      const asStatus = Utils.getAsStatus(days);
+
+      let installedTotal = 0;
+      if (ctrl.installed_at && ctrl.as_expire_at) {
+        const ins = new Date(ctrl.installed_at);
+        const exp = new Date(ctrl.as_expire_at);
+        installedTotal = Math.floor((exp - ins) / (1000 * 60 * 60 * 24));
+      }
+
+      const elapsed = installedTotal > 0 && days !== null
+        ? Math.max(0, installedTotal - Math.max(0, days))
+        : 0;
+
+      const pct = installedTotal > 0
+        ? Math.min(100, Math.round((elapsed / installedTotal) * 100))
+        : 0;
+
+      const barColor = asStatus === 'good' ? 'var(--success)'
+        : asStatus === 'caution' ? 'var(--warning)'
+        : 'var(--danger)';
+
+      let asMsg = '';
+      if (days === null) asMsg = '정보 없음';
+      else if (days < 0) asMsg = `AS 기간 만료 (${Math.abs(days)}일 경과)`;
+      else if (days <= 30) asMsg = `⚠️ AS 만료 임박 (${days}일 후 만료)`;
+      else if (days <= 90) asMsg = `주의: ${days}일 후 만료`;
+      else asMsg = `정상 (${days}일 잔여)`;
+
+      panel.innerHTML = `
+        <div class="as-info-box ${asStatus === 'expired' ? 'urgent' : asStatus}">
+          <div style="font-size:16px;font-weight:800;margin-bottom:6px;color:${barColor}">
+            ${days !== null ? (days < 0 ? '만료됨' : days + '일 잔여') : '-'}
+          </div>
+          <div style="font-size:13px;margin-bottom:8px">${asMsg}</div>
+          <div class="as-bar-container">
+            <div class="as-bar" style="width:${pct}%;background:${barColor}"></div>
+          </div>
+          <div style="font-size:11px;color:#64748b;text-align:right">${pct}% 사용됨</div>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="info-row">
+            <span class="label">📦 설치일</span>
+            <span class="value">${Utils.formatDate(ctrl.installed_at)}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">📅 AS 만료일</span>
+            <span class="value" style="color:${barColor}">${Utils.formatDate(ctrl.as_expire_at)}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">⏱️ 총 AS 기간</span>
+            <span class="value">${installedTotal > 0 ? installedTotal + '일' : '-'}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDeviceInfoPanel() {
+      const panel = document.getElementById('device-info-panel');
+
+      panel.innerHTML = `
+        <div class="info-row">
+          <span class="label">🔢 시리얼 번호</span>
+          <span class="value" style="font-family:monospace;font-size:13px">${ctrl.serial_no || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">📍 설치 위치</span>
+          <span class="value" style="font-size:13px">${ctrl.install_location || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">🗺️ 주소</span>
+          <span class="value" style="font-size:12px">${ctrl.install_address || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">🌐 좌표</span>
+          <span class="value" style="font-family:monospace;font-size:12px">
+            ${ctrl.latitude ? `${ctrl.latitude.toFixed(4)}, ${ctrl.longitude.toFixed(4)}` : '-'}
+          </span>
+        </div>
+        ${customer ? `
+        <div class="info-row">
+          <span class="label">🏢 고객사</span>
+          <span class="value">${customer.company_name}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">📞 담당자</span>
+          <span class="value" style="font-size:13px">${customer.contact_name || '-'} / ${customer.contact_phone || '-'}</span>
+        </div>` : ''}
+        <div class="info-row">
+          <span class="label">🔄 마지막 통신</span>
+          <span class="value">${Utils.timeAgo(ctrl.last_seen_at)}</span>
+        </div>
+      `;
+    }
+
+    async function renderControlLog() {
+      const logs = await API.getControlLogs(controllerId, 10);
+      const panel = document.getElementById('control-log-panel');
+
+      const cmdIcons = {
+        HEATER_ON: '🔥', HEATER_OFF: '❄️',
+        AUTO_MODE: '⚙️', MANUAL_MODE: '🖱️',
+        REBOOT: '🔄', THRESHOLD_CHANGE: '🎯'
+      };
+
+      const cmdLabels = {
+        HEATER_ON: '히터 ON', HEATER_OFF: '히터 OFF',
+        AUTO_MODE: '자동 모드', MANUAL_MODE: '수동 모드',
+        REBOOT: '재부팅', THRESHOLD_CHANGE: '임계값 변경'
+      };
+
+      if (logs.length === 0) {
+        panel.innerHTML = `<div style="text-align:center;padding:20px;color:#64748b;font-size:14px">제어 이력 없음</div>`;
+        return;
+      }
+
+      panel.innerHTML = `<div class="log-list">` + logs.map(log => `
+        <div class="command-history-item">
+          <div class="cmd-icon">${cmdIcons[log.command_type] || '📌'}</div>
+          <div class="cmd-body">
+            <div class="cmd-name">${cmdLabels[log.command_type] || log.command_type}
+              ${log.command_value && log.command_type === 'THRESHOLD_CHANGE'
+                ? `<span style="color:#94a3b8;font-weight:400"> → ${(parseFloat(log.command_value)*100).toFixed(0)}%</span>`
+                : ''}
+            </div>
+            <div class="cmd-meta">
+              👤 ${log.user_name || '-'} &nbsp;·&nbsp;
+              <span style="color:${log.result === 'success' ? '#10b981' : '#ef4444'}">
+                ${log.result === 'success' ? '성공' : '실패'}
+              </span>
+              &nbsp;·&nbsp;
+              ${Utils.timeAgo(log.updated_at || log.created_at)}
+            </div>
+          </div>
+        </div>
+      `).join('') + `</div>`;
+    }
+
+    async function renderEventLog() {
+      const events = await API.getEventLogs(controllerId, 10);
+      const panel = document.getElementById('event-log-panel');
+
+      const evtIcons = {
+        SNOW_DETECTED: '❄️', SNOW_CLEARED: '☀️',
+        HEATER_ON: '🔥', HEATER_OFF: '💧',
+        DEVICE_OFFLINE: '⚫', DEVICE_ONLINE: '🟢', ALARM: '🚨'
+      };
+
+      const severityColor = { info: '#10b981', warning: '#f59e0b', critical: '#ef4444' };
+
+      if (events.length === 0) {
+        panel.innerHTML = `<div style="text-align:center;padding:20px;color:#64748b;font-size:14px">이벤트 없음</div>`;
+        return;
+      }
+
+      panel.innerHTML = `<div class="log-list">` + events.map(evt => `
+        <div class="log-item">
+          <div class="log-icon">${evtIcons[evt.event_type] || '📌'}</div>
+          <div class="log-content">
+            <div class="log-msg">${evt.message || evt.event_type}</div>
+            <div class="log-meta">
+              <span style="color:${severityColor[evt.severity] || '#94a3b8'}">
+                ${evt.severity === 'critical' ? '긴급' : evt.severity === 'warning' ? '경고' : '정보'}
+              </span>
+              &nbsp;·&nbsp;${Utils.timeAgo(evt.updated_at || evt.created_at)}
+            </div>
+          </div>
+        </div>
+      `).join('') + `</div>`;
+    }
+
+    async function refreshSensorData() {
+      await loadControllerData();
+      renderDeviceHeader();
+      renderSensorGrid();
+      renderControlPanel();
+      Utils.toast('갱신 완료', '센서 데이터를 새로고침했습니다.', 'success');
+    }
+
+    async function executeCmd(cmd, value) {
+      const labels = {
+        HEATER_ON: '히터 ON',
+        HEATER_OFF: '히터 OFF',
+        AUTO_MODE: '자동 모드 전환',
+        MANUAL_MODE: '수동 모드 전환'
+      };
+
+      const label = labels[cmd] || cmd;
+
+      Utils.confirm(
+        `${label} 실행`,
+        `${ctrl.controller_name}에 [${label}] 명령을 전송하시겠습니까?`,
+        async () => {
+          Utils.toast('전송 중', `${label} 명령 전송 중...`, 'info');
+          const result = await sendCommand(controllerId, cmd, value, session);
+
+          if (result.success) {
+            Utils.toast('성공', `${label} 명령이 실행되었습니다.`, 'success');
+            await loadControllerData();
+            renderAll();
+          } else {
+            Utils.toast('오류', '명령 전송에 실패했습니다.', 'danger');
+          }
+        },
+        cmd === 'HEATER_OFF' ? 'secondary' : 'primary'
+      );
+    }
+
+    function openThresholdModal() {
+      document.getElementById('threshold-slider').value = ctrl.snow_threshold || 0.80;
+      document.getElementById('threshold-display').textContent =
+        parseFloat(ctrl.snow_threshold || 0.80).toFixed(2);
+      openModal('threshold-modal');
+    }
+
+    async function applyThreshold() {
+      const val = parseFloat(document.getElementById('threshold-slider').value);
+      closeModal('threshold-modal');
+
+      Utils.toast('전송 중', '임계값 변경 중...', 'info');
+      const result = await sendCommand(controllerId, 'THRESHOLD_CHANGE', val, session);
+
+      if (result.success) {
+        Utils.toast('성공', `눈 감지 임계값을 ${(val * 100).toFixed(0)}%로 변경했습니다.`, 'success');
+        await loadControllerData();
+        renderAll();
+      } else {
+        Utils.toast('오류', '임계값 변경에 실패했습니다.', 'danger');
+      }
+    }
+
+    function confirmReboot() {
+      Utils.confirm(
+        '제어기 재부팅',
+        `${ctrl.controller_name}을(를) 재부팅합니다. 약 5~10초간 오프라인 상태가 될 수 있습니다. 계속하시겠습니까?`,
+        async () => {
+          Utils.toast('재부팅 중', '재부팅 명령을 전송했습니다.', 'warning');
+          await sendCommand(controllerId, 'REBOOT', '', session);
+          setTimeout(async () => {
+            await loadControllerData();
+            renderAll();
+            Utils.toast('완료', '재부팅이 완료되었습니다.', 'success');
+          }, 6000);
+        },
+        'danger'
+      );
+    }
+
+    init();
+  </script>
+</body>
+</html>
