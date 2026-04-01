@@ -16,6 +16,214 @@ const APP = {
 const MAP_CENTER = [36.5, 127.8];
 const MAP_ZOOM = 7;
 
+const APP_PAGES = {
+  login: 'index.html',
+  dashboard: 'dashboard.html',
+  controllers: 'controllers.html',
+  detail: 'detail.html',
+  logs: 'logs.html',
+  events: 'events.html',
+  customers: 'customers.html'
+};
+
+const WebApp = {
+  installPrompt: null,
+
+  getPageUrl(page, params = {}) {
+    const file = APP_PAGES[page] || page || APP_PAGES.login;
+    const url = new URL(file, window.location.href);
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, value);
+      }
+    });
+
+    return `${url.pathname.split('/').pop()}${url.search}`;
+  },
+
+  go(page, params = {}, replace = false) {
+    const target = this.getPageUrl(page, params);
+    if (replace) {
+      window.location.replace(target);
+    } else {
+      window.location.href = target;
+    }
+  },
+
+  ensureHead() {
+    const head = document.head;
+    if (!head) return;
+
+    const ensureMeta = (name, content, attr = 'name') => {
+      let meta = head.querySelector(`meta[${attr}="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attr, name);
+        head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+
+    if (!head.querySelector('link[rel="manifest"]')) {
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = 'manifest.webmanifest';
+      head.appendChild(link);
+    }
+
+    ensureMeta('theme-color', '#0d1b2a');
+    ensureMeta('apple-mobile-web-app-capable', 'yes');
+    ensureMeta('apple-mobile-web-app-status-bar-style', 'black-translucent');
+    ensureMeta('mobile-web-app-capable', 'yes');
+
+    if (!head.querySelector('link[rel="apple-touch-icon"]')) {
+      const icon = document.createElement('link');
+      icon.rel = 'apple-touch-icon';
+      icon.href = 'icons/icon-192.png';
+      head.appendChild(icon);
+    }
+
+    if (document.body) {
+      document.body.classList.add('webapp-enabled');
+    }
+  },
+
+  registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+
+    window.addEventListener(
+      'load',
+      () => {
+        navigator.serviceWorker.register('sw.js').catch((error) => {
+          console.warn('SW register failed:', error);
+        });
+      },
+      { once: true }
+    );
+  },
+
+  mountInstallBanner() {
+    if (document.getElementById('install-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'install-banner';
+    banner.className = 'install-banner';
+    banner.innerHTML = `
+      <div class="install-banner__body">
+        <div>
+          <strong>앱처럼 설치해서 사용하세요</strong>
+          <span>홈 화면 추가 후 전체 화면으로 빠르게 실행할 수 있습니다.</span>
+        </div>
+        <div class="install-banner__actions">
+          <button type="button" class="btn btn-primary btn-sm" onclick="promptInstallApp()">설치</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeInstallBanner()">닫기</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(banner);
+  },
+
+  bindInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      this.installPrompt = event;
+      this.mountInstallBanner();
+      document.body.classList.add('install-ready');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      this.installPrompt = null;
+      document.body.classList.remove('install-ready');
+      closeInstallBanner();
+
+      if (window.Utils && typeof window.Utils.toast === 'function') {
+        window.Utils.toast('설치 완료', '홈 화면에서 앱처럼 실행할 수 있습니다.', 'success');
+      }
+    });
+  },
+
+  async promptInstall() {
+    if (!this.installPrompt) {
+      if (window.Utils && typeof window.Utils.toast === 'function') {
+        window.Utils.toast(
+          '안내',
+          '현재 브라우저에서는 자동 설치 프롬프트를 지원하지 않습니다.',
+          'info'
+        );
+      }
+      return;
+    }
+
+    this.installPrompt.prompt();
+    await this.installPrompt.userChoice.catch(() => null);
+
+    this.installPrompt = null;
+    document.body.classList.remove('install-ready');
+  },
+
+  renderBottomNav(session, activeNav) {
+    if (!session) return '';
+
+    const items =
+      session.role === 'admin'
+        ? [
+            ['dashboard', '🗺️', '관제'],
+            ['controllers', '📋', '장비'],
+            ['customers', '🏢', '고객사'],
+            ['logs', '📜', '이력'],
+            ['events', '🔔', '이벤트']
+          ]
+        : [
+            ['dashboard', '🗺️', '지도'],
+            ['controllers', '📋', '장비'],
+            ['logs', '📜', '이력']
+          ];
+
+    return `
+      <nav class="mobile-bottom-nav">
+        ${items
+          .map(
+            ([page, icon, label]) => `
+          <button type="button"
+                  class="mobile-bottom-nav__item ${activeNav === page ? 'active' : ''}"
+                  onclick="openAppPage('${page}')">
+            <span class="mobile-bottom-nav__icon">${icon}</span>
+            <span class="mobile-bottom-nav__label">${label}</span>
+          </button>
+        `
+          )
+          .join('')}
+      </nav>
+    `;
+  },
+
+  init() {
+    this.ensureHead();
+    this.registerServiceWorker();
+    this.bindInstallPrompt();
+  }
+};
+
+function openAppPage(page, params = {}, replace = false) {
+  return WebApp.go(page, params, replace);
+}
+
+function closeInstallBanner() {
+  document.getElementById('install-banner')?.remove();
+  document.body.classList.remove('install-ready');
+}
+
+function promptInstallApp() {
+  return WebApp.promptInstall();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  WebApp.init();
+});
+
+
 // ============================================================
 // 샘플 데이터 (초기값 - 최초 1회만 localStorage에 저장)
 // ============================================================
@@ -836,3 +1044,7 @@ window.createControllerMarker = createControllerMarker;
 window.sendCommand          = sendCommand;
 window.startClock           = startClock;
 window.toggleSidebar        = toggleSidebar;
+window.WebApp = WebApp;
+window.openAppPage = openAppPage;
+window.promptInstallApp = promptInstallApp;
+window.closeInstallBanner = closeInstallBanner;
