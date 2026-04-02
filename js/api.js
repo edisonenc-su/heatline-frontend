@@ -1,13 +1,33 @@
-const DEFAULT_REGISTRY_API_BASE_URL =
-  window.HEATLINE_API_BASE_URL ||
-  localStorage.getItem("HEATLINE_API_BASE_URL") ||
-  "http://localhost:8000/api/v1";
-
-let registryApiBaseUrl = stripTrailingSlash(DEFAULT_REGISTRY_API_BASE_URL);
+const PROD_API_BASE_URL =
+  "https://port-0-heatline-backend-mngz3utra2911079.sel3.cloudtype.app/api/v1";
 
 function stripTrailingSlash(url = "") {
   return String(url || "").replace(/\/+$/, "");
 }
+
+function isInvalidLegacyUrl(url = "") {
+  return (
+    !url ||
+    /localhost:8000\/api\/v1/i.test(url) ||
+    /localhost:3000/i.test(url)
+  );
+}
+
+function resolveRegistryApiBaseUrl() {
+  const fromWindow = window.HEATLINE_API_BASE_URL;
+  const fromStorage = localStorage.getItem("HEATLINE_API_BASE_URL");
+  const candidate = stripTrailingSlash(fromWindow || fromStorage || PROD_API_BASE_URL);
+  return isInvalidLegacyUrl(candidate) ? PROD_API_BASE_URL : candidate;
+}
+
+const DEFAULT_REGISTRY_API_BASE_URL = resolveRegistryApiBaseUrl();
+
+let registryApiBaseUrl = DEFAULT_REGISTRY_API_BASE_URL;
+
+try {
+  localStorage.setItem("HEATLINE_API_BASE_URL", registryApiBaseUrl);
+} catch (_) {}
+
 
 function toQueryString(params = {}) {
   const qs = new URLSearchParams();
@@ -23,9 +43,11 @@ export function setApiBaseUrl(url) {
   if (!url || typeof url !== "string") {
     throw new Error("유효한 API Base URL이 필요합니다.");
   }
-  registryApiBaseUrl = stripTrailingSlash(url);
+  const normalized = stripTrailingSlash(url);
+  registryApiBaseUrl = isInvalidLegacyUrl(normalized) ? PROD_API_BASE_URL : normalized;
   localStorage.setItem("HEATLINE_API_BASE_URL", registryApiBaseUrl);
 }
+
 
 export function getApiBaseUrl() {
   return registryApiBaseUrl;
