@@ -137,7 +137,17 @@
 
   <!-- 토스트 컨테이너 -->
   <div id="toast-container" class="toast-container"></div>
-
+  <script>
+  window.HEATLINE_API_BASE_URL = "https://port-0-heatline-backend-mngz3utra2911079.sel3.cloudtype.app/api/v1";
+  try {
+    const saved = localStorage.getItem("HEATLINE_API_BASE_URL") || "";
+    if (!saved || /localhost:8000\/api\/v1/i.test(saved) || /localhost:3000/i.test(saved)) {
+      localStorage.setItem("HEATLINE_API_BASE_URL", window.HEATLINE_API_BASE_URL);
+    }
+  } catch (e) {
+    console.warn("HEATLINE_API_BASE_URL 저장 실패:", e);
+  }
+  </script>
   <script src="js/app.js"></script>
   <script>
     // LocalDB 초기화 (최초 방문 시 시드 데이터 로드)
