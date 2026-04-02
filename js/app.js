@@ -1,8 +1,31 @@
 (() => {
-  const DEFAULT_API_BASE_URL =
-    window.HEATLINE_API_BASE_URL ||
-    localStorage.getItem("HEATLINE_API_BASE_URL") ||
-    "http://localhost:8000/api/v1";
+  const PROD_API_BASE_URL =
+    "https://port-0-heatline-backend-mngz3utra2911079.sel3.cloudtype.app/api/v1";
+
+  function stripTrailingSlash(url = "") {
+    return String(url || "").replace(/\/+$/, "");
+  }
+
+  function isInvalidLegacyUrl(url = "") {
+    return (
+      !url ||
+      /localhost:8000\/api\/v1/i.test(url) ||
+      /localhost:3000/i.test(url)
+    );
+  }
+
+  function resolveApiBaseUrl() {
+    const fromWindow = window.HEATLINE_API_BASE_URL;
+    const fromStorage = localStorage.getItem("HEATLINE_API_BASE_URL");
+    const candidate = stripTrailingSlash(fromWindow || fromStorage || PROD_API_BASE_URL);
+    return isInvalidLegacyUrl(candidate) ? PROD_API_BASE_URL : candidate;
+  }
+
+  const DEFAULT_API_BASE_URL = resolveApiBaseUrl();
+
+  try {
+    localStorage.setItem("HEATLINE_API_BASE_URL", DEFAULT_API_BASE_URL);
+  } catch (_) {}
 
   const APP_TABLES = {
     CUSTOMERS: "customers",
