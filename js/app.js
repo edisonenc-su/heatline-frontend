@@ -41,8 +41,9 @@
     return state.apiBaseUrl;
   }
 
-  function setApiBaseUrl(url) {
-    state.apiBaseUrl = String(url || "").replace(/\/+$/, "");
+   function setApiBaseUrl(url) {
+    const normalized = stripTrailingSlash(url);
+    state.apiBaseUrl = isInvalidLegacyUrl(normalized) ? PROD_API_BASE_URL : normalized;
     localStorage.setItem("HEATLINE_API_BASE_URL", state.apiBaseUrl);
   }
 
