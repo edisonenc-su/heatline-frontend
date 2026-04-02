@@ -1,25 +1,24 @@
-const DEFAULT_API_BASE_URL =
+const DEFAULT_REGISTRY_API_BASE_URL =
   window.HEATLINE_API_BASE_URL ||
   localStorage.getItem("HEATLINE_API_BASE_URL") ||
-  "http://localhost:8000/api/v1";
+  "http://localhost:8000/api/v1"; // 중앙 레지스트리 API
 
-let apiBaseUrl = DEFAULT_API_BASE_URL;
+let registryApiBaseUrl = DEFAULT_REGISTRY_API_BASE_URL;
+
+function stripTrailingSlash(url = "") {
+  return String(url).replace(/\/+$/, "");
+}
 
 export function setApiBaseUrl(url) {
   if (!url || typeof url !== "string") {
     throw new Error("유효한 API Base URL이 필요합니다.");
   }
-  apiBaseUrl = url.replace(/\/+$/, "");
-  localStorage.setItem("HEATLINE_API_BASE_URL", apiBaseUrl);
+  registryApiBaseUrl = stripTrailingSlash(url);
+  localStorage.setItem("HEATLINE_API_BASE_URL", registryApiBaseUrl);
 }
 
 export function getApiBaseUrl() {
-  return apiBaseUrl;
-}
-
-export function setAuthToken(token) {
-  if (!token) throw new Error("저장할 토큰이 없습니다.");
-  sessionStorage.setItem("token", token);
+  return registryApiBaseUrl;
 }
 
 export function getAuthToken() {
@@ -32,61 +31,53 @@ export function getAuthToken() {
   );
 }
 
-export function clearAuthToken() {
-  sessionStorage.removeItem("token");
-  sessionStorage.removeItem("auth_token");
-  localStorage.removeItem("token");
-  localStorage.removeItem("auth_token");
-}
+export function getSession() {
+  const candidates = [
+    sessionStorage.getItem("session"),
+    sessionStorage.getItem("auth_session"),
+    localStorage.getItem("session"),
+    localStorage.getItem("auth_session")
+  ].filter(Boolean);
 
-export function getAuthHeaders(extraHeaders = {}) {
-  const headers = {
-    "Content-Type": "application/json",
-    ...extraHeaders
-  };
-
-  const token = getAuthToken();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+  for (const raw of candidates) {
+    try {
+      return JSON.parse(raw);
+    } catch (_) {}
   }
-
-  return headers;
+  return null;
 }
 
 function toQueryString(params = {}) {
   const qs = new URLSearchParams();
-
   Object.entries(params).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
     qs.append(key, String(value));
   });
-
-  const query = qs.toString();
-  return query ? `?${query}` : "";
+  const s = qs.toString();
+  return s ? `?${s}` : "";
 }
 
-function normalizeApiError(error, fallbackMessage = "요청 처리 중 오류가 발생했습니다.") {
-  if (error instanceof Error) return error;
-  if (typeof error === "string") return new Error(error);
-
-  if (error && typeof error === "object") {
-    const message =
-      error.error?.message ||
-      error.message ||
-      fallbackMessage;
-    return new Error(message);
+function normalizeErrorPayload(payload, fallback = "요청 처리 중 오류가 발생했습니다.") {
+  if (payload instanceof Error) return payload;
+  if (typeof payload === "string") return new Error(payload);
+  if (payload && typeof payload === "object") {
+    return new Error(payload.error?.message || payload.message || fallback);
   }
-
-  return new Error(fallbackMessage);
+  return new Error(fallback);
 }
 
-export async function apiRequest(path, options = {}) {
-  const url = `${apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+async function request(baseUrl, path, options = {}) {
+  const url = `${stripTrailingSlash(baseUrl)}${path.startsWith("/") ? path : `/${path}`}`;
+
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
 
   const config = {
     method: options.method || "GET",
-    headers: getAuthHeaders(options.headers || {}),
-    ...options
+    ...options,
+    headers
   };
 
   if (config.body && typeof config.body !== "string") {
@@ -96,12 +87,12 @@ export async function apiRequest(path, options = {}) {
   let response;
   try {
     response = await fetch(url, config);
-  } catch (networkError) {
-    throw new Error(`네트워크 오류: ${networkError.message}`);
+  } catch (err) {
+    throw new Error(`네트워크 오류: ${err.message}`);
   }
 
-  let result = null;
   const contentType = response.headers.get("content-type") || "";
+  let result = null;
 
   if (contentType.includes("application/json")) {
     try {
@@ -115,43 +106,190 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    const message =
+    const err = new Error(
       result?.error?.message ||
       result?.message ||
-      `HTTP ${response.status} 오류`;
-    const err = new Error(message);
+      `HTTP ${response.status} 오류`
+    );
     err.status = response.status;
     err.response = result;
     throw err;
   }
 
   if (result && result.success === false) {
-    throw normalizeApiError(result, "API 요청 실패");
+    throw normalizeErrorPayload(result, "API 요청 실패");
   }
 
   return result;
 }
 
+function getRegistryHeaders(extra = {}) {
+  const token = getAuthToken();
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra
+  };
+}
+
+function getDeviceHeaders(controller, extra = {}) {
+  const session = getSession() || {};
+
+  return {
+    "X-User-Role": session.role || "guest",
+    "X-User-Id": String(session.user_id ?? session.userId ?? session.id ?? ""),
+    "X-User-Name": session.user_name || session.username || session.fullName || session.full_name || "unknown",
+    "X-Customer-Id": String(session.customer_id ?? session.customerId ?? ""),
+    ...(controller?.serial_no ? { "X-Controller-Serial": controller.serial_no } : {}),
+    ...extra
+  };
+}
+
+function getDeviceBaseUrl(controller) {
+  return stripTrailingSlash(
+    controller?.device_api_base ||
+    controller?.device_api_url ||
+    controller?.api_base_url ||
+    ""
+  );
+}
+
+function getDeviceOrigin(controller) {
+  const base = getDeviceBaseUrl(controller);
+  if (!base) return "";
+  return base.replace(/\/api\/v\d+$/i, "");
+}
+
+function mergeController(registryController, liveStatus = null) {
+  const merged = {
+    ...(registryController || {}),
+    ...(liveStatus || {})
+  };
+
+  if (!merged.camera_url) {
+    const origin = getDeviceOrigin(registryController);
+    if (origin) {
+      merged.camera_url = `${origin}/stream.mjpg`;
+    }
+  }
+
+  if (!merged.status) {
+    merged.status = "offline";
+  }
+
+  if (merged.allow_customer_control === undefined) {
+    merged.allow_customer_control = true;
+  }
+
+  return merged;
+}
+
+export function validateControllerId(controllerId) {
+  const id = Number(controllerId);
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error("유효한 controllerId 가 필요합니다.");
+  }
+  return id;
+}
+
+/* -----------------------------
+ * 중앙 레지스트리 API
+ * ----------------------------- */
+
 export async function getControllers(params = {}) {
   const query = toQueryString(params);
-  return apiRequest(`/controllers${query}`, { method: "GET" });
+  return request(registryApiBaseUrl, `/controllers${query}`, {
+    method: "GET",
+    headers: getRegistryHeaders()
+  });
+}
+
+export async function getControllerRegistry(controllerId) {
+  const id = validateControllerId(controllerId);
+
+  const result = await request(registryApiBaseUrl, `/controllers/${id}`, {
+    method: "GET",
+    headers: getRegistryHeaders()
+  });
+
+  return result?.data ?? result;
+}
+
+/* -----------------------------
+ * 장비별 Raspberry Pi API
+ * ----------------------------- */
+
+export async function getDeviceStatus(controller) {
+  const base = getDeviceBaseUrl(controller);
+  if (!base) throw new Error("device_api_base 가 등록되지 않았습니다.");
+
+  const result = await request(base, `/status`, {
+    method: "GET",
+    headers: getDeviceHeaders(controller)
+  });
+
+  return result?.data ?? result;
 }
 
 export async function getControllerDetail(controllerId) {
-  validateControllerId(controllerId);
-  return apiRequest(`/controllers/${controllerId}`, { method: "GET" });
+  const controller = await getControllerRegistry(controllerId);
+
+  try {
+    const live = await getDeviceStatus(controller);
+    return { data: mergeController(controller, live) };
+  } catch (err) {
+    // 장비 오프라인이어도 레지스트리 정보는 보여준다
+    return {
+      data: mergeController(controller, {
+        status: "offline",
+        last_error: err.message
+      })
+    };
+  }
 }
 
 export async function getControllerEvents(controllerId, params = { limit: 10 }) {
-  validateControllerId(controllerId);
-  const query = toQueryString(params);
-  return apiRequest(`/controllers/${controllerId}/events${query}`, { method: "GET" });
+  const controller = await getControllerRegistry(controllerId);
+
+  const result = await request(getDeviceBaseUrl(controller), `/events${toQueryString(params)}`, {
+    method: "GET",
+    headers: getDeviceHeaders(controller)
+  });
+
+  return {
+    data: {
+      items: result?.data?.items ?? result?.items ?? []
+    }
+  };
 }
 
 export async function getControllerControlLogs(controllerId, params = { limit: 10 }) {
-  validateControllerId(controllerId);
-  const query = toQueryString(params);
-  return apiRequest(`/controllers/${controllerId}/control-logs${query}`, { method: "GET" });
+  const controller = await getControllerRegistry(controllerId);
+
+  const result = await request(getDeviceBaseUrl(controller), `/control-logs${toQueryString(params)}`, {
+    method: "GET",
+    headers: getDeviceHeaders(controller)
+  });
+
+  return {
+    data: {
+      items: result?.data?.items ?? result?.items ?? []
+    }
+  };
+}
+
+export function canControlController(controller, session = getSession()) {
+  if (!session || !controller) return false;
+
+  if (session.role === "admin") return true;
+
+  const sessionCustomerId = String(session.customer_id ?? session.customerId ?? "");
+  const controllerCustomerId = String(controller.customer_id ?? "");
+
+  if (session.role === "customer" && sessionCustomerId === controllerCustomerId) {
+    return controller.allow_customer_control !== false;
+  }
+
+  return false;
 }
 
 export async function sendControllerCommand(
@@ -164,70 +302,31 @@ export async function sendControllerCommand(
     expiresInSec = 120
   } = {}
 ) {
-  validateControllerId(controllerId);
+  const controller = await getControllerRegistry(controllerId);
 
-  if (!commandType) {
-    throw new Error("commandType 이 필요합니다.");
+  if (!canControlController(controller)) {
+    throw new Error("이 장비를 제어할 권한이 없습니다.");
   }
 
   const body = {
     command_type: commandType,
     command_value: commandValue,
     reason,
-    expires_in_sec: expiresInSec
+    expires_in_sec: expiresInSec,
+    requested_by: {
+      user_id: requestedBy?.user_id ?? null,
+      user_name: requestedBy?.user_name ?? "unknown"
+    }
   };
 
-  if (requestedBy && typeof requestedBy === "object") {
-    body.requested_by = {
-      user_id: requestedBy.user_id ?? null,
-      user_name: requestedBy.user_name ?? null
-    };
-  }
-
-  return apiRequest(`/controllers/${controllerId}/commands`, {
+  return request(getDeviceBaseUrl(controller), `/commands`, {
     method: "POST",
+    headers: getDeviceHeaders(controller),
     body
   });
 }
 
-export async function getCommandDetail(controllerId, commandId) {
-  validateControllerId(controllerId);
-  if (!commandId) {
-    throw new Error("commandId 가 필요합니다.");
-  }
-
-  return apiRequest(`/controllers/${controllerId}/commands/${commandId}`, {
-    method: "GET"
-  });
-}
-
-export async function getDetailPageData(controllerId, options = {}) {
-  validateControllerId(controllerId);
-
-  const eventLimit = options.eventLimit ?? 10;
-  const controlLogLimit = options.controlLogLimit ?? 10;
-
-  const [detailRes, eventsRes, controlLogsRes] = await Promise.all([
-    getControllerDetail(controllerId),
-    getControllerEvents(controllerId, { limit: eventLimit }),
-    getControllerControlLogs(controllerId, { limit: controlLogLimit })
-  ]);
-
-  return {
-    controller: detailRes?.data ?? null,
-    events: eventsRes?.data?.items ?? [],
-    controlLogs: controlLogsRes?.data?.items ?? [],
-    raw: {
-      detailRes,
-      eventsRes,
-      controlLogsRes
-    }
-  };
-}
-
 export function buildDetailCommands(controllerId, currentUser = null) {
-  validateControllerId(controllerId);
-
   return {
     heatOn: () =>
       sendControllerCommand(controllerId, {
@@ -279,23 +378,48 @@ export function buildDetailCommands(controllerId, currentUser = null) {
   };
 }
 
+export async function getDetailPageData(controllerId, options = {}) {
+  validateControllerId(controllerId);
+
+  const eventLimit = options.eventLimit ?? 10;
+  const controlLogLimit = options.controlLogLimit ?? 10;
+
+  const detailRes = await getControllerDetail(controllerId);
+  const controller = detailRes?.data ?? null;
+
+  if (!controller) {
+    throw new Error("장비 정보를 불러오지 못했습니다.");
+  }
+
+  let events = [];
+  let controlLogs = [];
+
+  try {
+    const [eventsRes, controlLogsRes] = await Promise.all([
+      getControllerEvents(controllerId, { limit: eventLimit }),
+      getControllerControlLogs(controllerId, { limit: controlLogLimit })
+    ]);
+
+    events = eventsRes?.data?.items ?? [];
+    controlLogs = controlLogsRes?.data?.items ?? [];
+  } catch (err) {
+    console.warn("장비 로그 조회 실패:", err.message);
+  }
+
+  return {
+    controller,
+    events,
+    controlLogs,
+    raw: {
+      detailRes
+    }
+  };
+}
+
 export function buildNoCacheStreamUrl(cameraUrl) {
   if (!cameraUrl) return "";
   const separator = cameraUrl.includes("?") ? "&" : "?";
   return `${cameraUrl}${separator}_t=${Date.now()}`;
-}
-
-export function validateControllerId(controllerId) {
-  const id = Number(controllerId);
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new Error("유효한 controllerId 가 필요합니다.");
-  }
-  return id;
-}
-
-export function formatNumber(value, digits = 1, suffix = "") {
-  if (typeof value !== "number" || Number.isNaN(value)) return "-";
-  return `${value.toFixed(digits)}${suffix}`;
 }
 
 export function formatDateTime(value, locale = "ko-KR") {
@@ -305,20 +429,7 @@ export function formatDateTime(value, locale = "ko-KR") {
   return d.toLocaleString(locale);
 }
 
-export function getStatusLabel(status) {
-  const map = {
-    online: "온라인",
-    offline: "오프라인",
-    warning: "경고",
-    error: "오류"
-  };
-  return map[status] || status || "-";
-}
-
-export function getHeaterLabel(heaterOn) {
-  return heaterOn ? "ON" : "OFF";
-}
-
-export function getSnowDetectedLabel(snowDetected) {
-  return snowDetected ? "감지" : "없음";
+export function formatNumber(value, digits = 1, suffix = "") {
+  if (typeof value !== "number" || Number.isNaN(value)) return "-";
+  return `${value.toFixed(digits)}${suffix}`;
 }
