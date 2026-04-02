@@ -3,21 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0d1b2a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>로그인 - 도로 열선 통합관제 시스템</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-
   <title>장비 목록 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .add-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .add-form-grid .full {
+      grid-column: 1 / -1;
+    }
+    .form-group-inline {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-group-inline label {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .form-group-inline input,
+    .form-group-inline select,
+    .form-group-inline textarea {
+      width: 100%;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+    }
+    .form-group-inline textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0 4px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    .hint-text {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    @media (max-width: 900px) {
+      .add-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="sidebar-placeholder"></div>
@@ -182,12 +230,162 @@
     </div>
   </div>
 
+  <!-- 장비 등록 모달 -->
+  <div id="add-controller-modal" class="modal-backdrop">
+    <div class="modal-box" style="max-width:960px;width:min(96vw,960px)">
+      <div class="modal-header">
+        <div class="modal-title">➕ 장비 등록</div>
+        <button class="modal-close" onclick="closeAddModal()">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding:20px 24px">
+        <form id="add-controller-form">
+          <div class="add-form-grid">
+            <div class="form-group-inline">
+              <label for="f-customer-id">고객사</label>
+              <select id="f-customer-id" required></select>
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-controller-name">장비명</label>
+              <input id="f-controller-name" type="text" placeholder="예: 영동고속도로 3호 구간" required>
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-serial-no">시리얼 번호</label>
+              <input id="f-serial-no" type="text" placeholder="예: KW-PI5-103" required>
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-install-location">설치 위치</label>
+              <input id="f-install-location" type="text" placeholder="예: 터널 입구 / 교량 하단" required>
+            </div>
+
+            <div class="form-group-inline full">
+              <label for="f-install-address">설치 주소</label>
+              <input id="f-install-address" type="text" placeholder="예: 강원도 영동군 ○○면 ○○리 123-4" required>
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-latitude">위도</label>
+              <input id="f-latitude" type="number" step="0.000001" placeholder="37.123456">
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-longitude">경도</label>
+              <input id="f-longitude" type="number" step="0.000001" placeholder="128.123456">
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-device-api-base">장비 API 주소</label>
+              <input id="f-device-api-base" type="url" placeholder="http://192.168.0.31:9000/api/v1" required>
+              <div class="hint-text">각 Raspberry Pi 백엔드 주소입니다.</div>
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-camera-url">카메라 스트림 URL</label>
+              <input id="f-camera-url" type="url" placeholder="http://192.168.0.31:8000/stream.mjpg">
+              <div class="hint-text">비워두면 detail 페이지에서 device_api_base 기준으로 유도할 수 있습니다.</div>
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-heater-mode">초기 운전 모드</label>
+              <select id="f-heater-mode">
+                <option value="auto" selected>자동</option>
+                <option value="manual">수동</option>
+              </select>
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-snow-threshold">눈 감지 임계값</label>
+              <input id="f-snow-threshold" type="number" min="0" max="1" step="0.01" value="0.80">
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-as-expire-at">AS 만료일</label>
+              <input id="f-as-expire-at" type="date">
+            </div>
+
+            <div class="form-group-inline">
+              <label for="f-status">초기 상태</label>
+              <select id="f-status">
+                <option value="offline" selected>오프라인</option>
+                <option value="online">온라인</option>
+                <option value="warning">경고</option>
+                <option value="error">오류</option>
+              </select>
+            </div>
+
+            <div class="form-group-inline full">
+              <label for="f-note">메모</label>
+              <textarea id="f-note" placeholder="설치 메모, 담당자 참고사항 등을 입력하세요."></textarea>
+            </div>
+
+            <div class="form-group-inline full">
+              <label class="checkbox-row">
+                <input id="f-allow-customer-control" type="checkbox" checked>
+                고객 관리자에게 원격 제어 권한 허용
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddModal()">취소</button>
+        <button class="btn btn-primary" id="btn-submit-add-controller">등록</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/app.js"></script>
   <script>
     let session = null;
     let allControllers = [];
     let allCustomers = [];
     let filtered = [];
+
+    function getRegistryApiBase() {
+      return (
+        window.HEATLINE_API_BASE_URL ||
+        localStorage.getItem("HEATLINE_API_BASE_URL") ||
+        "http://localhost:8000/api/v1"
+      ).replace(/\/+$/, "");
+    }
+
+    function getAuthHeaders(extra = {}) {
+      const token =
+        sessionStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        localStorage.getItem("auth_token");
+
+      return {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...extra
+      };
+    }
+
+    async function apiCreateController(payload) {
+      const res = await fetch(`${getRegistryApiBase()}/controllers`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.success === false) {
+        throw new Error(
+          data?.error?.message ||
+          data?.message ||
+          "장비 등록 중 오류가 발생했습니다."
+        );
+      }
+
+      return data;
+    }
 
     async function init() {
       session = Auth.requireAuth();
@@ -203,8 +401,29 @@
       }
 
       await loadData();
+      refreshHeaderAndStats();
 
+      startClock();
+
+      const params = new URLSearchParams(window.location.search);
+      const customerParam = params.get('customer');
+      if (customerParam && session.role === 'admin') {
+        setTimeout(() => {
+          const sel = document.getElementById('filter-customer');
+          if (sel) {
+            sel.value = customerParam;
+            filterTable();
+          }
+        }, 100);
+      }
+
+      bindModalEvents();
+      renderTable();
+    }
+
+    function refreshHeaderAndStats() {
       const stats = Utils.calcStats(allControllers);
+
       document.getElementById('header-placeholder').innerHTML = renderHeader(
         session.role === 'admin' ? '장비 목록' : '내 장비 목록',
         `총 ${allControllers.length}대`,
@@ -216,20 +435,6 @@
       );
 
       document.getElementById('stats-container').innerHTML = renderStatsCards(stats, session);
-
-      startClock();
-
-      // URL 쿼리파라미터에서 고객사 필터 읽기
-      const params = new URLSearchParams(window.location.search);
-      const customerParam = params.get('customer');
-      if (customerParam && session.role === 'admin') {
-        setTimeout(() => {
-          const sel = document.getElementById('filter-customer');
-          if (sel) { sel.value = customerParam; filterTable(); }
-        }, 100);
-      }
-
-      renderTable();
     }
 
     async function loadData() {
@@ -238,16 +443,29 @@
         API.getCustomers()
       ]);
 
-      // 고객사 필터 옵션 채우기
-      if (session.role === 'admin') {
-        const sel = document.getElementById('filter-customer');
-        sel.innerHTML = '<option value="">전체 고객사</option>';
-        allCustomers.forEach(c => {
-          sel.innerHTML += `<option value="${c.id}">${c.company_name}</option>`;
-        });
-      }
-
+      populateCustomerFilter();
+      populateCustomerSelectForModal();
       filterTable();
+    }
+
+    function populateCustomerFilter() {
+      if (session.role !== 'admin') return;
+
+      const sel = document.getElementById('filter-customer');
+      sel.innerHTML = '<option value="">전체 고객사</option>';
+
+      allCustomers.forEach(c => {
+        sel.innerHTML += `<option value="${c.id}">${c.company_name}</option>`;
+      });
+    }
+
+    function populateCustomerSelectForModal() {
+      const sel = document.getElementById('f-customer-id');
+      if (!sel) return;
+
+      sel.innerHTML = allCustomers.map(c => `
+        <option value="${c.id}">${c.company_name}</option>
+      `).join('');
     }
 
     function filterTable() {
@@ -256,13 +474,14 @@
       const heater = document.getElementById('filter-heater').value;
       const asFilter = document.getElementById('filter-as').value;
       const customer = session.role === 'admin'
-        ? document.getElementById('filter-customer').value : null;
+        ? document.getElementById('filter-customer').value
+        : null;
 
       filtered = allControllers.filter(ctrl => {
         if (status && ctrl.status !== status) return false;
         if (heater === 'on' && !ctrl.heater_on) return false;
         if (heater === 'off' && ctrl.heater_on) return false;
-        if (customer && ctrl.customer_id !== customer) return false;
+        if (customer && String(ctrl.customer_id) !== String(customer)) return false;
 
         if (asFilter) {
           const days = Utils.calcAsRemaining(ctrl.as_expire_at);
@@ -279,6 +498,7 @@
             ctrl.install_location,
             ctrl.serial_no
           ].join(' ').toLowerCase();
+
           if (!haystack.includes(search)) return false;
         }
 
@@ -312,12 +532,131 @@
       }
 
       emptyState.classList.add('hidden');
-
       tbody.innerHTML = filtered.map(ctrl => renderControllerRow(ctrl, allCustomers, isAdmin)).join('');
     }
 
+    function bindModalEvents() {
+      document.getElementById('btn-submit-add-controller')
+        .addEventListener('click', submitAddController);
+
+      document.getElementById('add-controller-form')
+        .addEventListener('submit', (e) => {
+          e.preventDefault();
+          submitAddController();
+        });
+
+      document.getElementById('add-controller-modal')
+        .addEventListener('click', (e) => {
+          if (e.target.id === 'add-controller-modal') {
+            closeAddModal();
+          }
+        });
+    }
+
     function openAddModal() {
-      Utils.toast('준비 중', '장비 등록 기능은 준비 중입니다.', 'info');
+      if (session.role !== 'admin') {
+        Utils.toast('권한 없음', '관리자만 장비를 등록할 수 있습니다.', 'danger');
+        return;
+      }
+
+      resetAddForm();
+      populateCustomerSelectForModal();
+      document.getElementById('add-controller-modal').classList.add('show');
+    }
+
+    function closeAddModal() {
+      document.getElementById('add-controller-modal').classList.remove('show');
+    }
+
+    function resetAddForm() {
+      document.getElementById('add-controller-form').reset();
+      document.getElementById('f-heater-mode').value = 'auto';
+      document.getElementById('f-snow-threshold').value = '0.80';
+      document.getElementById('f-status').value = 'offline';
+      document.getElementById('f-allow-customer-control').checked = true;
+    }
+
+    function formValue(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function toNullableNumber(value) {
+      if (value === '' || value === null || value === undefined) return null;
+      const n = Number(value);
+      return Number.isNaN(n) ? null : n;
+    }
+
+    function buildCreatePayload() {
+      const controllerName = formValue('f-controller-name');
+      const serialNo = formValue('f-serial-no');
+      const installLocation = formValue('f-install-location');
+      const installAddress = formValue('f-install-address');
+      const customerId = formValue('f-customer-id');
+      const deviceApiBase = formValue('f-device-api-base');
+      const cameraUrl = formValue('f-camera-url');
+      const heaterMode = formValue('f-heater-mode');
+      const status = formValue('f-status');
+      const asExpireAt = formValue('f-as-expire-at');
+      const note = formValue('f-note');
+      const snowThreshold = Number(formValue('f-snow-threshold'));
+
+      if (!customerId) throw new Error('고객사를 선택하세요.');
+      if (!controllerName) throw new Error('장비명을 입력하세요.');
+      if (!serialNo) throw new Error('시리얼 번호를 입력하세요.');
+      if (!installLocation) throw new Error('설치 위치를 입력하세요.');
+      if (!installAddress) throw new Error('설치 주소를 입력하세요.');
+      if (!deviceApiBase) throw new Error('장비 API 주소를 입력하세요.');
+      if (Number.isNaN(snowThreshold) || snowThreshold < 0 || snowThreshold > 1) {
+        throw new Error('눈 감지 임계값은 0~1 범위여야 합니다.');
+      }
+
+      return {
+        customer_id: customerId,
+        controller_name: controllerName,
+        serial_no: serialNo,
+        install_location: installLocation,
+        install_address: installAddress,
+        latitude: toNullableNumber(formValue('f-latitude')),
+        longitude: toNullableNumber(formValue('f-longitude')),
+        device_api_base: deviceApiBase,
+        camera_url: cameraUrl || null,
+        heater_mode: heaterMode,
+        snow_threshold: snowThreshold,
+        as_expire_at: asExpireAt || null,
+        status,
+        note,
+        allow_customer_control: document.getElementById('f-allow-customer-control').checked,
+        snow_detected: false,
+        heater_on: false,
+        temperature: null,
+        humidity: null,
+        last_seen_at: null
+      };
+    }
+
+    async function submitAddController() {
+      try {
+        const btn = document.getElementById('btn-submit-add-controller');
+        btn.disabled = true;
+        btn.textContent = '등록 중...';
+
+        const payload = buildCreatePayload();
+        await apiCreateController(payload);
+
+        Utils.toast('등록 완료', '장비가 정상적으로 등록되었습니다.', 'success');
+        closeAddModal();
+
+        await loadData();
+        refreshHeaderAndStats();
+        renderTable();
+      } catch (err) {
+        console.error(err);
+        Utils.toast('등록 실패', err.message || '장비 등록 중 오류가 발생했습니다.', 'danger');
+      } finally {
+        const btn = document.getElementById('btn-submit-add-controller');
+        btn.disabled = false;
+        btn.textContent = '등록';
+      }
     }
 
     init();
