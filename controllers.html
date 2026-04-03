@@ -2,94 +2,22 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0d1b2a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>로그인 - 도로 열선 통합관제 시스템</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+
   <title>장비 목록 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    .controllers-filter-bar {
-      background:var(--bg-card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:16px 20px;
-      margin-bottom:20px;
-      display:grid;
-      grid-template-columns:minmax(220px, 2fr) repeat(3, minmax(140px, 1fr)) auto;
-      gap:12px;
-      align-items:center;
-    }
-    .controllers-filter-bar .search-box,
-    .controllers-filter-bar select,
-    .controllers-filter-bar #admin-filter-wrap,
-    .controllers-filter-bar #admin-filter-wrap select {
-      width:100%;
-      min-width:0 !important;
-    }
-    .controllers-filter-bar select {
-      background:var(--bg-dark);
-      border:1px solid var(--border);
-      border-radius:8px;
-      padding:9px 14px;
-      color:var(--text-primary);
-      font-size:14px;
-      outline:none;
-      cursor:pointer;
-    }
-    .controllers-filter-actions {
-      margin-left:auto;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      justify-content:flex-end;
-      flex-wrap:wrap;
-      min-width:0;
-    }
-    .controllers-filter-actions #result-count {
-      display:flex;
-      align-items:center;
-      font-size:13px;
-      color:#94a3b8;
-      padding:0 4px;
-      white-space:nowrap;
-    }
-    @media (max-width: 1200px) {
-      .controllers-filter-bar {
-        grid-template-columns:repeat(2, minmax(0, 1fr));
-      }
-      .controllers-filter-actions {
-        grid-column:1 / -1;
-        margin-left:0;
-      }
-    }
-    @media (max-width: 768px) {
-      .controllers-filter-bar {
-        grid-template-columns:1fr;
-        padding:14px;
-      }
-      .controllers-filter-actions {
-        justify-content:space-between;
-        width:100%;
-      }
-      .controllers-filter-actions .btn { flex:1 1 auto; }
-      #controllers-table { min-width:860px; }
-    }
-    @media (max-width: 480px) {
-      .controllers-filter-actions {
-        flex-direction:column;
-        align-items:stretch;
-      }
-      .controllers-filter-actions .btn,
-      .controllers-filter-actions #result-count {
-        width:100%;
-        justify-content:center;
-      }
-    }
-  </style>
 </head>
 <body>
   <div id="sidebar-placeholder"></div>
@@ -103,7 +31,17 @@
         <div id="stats-container"></div>
 
         <!-- 필터 바 -->
-        <div class="controllers-filter-bar">
+        <div style="
+          background:var(--bg-card);
+          border:1px solid var(--border);
+          border-radius:var(--radius);
+          padding:16px 20px;
+          margin-bottom:20px;
+          display:flex;
+          gap:12px;
+          flex-wrap:wrap;
+          align-items:center;
+        ">
           <div class="search-box" style="min-width:240px">
             <span>🔍</span>
             <input type="text" id="search-input" placeholder="제어기명, 주소, 시리얼 검색..." oninput="filterTable()">
@@ -123,6 +61,7 @@
             <option value="offline">⚫ 오프라인</option>
             <option value="warning">🟡 경고</option>
             <option value="error">🔴 오류</option>
+            <option value="issue">🟠 주의/오류</option>
           </select>
 
           <select id="filter-heater" onchange="filterTable()" style="
@@ -137,6 +76,20 @@
             <option value="">히터 전체</option>
             <option value="on">🔥 히터 ON</option>
             <option value="off">❄️ 히터 OFF</option>
+          </select>
+
+          <select id="filter-snow" onchange="filterTable()" style="
+            background:var(--bg-dark);
+            border:1px solid var(--border);
+            border-radius:8px;
+            padding:9px 14px;
+            color:var(--text-primary);
+            font-size:14px;
+            outline:none;cursor:pointer;
+          ">
+            <option value="">눈 감지 전체</option>
+            <option value="detected">❄️ 눈 감지</option>
+            <option value="clear">✅ 감지 없음</option>
           </select>
 
           <select id="filter-as" onchange="filterTable()" style="
@@ -168,7 +121,7 @@
             </select>
           </div>
 
-          <div class="controllers-filter-actions">
+          <div style="margin-left:auto;display:flex;gap:8px">
             <button class="btn btn-secondary btn-sm" onclick="resetFilters()">필터 초기화</button>
             <span id="result-count" style="
               display:flex;align-items:center;
@@ -281,15 +234,32 @@
 
       startClock();
 
-      // URL 쿼리파라미터에서 고객사 필터 읽기
+      // URL 쿼리파라미터 필터 적용
       const params = new URLSearchParams(window.location.search);
       const customerParam = params.get('customer');
-      if (customerParam && session.role === 'admin') {
-        setTimeout(() => {
+      const statusParam = params.get('status');
+      const statusGroupParam = params.get('status_group');
+      const heaterParam = params.get('heater');
+      const snowParam = params.get('snow');
+      const asParam = params.get('as');
+      const searchParam = params.get('search');
+
+      setTimeout(() => {
+        if (customerParam && session.role === 'admin') {
           const sel = document.getElementById('filter-customer');
-          if (sel) { sel.value = customerParam; filterTable(); }
-        }, 100);
-      }
+          if (sel) sel.value = customerParam;
+        }
+        if (statusGroupParam === 'issue') {
+          document.getElementById('filter-status').value = 'issue';
+        } else if (statusParam) {
+          document.getElementById('filter-status').value = statusParam;
+        }
+        if (heaterParam) document.getElementById('filter-heater').value = heaterParam;
+        if (snowParam) document.getElementById('filter-snow').value = snowParam;
+        if (asParam) document.getElementById('filter-as').value = asParam;
+        if (searchParam) document.getElementById('search-input').value = searchParam;
+        filterTable();
+      }, 100);
 
       renderTable();
     }
@@ -316,14 +286,18 @@
       const search = document.getElementById('search-input').value.toLowerCase();
       const status = document.getElementById('filter-status').value;
       const heater = document.getElementById('filter-heater').value;
+      const snow = document.getElementById('filter-snow').value;
       const asFilter = document.getElementById('filter-as').value;
       const customer = session.role === 'admin'
         ? document.getElementById('filter-customer').value : null;
 
       filtered = allControllers.filter(ctrl => {
-        if (status && ctrl.status !== status) return false;
+        if (status === 'issue' && ctrl.status !== 'warning' && ctrl.status !== 'error') return false;
+        if (status && status !== 'issue' && ctrl.status !== status) return false;
         if (heater === 'on' && !ctrl.heater_on) return false;
         if (heater === 'off' && ctrl.heater_on) return false;
+        if (snow === 'detected' && !ctrl.snow_detected) return false;
+        if (snow === 'clear' && ctrl.snow_detected) return false;
         if (customer && ctrl.customer_id !== customer) return false;
 
         if (asFilter) {
@@ -354,6 +328,7 @@
       document.getElementById('search-input').value = '';
       document.getElementById('filter-status').value = '';
       document.getElementById('filter-heater').value = '';
+      document.getElementById('filter-snow').value = '';
       document.getElementById('filter-as').value = '';
       if (session.role === 'admin') document.getElementById('filter-customer').value = '';
       filterTable();
