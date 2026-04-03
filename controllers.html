@@ -2,22 +2,94 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0d1b2a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>로그인 - 도로 열선 통합관제 시스템</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-
   <title>장비 목록 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .controllers-filter-bar {
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:16px 20px;
+      margin-bottom:20px;
+      display:grid;
+      grid-template-columns:minmax(220px, 2fr) repeat(3, minmax(140px, 1fr)) auto;
+      gap:12px;
+      align-items:center;
+    }
+    .controllers-filter-bar .search-box,
+    .controllers-filter-bar select,
+    .controllers-filter-bar #admin-filter-wrap,
+    .controllers-filter-bar #admin-filter-wrap select {
+      width:100%;
+      min-width:0 !important;
+    }
+    .controllers-filter-bar select {
+      background:var(--bg-dark);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:9px 14px;
+      color:var(--text-primary);
+      font-size:14px;
+      outline:none;
+      cursor:pointer;
+    }
+    .controllers-filter-actions {
+      margin-left:auto;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+    .controllers-filter-actions #result-count {
+      display:flex;
+      align-items:center;
+      font-size:13px;
+      color:#94a3b8;
+      padding:0 4px;
+      white-space:nowrap;
+    }
+    @media (max-width: 1200px) {
+      .controllers-filter-bar {
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+      }
+      .controllers-filter-actions {
+        grid-column:1 / -1;
+        margin-left:0;
+      }
+    }
+    @media (max-width: 768px) {
+      .controllers-filter-bar {
+        grid-template-columns:1fr;
+        padding:14px;
+      }
+      .controllers-filter-actions {
+        justify-content:space-between;
+        width:100%;
+      }
+      .controllers-filter-actions .btn { flex:1 1 auto; }
+      #controllers-table { min-width:860px; }
+    }
+    @media (max-width: 480px) {
+      .controllers-filter-actions {
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .controllers-filter-actions .btn,
+      .controllers-filter-actions #result-count {
+        width:100%;
+        justify-content:center;
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="sidebar-placeholder"></div>
@@ -31,17 +103,7 @@
         <div id="stats-container"></div>
 
         <!-- 필터 바 -->
-        <div style="
-          background:var(--bg-card);
-          border:1px solid var(--border);
-          border-radius:var(--radius);
-          padding:16px 20px;
-          margin-bottom:20px;
-          display:flex;
-          gap:12px;
-          flex-wrap:wrap;
-          align-items:center;
-        ">
+        <div class="controllers-filter-bar">
           <div class="search-box" style="min-width:240px">
             <span>🔍</span>
             <input type="text" id="search-input" placeholder="제어기명, 주소, 시리얼 검색..." oninput="filterTable()">
@@ -106,7 +168,7 @@
             </select>
           </div>
 
-          <div style="margin-left:auto;display:flex;gap:8px">
+          <div class="controllers-filter-actions">
             <button class="btn btn-secondary btn-sm" onclick="resetFilters()">필터 초기화</button>
             <span id="result-count" style="
               display:flex;align-items:center;

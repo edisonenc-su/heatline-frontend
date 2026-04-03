@@ -2,23 +2,65 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0d1b2a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>로그인 - 도로 열선 통합관제 시스템</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-
   <title>대시보드 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    #alert-banner { flex-wrap: wrap; }
+    #alert-banner > div { min-width: 0; }
+    .dashboard-map-tools {
+      display:flex; gap:12px; align-items:center; flex-wrap:wrap; min-width:0;
+    }
+    .dashboard-map-legend {
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:13px;
+    }
+    #quick-sections {
+      display:grid !important;
+      grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+      gap:20px !important;
+      margin-bottom:24px !important;
+      align-items:start;
+    }
+    #quick-sections > * { min-width: 0; }
+    #warning-list, #event-list { min-width: 0; }
+    @media (max-width: 1024px) {
+      #quick-sections { grid-template-columns:1fr !important; }
+    }
+    @media (max-width: 768px) {
+      #alert-banner {
+        padding:12px 14px !important;
+        align-items:flex-start !important;
+      }
+      .map-header {
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .dashboard-map-tools {
+        width:100%;
+        justify-content:space-between;
+      }
+      .dashboard-map-legend {
+        gap:6px;
+        font-size:12px;
+      }
+      #quick-sections { gap:16px !important; }
+      #event-list { padding:0 12px !important; }
+    }
+    @media (max-width: 480px) {
+      .dashboard-map-tools {
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .dashboard-map-tools .btn { width:100%; }
+    }
+  </style>
 </head>
 <body>
   <div id="sidebar-placeholder"></div>
@@ -53,8 +95,8 @@
         <div class="map-section">
           <div class="map-header">
             <h2>🗺️ 전국 제어기 설치 현황</h2>
-            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-              <div style="display:flex;gap:8px;align-items:center;font-size:13px">
+            <div class="dashboard-map-tools">
+              <div class="dashboard-map-legend">
                 <div style="width:12px;height:12px;border-radius:50%;background:#10b981"></div> 온라인
                 <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;margin-left:6px"></div> 경고
                 <div style="width:12px;height:12px;border-radius:50%;background:#64748b;margin-left:6px"></div> 오프라인
