@@ -8,98 +8,122 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>로그인 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-  <div class="login-page">
+<body class="webapp-enabled login-webapp login-webapp-v3">
+  <main class="login-page login-page-v3">
     <div class="login-bg-animation" id="bgAnimation"></div>
 
-    <div class="login-container">
-      <div class="login-logo">
-        <span class="logo-icon">🛣️</span>
-        <h1>도로 열선 통합관제 시스템</h1>
-        <p class="subtitle">Road Heatline Integrated Control System</p>
-      </div>
-
-      <div class="login-divider"></div>
-
-      <div id="login-alert" class="alert alert-danger hidden"></div>
-
-      <form id="login-form" onsubmit="handleLogin(event)">
-        <div class="form-group">
-          <label class="form-label" for="username">아이디</label>
-          <input
-            type="text"
-            id="username"
-            class="form-control"
-            placeholder="아이디를 입력하세요"
-            autocomplete="username"
-            required
-          >
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="password">비밀번호</label>
-          <input
-            type="password"
-            id="password"
-            class="form-control"
-            placeholder="비밀번호를 입력하세요"
-            autocomplete="current-password"
-            required
-          >
-        </div>
-
-        <button type="submit" class="btn btn-primary" id="login-btn">
-          🔐 로그인
-        </button>
-      </form>
-
-      <div class="login-demo">
-        <h4>🧪 데모 계정 (클릭하여 자동 입력)</h4>
-        <div class="demo-account" onclick="fillDemo('admin','admin1234')">
+    <section class="login-shell-v3" aria-label="로그인 화면">
+      <div class="login-hero-v3">
+        <div class="login-hero-v3__badge">모바일 웹앱</div>
+        <div class="login-hero-v3__brand">
+          <span class="login-hero-v3__icon">🛣️</span>
           <div>
-            <span class="demo-id" style="font-weight:600">admin</span>
-            <span style="color:#64748b;margin-left:8px;font-size:12px">/ admin1234</span>
+            <h1>Heatline</h1>
+            <p>도로 열선 통합관제 시스템</p>
           </div>
-          <span class="demo-role admin">관리자</span>
-        </div>
-        <div class="demo-account" onclick="fillDemo('kangwon','kw1234')">
-          <div>
-            <span class="demo-id" style="font-weight:600">kangwon</span>
-            <span style="color:#64748b;margin-left:8px;font-size:12px">/ kw1234</span>
-          </div>
-          <span class="demo-role customer">강원지사</span>
-        </div>
-        <div class="demo-account" onclick="fillDemo('seoul','se1234')">
-          <div>
-            <span class="demo-id" style="font-weight:600">seoul</span>
-            <span style="color:#64748b;margin-left:8px;font-size:12px">/ se1234</span>
-          </div>
-          <span class="demo-role customer">서울시 도로교통과</span>
-        </div>
-        <div class="demo-account" onclick="fillDemo('busan','bs1234')">
-          <div>
-            <span class="demo-id" style="font-weight:600">busan</span>
-            <span style="color:#64748b;margin-left:8px;font-size:12px">/ bs1234</span>
-          </div>
-          <span class="demo-role customer">부산광역시 도로과</span>
         </div>
       </div>
 
-      <div class="login-version">
-        v1.0.0 &nbsp;|&nbsp; © 2026 도로 열선 통합관제 시스템
-        <br>
-        <a href="#" onclick="resetDB()" style="font-size:11px;color:#475569;text-decoration:underline;">
-          데모 데이터 초기화
-        </a>
-      </div>
-    </div>
-  </div>
+      <div class="login-card-v3">
+        <div class="login-logo login-logo-v3">
+          <span class="logo-icon">🛣️</span>
+          <h2>로그인</h2>
+          <p class="subtitle">현장 관제 화면으로 바로 이동합니다</p>
+        </div>
 
-  <!-- 토스트 컨테이너 -->
+        <div id="login-alert" class="alert alert-danger hidden"></div>
+
+        <form id="login-form" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label" for="username">아이디</label>
+            <input
+              type="text"
+              id="username"
+              class="form-control"
+              placeholder="아이디를 입력하세요"
+              autocomplete="username"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">비밀번호</label>
+            <input
+              type="password"
+              id="password"
+              class="form-control"
+              placeholder="비밀번호를 입력하세요"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="login-btn">
+            🔐 로그인
+          </button>
+        </form>
+
+        <div class="login-quick-note-v3">
+          <div class="login-quick-note-v3__title">빠른 안내</div>
+          <div class="login-quick-note-v3__text">로그인 후에는 하단 메뉴 기반의 모바일 관제 화면으로 이동합니다.</div>
+        </div>
+
+        <div class="login-demo login-demo-v3">
+          <h4>🧪 데모 계정</h4>
+          <button type="button" class="demo-account demo-account-v3" onclick="fillDemo('admin','admin1234')">
+            <div>
+              <span class="demo-id">admin</span>
+              <span class="demo-pw">/ admin1234</span>
+            </div>
+            <span class="demo-role admin">관리자</span>
+          </button>
+          <button type="button" class="demo-account demo-account-v3" onclick="fillDemo('kangwon','kw1234')">
+            <div>
+              <span class="demo-id">kangwon</span>
+              <span class="demo-pw">/ kw1234</span>
+            </div>
+            <span class="demo-role customer">강원지사</span>
+          </button>
+          <button type="button" class="demo-account demo-account-v3" onclick="fillDemo('seoul','se1234')">
+            <div>
+              <span class="demo-id">seoul</span>
+              <span class="demo-pw">/ se1234</span>
+            </div>
+            <span class="demo-role customer">서울시 도로교통과</span>
+          </button>
+          <button type="button" class="demo-account demo-account-v3" onclick="fillDemo('busan','bs1234')">
+            <div>
+              <span class="demo-id">busan</span>
+              <span class="demo-pw">/ bs1234</span>
+            </div>
+            <span class="demo-role customer">부산광역시 도로과</span>
+          </button>
+        </div>
+
+        <div class="login-meta-v3">
+          <div class="login-meta-v3__row">
+            <span>접속 환경</span>
+            <strong>모바일 최적화</strong>
+          </div>
+          <div class="login-meta-v3__row">
+            <span>화면 구조</span>
+            <strong>웹앱 스타일</strong>
+          </div>
+        </div>
+
+        <div class="login-version login-version-v3">
+          v1.0.0 &nbsp;|&nbsp; © 2026 도로 열선 통합관제 시스템
+          <br>
+          <a href="#" onclick="resetDB(); return false;">데모 데이터 초기화</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
   <div id="toast-container" class="toast-container"></div>
+
   <script>
   window.HEATLINE_API_BASE_URL = "https://port-0-heatline-backend-mngz3utra2911079.sel3.cloudtype.app/api/v1";
   try {
@@ -113,18 +137,24 @@
   </script>
   <script src="js/app.js"></script>
   <script>
-    // LocalDB 초기화 (최초 방문 시 시드 데이터 로드)
     LocalDB.init();
 
-    // 이미 로그인된 경우 대시보드로
     if (Auth.isLoggedIn()) {
       window.location.href = 'dashboard.html';
     }
 
-    // 배경 애니메이션
+    function updateViewportHeight() {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    }
+    updateViewportHeight();
+    window.addEventListener('resize', updateViewportHeight);
+
     function createRoadLines() {
       const container = document.getElementById('bgAnimation');
-      for (let i = 0; i < 8; i++) {
+      if (!container) return;
+      container.innerHTML = '';
+      const count = window.innerWidth <= 768 ? 4 : 7;
+      for (let i = 0; i < count; i++) {
         const line = document.createElement('div');
         line.className = 'road-line';
         line.style.top = Math.random() * 100 + '%';
@@ -135,11 +165,12 @@
       }
     }
     createRoadLines();
+    window.addEventListener('resize', createRoadLines);
 
     function fillDemo(id, pw) {
       document.getElementById('username').value = id;
       document.getElementById('password').value = pw;
-      document.getElementById('username').focus();
+      document.getElementById('password').focus();
     }
 
     async function handleLogin(e) {
@@ -155,7 +186,6 @@
         return;
       }
 
-      // 로딩 상태
       btn.disabled = true;
       btn.innerHTML = '<div class="loading-spinner"></div> 로그인 중...';
       alert.classList.add('hidden');
@@ -167,7 +197,7 @@
         Utils.toast('로그인 성공', `${result.session.fullName || username}님, 환영합니다.`, 'success');
         setTimeout(() => {
           window.location.href = 'dashboard.html';
-        }, 800);
+        }, 700);
       } else {
         showAlert(result.message);
         btn.disabled = false;
@@ -181,16 +211,15 @@
       el.classList.remove('hidden');
     }
 
-    // 엔터키 처리
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.target.closest('form')) {
         document.getElementById('login-form').requestSubmit();
       }
     });
 
-    // 데모 데이터 초기화
     function resetDB() {
-      if (confirm('샘플 데이터를 초기화하시겠습니까?\n(제어 이력 등 변경 사항이 삭제됩니다)')) {
+      if (confirm('샘플 데이터를 초기화하시겠습니까?
+(제어 이력 등 변경 사항이 삭제됩니다)')) {
         LocalDB.reset();
         Utils.toast('초기화 완료', '샘플 데이터가 초기화되었습니다.', 'success');
       }
