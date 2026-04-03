@@ -60,9 +60,111 @@
       }
       .dashboard-map-tools .btn { width:100%; }
     }
+
+    #header-placeholder header {
+      min-width: 0;
+    }
+    #header-placeholder header > div,
+    #header-placeholder header > div > div,
+    #header-placeholder header span {
+      min-width: 0;
+    }
+    .dashboard-mobile-menu {
+      display:none;
+      position:fixed;
+      left:16px;
+      bottom:16px;
+      z-index:260;
+      width:52px;
+      height:52px;
+      border-radius:50%;
+      border:1px solid rgba(0,174,255,0.25);
+      background:linear-gradient(135deg, rgba(36,86,164,0.96), rgba(0,128,204,0.96));
+      color:#fff;
+      box-shadow:0 14px 30px rgba(0,0,0,0.35);
+      font-size:22px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .mobile-sidebar-overlay {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(2,6,23,0.58);
+      z-index:240;
+    }
+    @media (max-width: 768px) {
+      .dashboard-mobile-menu {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+      #sidebar-placeholder aside {
+        width:min(82vw, 280px) !important;
+        max-width:280px !important;
+        transform:translateX(-110%);
+        transition:transform .24s ease;
+        z-index:250 !important;
+        box-shadow:0 18px 40px rgba(0,0,0,0.45);
+      }
+      body.sidebar-open #sidebar-placeholder aside {
+        transform:translateX(0);
+      }
+      body.sidebar-open .mobile-sidebar-overlay {
+        display:block;
+      }
+      #header-placeholder header {
+        padding:16px 16px 12px !important;
+      }
+      #header-placeholder header > div:first-child {
+        width:100%;
+      }
+      #header-placeholder header > div:first-child > div:first-child {
+        font-size:22px !important;
+        line-height:1.3;
+        word-break:keep-all;
+      }
+      #header-placeholder header > div:last-child {
+        width:100%;
+      }
+      #header-placeholder header > div:last-child > span {
+        max-width:100%;
+      }
+      #alert-banner {
+        margin-top:4px;
+      }
+      .table-header {
+        padding:14px 16px;
+      }
+      .table-header h2 {
+        font-size:15px;
+      }
+      .page-body {
+        padding:16px 16px 88px;
+      }
+    }
+    @media (max-width: 480px) {
+      #header-placeholder header > div:first-child > div:first-child {
+        font-size:19px !important;
+      }
+      .dashboard-map-legend {
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        row-gap:6px;
+      }
+      .dashboard-map-legend > div {
+        margin-left:0 !important;
+      }
+      #quick-sections {
+        gap:14px !important;
+      }
+    }
+
   </style>
 </head>
 <body>
+  <div class="mobile-sidebar-overlay" id="mobileSidebarOverlay"></div>
+  <button class="dashboard-mobile-menu" id="dashboardMobileMenu" type="button" aria-label="메뉴 열기">☰</button>
   <div id="sidebar-placeholder"></div>
 
   <div class="app-layout">
@@ -448,6 +550,40 @@
         `;
       }).join('');
     }
+
+    function bindMobileSidebar() {
+      const menuBtn = document.getElementById('dashboardMobileMenu');
+      const overlay = document.getElementById('mobileSidebarOverlay');
+      const getAside = () => document.querySelector('#sidebar-placeholder aside');
+      const closeSidebar = () => document.body.classList.remove('sidebar-open');
+      const toggleSidebar = () => document.body.classList.toggle('sidebar-open');
+
+      if (menuBtn && !menuBtn.dataset.bound) {
+        menuBtn.dataset.bound = '1';
+        menuBtn.addEventListener('click', toggleSidebar);
+      }
+
+      if (overlay && !overlay.dataset.bound) {
+        overlay.dataset.bound = '1';
+        overlay.addEventListener('click', closeSidebar);
+      }
+
+      const aside = getAside();
+      if (aside && !aside.dataset.mobileBound) {
+        aside.dataset.mobileBound = '1';
+        aside.addEventListener('click', (e) => {
+          if (e.target.closest('a') || e.target.closest('button')) {
+            closeSidebar();
+          }
+        });
+      }
+
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) closeSidebar();
+      }, { passive: true });
+    }
+
+    bindMobileSidebar();
 
     init();
   </script>
