@@ -2,169 +2,25 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0d1b2a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>로그인 - 도로 열선 통합관제 시스템</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+
   <title>대시보드 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    #alert-banner { flex-wrap: wrap; }
-    #alert-banner > div { min-width: 0; }
-    .dashboard-map-tools {
-      display:flex; gap:12px; align-items:center; flex-wrap:wrap; min-width:0;
-    }
-    .dashboard-map-legend {
-      display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:13px;
-    }
-    #quick-sections {
-      display:grid !important;
-      grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-      gap:20px !important;
-      margin-bottom:24px !important;
-      align-items:start;
-    }
-    #quick-sections > * { min-width: 0; }
-    #warning-list, #event-list { min-width: 0; }
-    @media (max-width: 1024px) {
-      #quick-sections { grid-template-columns:1fr !important; }
-    }
-    @media (max-width: 768px) {
-      #alert-banner {
-        padding:12px 14px !important;
-        align-items:flex-start !important;
-      }
-      .map-header {
-        flex-direction:column;
-        align-items:flex-start;
-      }
-      .dashboard-map-tools {
-        width:100%;
-        justify-content:space-between;
-      }
-      .dashboard-map-legend {
-        gap:6px;
-        font-size:12px;
-      }
-      #quick-sections { gap:16px !important; }
-      #event-list { padding:0 12px !important; }
-    }
-    @media (max-width: 480px) {
-      .dashboard-map-tools {
-        flex-direction:column;
-        align-items:stretch;
-      }
-      .dashboard-map-tools .btn { width:100%; }
-    }
-
-    #header-placeholder header {
-      min-width: 0;
-    }
-    #header-placeholder header > div,
-    #header-placeholder header > div > div,
-    #header-placeholder header span {
-      min-width: 0;
-    }
-    .dashboard-mobile-menu {
-      display:none;
-      position:fixed;
-      left:16px;
-      bottom:16px;
-      z-index:260;
-      width:52px;
-      height:52px;
-      border-radius:50%;
-      border:1px solid rgba(0,174,255,0.25);
-      background:linear-gradient(135deg, rgba(36,86,164,0.96), rgba(0,128,204,0.96));
-      color:#fff;
-      box-shadow:0 14px 30px rgba(0,0,0,0.35);
-      font-size:22px;
-      font-weight:700;
-      cursor:pointer;
-    }
-    .mobile-sidebar-overlay {
-      display:none;
-      position:fixed;
-      inset:0;
-      background:rgba(2,6,23,0.58);
-      z-index:240;
-    }
-    @media (max-width: 768px) {
-      .dashboard-mobile-menu {
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
-      #sidebar-placeholder aside {
-        width:min(82vw, 280px) !important;
-        max-width:280px !important;
-        transform:translateX(-110%);
-        transition:transform .24s ease;
-        z-index:250 !important;
-        box-shadow:0 18px 40px rgba(0,0,0,0.45);
-      }
-      body.sidebar-open #sidebar-placeholder aside {
-        transform:translateX(0);
-      }
-      body.sidebar-open .mobile-sidebar-overlay {
-        display:block;
-      }
-      #header-placeholder header {
-        padding:16px 16px 12px !important;
-      }
-      #header-placeholder header > div:first-child {
-        width:100%;
-      }
-      #header-placeholder header > div:first-child > div:first-child {
-        font-size:22px !important;
-        line-height:1.3;
-        word-break:keep-all;
-      }
-      #header-placeholder header > div:last-child {
-        width:100%;
-      }
-      #header-placeholder header > div:last-child > span {
-        max-width:100%;
-      }
-      #alert-banner {
-        margin-top:4px;
-      }
-      .table-header {
-        padding:14px 16px;
-      }
-      .table-header h2 {
-        font-size:15px;
-      }
-      .page-body {
-        padding:16px 16px 88px;
-      }
-    }
-    @media (max-width: 480px) {
-      #header-placeholder header > div:first-child > div:first-child {
-        font-size:19px !important;
-      }
-      .dashboard-map-legend {
-        display:grid;
-        grid-template-columns:repeat(2, minmax(0, 1fr));
-        row-gap:6px;
-      }
-      .dashboard-map-legend > div {
-        margin-left:0 !important;
-      }
-      #quick-sections {
-        gap:14px !important;
-      }
-    }
-
-  </style>
 </head>
 <body>
-  <div class="mobile-sidebar-overlay" id="mobileSidebarOverlay"></div>
-  <button class="dashboard-mobile-menu" id="dashboardMobileMenu" type="button" aria-label="메뉴 열기">☰</button>
   <div id="sidebar-placeholder"></div>
 
   <div class="app-layout">
@@ -197,8 +53,8 @@
         <div class="map-section">
           <div class="map-header">
             <h2>🗺️ 전국 제어기 설치 현황</h2>
-            <div class="dashboard-map-tools">
-              <div class="dashboard-map-legend">
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+              <div style="display:flex;gap:8px;align-items:center;font-size:13px">
                 <div style="width:12px;height:12px;border-radius:50%;background:#10b981"></div> 온라인
                 <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;margin-left:6px"></div> 경고
                 <div style="width:12px;height:12px;border-radius:50%;background:#64748b;margin-left:6px"></div> 오프라인
@@ -550,40 +406,6 @@
         `;
       }).join('');
     }
-
-    function bindMobileSidebar() {
-      const menuBtn = document.getElementById('dashboardMobileMenu');
-      const overlay = document.getElementById('mobileSidebarOverlay');
-      const getAside = () => document.querySelector('#sidebar-placeholder aside');
-      const closeSidebar = () => document.body.classList.remove('sidebar-open');
-      const toggleSidebar = () => document.body.classList.toggle('sidebar-open');
-
-      if (menuBtn && !menuBtn.dataset.bound) {
-        menuBtn.dataset.bound = '1';
-        menuBtn.addEventListener('click', toggleSidebar);
-      }
-
-      if (overlay && !overlay.dataset.bound) {
-        overlay.dataset.bound = '1';
-        overlay.addEventListener('click', closeSidebar);
-      }
-
-      const aside = getAside();
-      if (aside && !aside.dataset.mobileBound) {
-        aside.dataset.mobileBound = '1';
-        aside.addEventListener('click', (e) => {
-          if (e.target.closest('a') || e.target.closest('button')) {
-            closeSidebar();
-          }
-        });
-      }
-
-      window.addEventListener('resize', () => {
-        if (window.innerWidth > 768) closeSidebar();
-      }, { passive: true });
-    }
-
-    bindMobileSidebar();
 
     init();
   </script>
