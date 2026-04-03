@@ -2,21 +2,13 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#223652">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>로그인 - 도로 열선 통합관제 시스템</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-
   <title>장비 목록 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -31,17 +23,7 @@
         <div id="stats-container"></div>
 
         <!-- 필터 바 -->
-        <div style="
-          background:var(--bg-card);
-          border:1px solid var(--border);
-          border-radius:var(--radius);
-          padding:16px 20px;
-          margin-bottom:20px;
-          display:flex;
-          gap:12px;
-          flex-wrap:wrap;
-          align-items:center;
-        ">
+        <div class="filter-toolbar">
           <div class="search-box" style="min-width:240px">
             <span>🔍</span>
             <input type="text" id="search-input" placeholder="제어기명, 주소, 시리얼 검색..." oninput="filterTable()">
@@ -61,7 +43,6 @@
             <option value="offline">⚫ 오프라인</option>
             <option value="warning">🟡 경고</option>
             <option value="error">🔴 오류</option>
-            <option value="issue">🟠 주의/오류</option>
           </select>
 
           <select id="filter-heater" onchange="filterTable()" style="
@@ -76,20 +57,6 @@
             <option value="">히터 전체</option>
             <option value="on">🔥 히터 ON</option>
             <option value="off">❄️ 히터 OFF</option>
-          </select>
-
-          <select id="filter-snow" onchange="filterTable()" style="
-            background:var(--bg-dark);
-            border:1px solid var(--border);
-            border-radius:8px;
-            padding:9px 14px;
-            color:var(--text-primary);
-            font-size:14px;
-            outline:none;cursor:pointer;
-          ">
-            <option value="">눈 감지 전체</option>
-            <option value="detected">❄️ 눈 감지</option>
-            <option value="clear">✅ 감지 없음</option>
           </select>
 
           <select id="filter-as" onchange="filterTable()" style="
@@ -121,18 +88,18 @@
             </select>
           </div>
 
-          <div style="margin-left:auto;display:flex;gap:8px">
+          <div class="filter-toolbar__spacer">
             <button class="btn btn-secondary btn-sm" onclick="resetFilters()">필터 초기화</button>
             <span id="result-count" style="
               display:flex;align-items:center;
-              font-size:13px;color:#d7e4f3;
+              font-size:13px;color:#94a3b8;
               padding:0 4px;
             "></span>
           </div>
         </div>
 
         <!-- 테이블 -->
-        <div class="table-section">
+        <div class="table-section has-mobile-list">
           <div class="table-header">
             <h2>📋 <span id="list-title">장비 목록</span></h2>
             <div style="display:flex;gap:8px">
@@ -159,14 +126,15 @@
                 </tr>
               </thead>
               <tbody id="controllers-tbody">
-                <tr><td colspan="9" style="text-align:center;padding:40px;color:#a9bdd2">
+                <tr><td colspan="9" style="text-align:center;padding:40px;color:#64748b">
                   <div class="loading-spinner" style="margin:0 auto 10px"></div><br>로딩 중...
                 </td></tr>
               </tbody>
             </table>
           </div>
+          <div id="controllers-mobile-list" class="mobile-record-list"></div>
 
-          <div id="empty-state" class="hidden" style="padding:60px 20px;text-align:center;color:#a9bdd2">
+          <div id="empty-state" class="hidden" style="padding:60px 20px;text-align:center;color:#64748b">
             <div style="font-size:48px;margin-bottom:12px">📭</div>
             <div style="font-size:16px;font-weight:600;margin-bottom:8px">장비가 없습니다</div>
             <div style="font-size:14px">검색 조건을 변경해보세요.</div>
@@ -234,32 +202,15 @@
 
       startClock();
 
-      // URL 쿼리파라미터 필터 적용
+      // URL 쿼리파라미터에서 고객사 필터 읽기
       const params = new URLSearchParams(window.location.search);
       const customerParam = params.get('customer');
-      const statusParam = params.get('status');
-      const statusGroupParam = params.get('status_group');
-      const heaterParam = params.get('heater');
-      const snowParam = params.get('snow');
-      const asParam = params.get('as');
-      const searchParam = params.get('search');
-
-      setTimeout(() => {
-        if (customerParam && session.role === 'admin') {
+      if (customerParam && session.role === 'admin') {
+        setTimeout(() => {
           const sel = document.getElementById('filter-customer');
-          if (sel) sel.value = customerParam;
-        }
-        if (statusGroupParam === 'issue') {
-          document.getElementById('filter-status').value = 'issue';
-        } else if (statusParam) {
-          document.getElementById('filter-status').value = statusParam;
-        }
-        if (heaterParam) document.getElementById('filter-heater').value = heaterParam;
-        if (snowParam) document.getElementById('filter-snow').value = snowParam;
-        if (asParam) document.getElementById('filter-as').value = asParam;
-        if (searchParam) document.getElementById('search-input').value = searchParam;
-        filterTable();
-      }, 100);
+          if (sel) { sel.value = customerParam; filterTable(); }
+        }, 100);
+      }
 
       renderTable();
     }
@@ -286,18 +237,14 @@
       const search = document.getElementById('search-input').value.toLowerCase();
       const status = document.getElementById('filter-status').value;
       const heater = document.getElementById('filter-heater').value;
-      const snow = document.getElementById('filter-snow').value;
       const asFilter = document.getElementById('filter-as').value;
       const customer = session.role === 'admin'
         ? document.getElementById('filter-customer').value : null;
 
       filtered = allControllers.filter(ctrl => {
-        if (status === 'issue' && ctrl.status !== 'warning' && ctrl.status !== 'error') return false;
-        if (status && status !== 'issue' && ctrl.status !== status) return false;
+        if (status && ctrl.status !== status) return false;
         if (heater === 'on' && !ctrl.heater_on) return false;
         if (heater === 'off' && ctrl.heater_on) return false;
-        if (snow === 'detected' && !ctrl.snow_detected) return false;
-        if (snow === 'clear' && ctrl.snow_detected) return false;
         if (customer && ctrl.customer_id !== customer) return false;
 
         if (asFilter) {
@@ -328,7 +275,6 @@
       document.getElementById('search-input').value = '';
       document.getElementById('filter-status').value = '';
       document.getElementById('filter-heater').value = '';
-      document.getElementById('filter-snow').value = '';
       document.getElementById('filter-as').value = '';
       if (session.role === 'admin') document.getElementById('filter-customer').value = '';
       filterTable();
@@ -345,12 +291,52 @@
       if (filtered.length === 0) {
         tbody.innerHTML = '';
         emptyState.classList.remove('hidden');
+        renderMobileCards();
         return;
       }
 
       emptyState.classList.add('hidden');
 
       tbody.innerHTML = filtered.map(ctrl => renderControllerRow(ctrl, allCustomers, isAdmin)).join('');
+      renderMobileCards();
+    }
+
+
+
+    function renderMobileCards() {
+      const container = document.getElementById('controllers-mobile-list');
+      const isAdmin = session.role === 'admin';
+      if (!container) return;
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="mobile-record-card"><div class="mobile-record-card__title">표시할 장비가 없습니다</div><div class="mobile-record-card__sub">필터 조건을 변경해 보세요.</div></div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(ctrl => {
+        const customer = allCustomers.find(item => String(item.id) === String(ctrl.customer_id));
+        const temp = typeof ctrl.temperature === 'number' ? `${ctrl.temperature.toFixed(1)}°C` : '-';
+        const asDays = Utils.calcAsRemaining(ctrl.as_expire_at);
+        const asText = asDays === null ? '-' : (asDays < 0 ? `만료 ${Math.abs(asDays)}일` : `${asDays}일`);
+        return `
+          <div class="mobile-record-card" onclick="location.href='detail.html?id=${ctrl.id}'">
+            <div class="mobile-record-card__top">
+              <div>
+                <div class="mobile-record-card__title">${ctrl.controller_name || '-'}</div>
+                <div class="mobile-record-card__sub">${ctrl.serial_no || '-'}${isAdmin && customer ? ` · ${customer.company_name}` : ''}</div>
+                <div class="mobile-record-card__sub">${ctrl.install_location || ctrl.install_address || '-'}</div>
+              </div>
+              ${Utils.getStatusBadge(ctrl.status)}
+            </div>
+            <div class="mobile-record-grid">
+              <div class="mobile-record-item"><div class="label">눈 감지</div><div class="value">${ctrl.snow_detected ? '감지' : '없음'}</div></div>
+              <div class="mobile-record-item"><div class="label">히터</div><div class="value">${ctrl.heater_on ? 'ON' : 'OFF'}</div></div>
+              <div class="mobile-record-item"><div class="label">온도</div><div class="value">${temp}</div></div>
+              <div class="mobile-record-item"><div class="label">잔여 AS</div><div class="value">${asText}</div></div>
+            </div>
+            <div class="mobile-record-card__sub" style="margin-top:12px">마지막 통신 ${Utils.timeAgo(ctrl.last_seen_at)}</div>
+          </div>
+        `;
+      }).join('');
     }
 
     function openAddModal() {

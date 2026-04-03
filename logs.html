@@ -2,21 +2,13 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0d1b2a">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#223652">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>로그인 - 도로 열선 통합관제 시스템</title>
+  <title>로그 / 이력 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-
-  <title>제어 이력 - 도로 열선 통합관제 시스템</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -28,7 +20,7 @@
 
       <div class="page-body">
         <!-- 제어 이력 -->
-        <div class="table-section" style="margin-bottom:24px">
+        <div class="table-section has-mobile-list" style="margin-bottom:24px">
           <div class="table-header">
             <h2>📜 제어 이력</h2>
             <button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 새로고침</button>
@@ -51,10 +43,11 @@
               </tbody>
             </table>
           </div>
+          <div id="log-mobile-list" class="mobile-record-list"></div>
         </div>
 
         <!-- 이벤트 로그 -->
-        <div class="table-section">
+        <div class="table-section has-mobile-list">
           <div class="table-header">
             <h2>🔔 이벤트 로그</h2>
             <a href="events.html" class="btn btn-secondary btn-sm">전체 보기</a>
@@ -76,6 +69,7 @@
               </tbody>
             </table>
           </div>
+          <div id="evt-mobile-list" class="mobile-record-list"></div>
         </div>
       </div>
     </div>
@@ -136,6 +130,64 @@
       await renderEvents(ctrlMap, custMap);
     }
 
+
+
+    function renderLogsMobile(logs, ctrlMap, custMap, isAdmin) {
+      const container = document.getElementById('log-mobile-list');
+      if (!container) return;
+      if (!logs.length) {
+        container.innerHTML = `<div class="mobile-record-card"><div class="mobile-record-card__title">제어 이력 없음</div><div class="mobile-record-card__sub">최근 제어 이력이 없습니다.</div></div>`;
+        return;
+      }
+      container.innerHTML = logs.map(log => {
+        const ctrl = ctrlMap[log.controller_id];
+        const cust = ctrl ? custMap[ctrl.customer_id] : null;
+        return `
+          <div class="mobile-record-card" onclick="location.href='detail.html?id=${log.controller_id}'">
+            <div class="mobile-record-card__top">
+              <div>
+                <div class="mobile-record-card__title">${cmdIcons[log.command_type] || '📌'} ${cmdLabels[log.command_type] || log.command_type}</div>
+                <div class="mobile-record-card__sub">${ctrl ? ctrl.controller_name : log.controller_id}${isAdmin && cust ? ` · ${cust.company_name}` : ''}</div>
+              </div>
+              <span class="badge ${log.result === 'success' ? 'badge-online' : 'badge-danger'}">${log.result === 'success' ? '성공' : '실패'}</span>
+            </div>
+            <div class="mobile-record-grid">
+              <div class="mobile-record-item"><div class="label">실행자</div><div class="value">${log.user_name || '-'}</div></div>
+              <div class="mobile-record-item"><div class="label">시간</div><div class="value">${Utils.timeAgo(log.updated_at || log.created_at)}</div></div>
+            </div>
+            <div class="mobile-record-card__sub" style="margin-top:12px">${log.note || '-'}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderEventsMobile(events, ctrlMap, custMap, isAdmin, severityColor, severityLabel) {
+      const container = document.getElementById('evt-mobile-list');
+      if (!container) return;
+      if (!events.length) {
+        container.innerHTML = `<div class="mobile-record-card"><div class="mobile-record-card__title">이벤트 없음</div><div class="mobile-record-card__sub">최근 이벤트가 없습니다.</div></div>`;
+        return;
+      }
+      container.innerHTML = events.map(evt => {
+        const ctrl = ctrlMap[evt.controller_id];
+        const cust = ctrl ? custMap[ctrl.customer_id] : null;
+        const sevColor = severityColor[evt.severity] || '#d7e4f3';
+        return `
+          <div class="mobile-record-card" onclick="location.href='detail.html?id=${evt.controller_id}'">
+            <div class="mobile-record-card__top">
+              <div>
+                <div class="mobile-record-card__title">${evtIcons[evt.event_type] || '📌'} ${evt.event_type}</div>
+                <div class="mobile-record-card__sub">${ctrl ? ctrl.controller_name : evt.controller_id}${isAdmin && cust ? ` · ${cust.company_name}` : ''}</div>
+              </div>
+              <span class="badge" style="background:${sevColor}20;color:${sevColor}">${severityLabel[evt.severity] || evt.severity}</span>
+            </div>
+            <div class="mobile-record-item"><div class="label">메시지</div><div class="value">${evt.message || '-'}</div></div>
+            <div class="mobile-record-card__sub" style="margin-top:12px">${Utils.timeAgo(evt.updated_at || evt.created_at)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
     async function renderLogs(ctrlMap, custMap) {
       const logs = await API.getControlLogs(null, 50);
       const tbody = document.getElementById('log-tbody');
@@ -148,6 +200,8 @@
           const c = ctrlMap[l.controller_id];
           return c && c.customer_id === session.customerId;
         });
+
+      renderLogsMobile(filtered, ctrlMap, custMap, isAdmin);
 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}" style="text-align:center;padding:30px;color:#64748b">이력 없음</td></tr>`;
@@ -199,6 +253,8 @@
 
       const severityColor = { info: '#10b981', warning: '#f59e0b', critical: '#ef4444' };
       const severityLabel = { info: '정보', warning: '경고', critical: '긴급' };
+
+      renderEventsMobile(filtered, ctrlMap, custMap, isAdmin, severityColor, severityLabel);
 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="text-align:center;padding:30px;color:#64748b">이벤트 없음</td></tr>`;

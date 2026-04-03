@@ -3,52 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0d1b2a">
+  <meta name="theme-color" content="#223652">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>로그인 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    .login-page { padding:24px 16px; }
-    .login-container { width:min(420px, 100%); }
-    .demo-account > div { min-width:0; }
-    @media (max-width: 768px) {
-      .login-page {
-        align-items:flex-start;
-        padding:24px 16px max(24px, env(safe-area-inset-bottom));
-      }
-      .login-container {
-        padding:32px 20px;
-        max-width:100%;
-        margin:8px 0 24px;
-      }
-      .login-logo { margin-bottom:24px; }
-      .login-demo { padding:14px; }
-      .demo-account {
-        flex-direction:column;
-        align-items:flex-start;
-        gap:8px;
-        padding:10px 0;
-      }
-      .demo-account span[style*="margin-left:8px"] {
-        display:block;
-        margin-left:0 !important;
-        margin-top:4px;
-      }
-      .demo-role { margin-left:0; }
-    }
-    @media (max-width: 480px) {
-      .login-container { padding:28px 16px; }
-      .login-logo h1 { font-size:17px; }
-      .road-line { animation-duration:6s; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .road-line { animation:none; display:none; }
-    }
-  </style>
 </head>
 <body>
   <div class="login-page">
