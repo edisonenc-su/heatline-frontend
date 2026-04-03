@@ -3,27 +3,27 @@
    ============================================================ */
 
 :root {
-  --primary: #1a3a5c;
-  --primary-light: #2456a4;
-  --accent: #00aeff;
-  --accent-dark: #0080cc;
+  --primary: #22476d;
+  --primary-light: #3b74c9;
+  --accent: #5dc8ff;
+  --accent-dark: #2596e8;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
   --info: #3b82f6;
-  --bg-dark: #0d1b2a;
-  --bg-card: #1a2740;
-  --bg-card2: #1e3050;
-  --text-primary: #e8f0fe;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border: #2a3f5f;
-  --border-light: #334d70;
+  --bg-dark: #16283d;
+  --bg-card: #243a57;
+  --bg-card2: #2f4a6d;
+  --text-primary: #f8fbff;
+  --text-secondary: #d7e4f3;
+  --text-muted: #a9bdd2;
+  --border: #4a6787;
+  --border-light: #6f8fb2;
   --sidebar-w: 280px;
   --header-h: 64px;
   --radius: 12px;
   --radius-sm: 8px;
-  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow: 0 10px 32px rgba(3, 12, 24, 0.26);
 }
 
 * {
@@ -34,7 +34,7 @@
 
 body {
   font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
-  background: var(--bg-dark);
+  background: radial-gradient(circle at top, #27466c 0%, #1c3250 28%, #16283d 100%);
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
@@ -53,7 +53,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 50%, #0d1b2a 100%);
+  background: linear-gradient(135deg, #17304c 0%, #2e5583 48%, #17304c 100%);
   position: relative;
   overflow: hidden;
 }
@@ -139,7 +139,7 @@ a {
 .form-control {
   width: 100%;
   padding: 12px 16px;
-  background: var(--bg-dark);
+  background: radial-gradient(circle at top, #27466c 0%, #1c3250 28%, #16283d 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -311,8 +311,9 @@ a {
 .sidebar {
   width: var(--sidebar-w);
   min-height: 100vh;
-  background: var(--bg-card);
+  background: linear-gradient(180deg, #2a4466 0%, #223652 100%);
   border-right: 1px solid var(--border);
+  box-shadow: 10px 0 28px rgba(6, 14, 28, 0.18);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -425,7 +426,7 @@ a {
 }
 
 .nav-item:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.10);
   color: var(--text-primary);
 }
 
@@ -469,8 +470,9 @@ a {
 /* ---- 헤더 ---- */
 .top-header {
   height: var(--header-h);
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(53,84,121,0.98), rgba(36,58,87,0.98));
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(7, 15, 30, 0.14);
   display: flex;
   align-items: center;
   padding: 0 24px;
@@ -504,7 +506,7 @@ a {
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: var(--bg-card2);
+  background: rgba(255,255,255,0.12);
   border: 1px solid var(--border);
   border-radius: 99px;
   font-size: 13px;
@@ -549,18 +551,20 @@ a {
 }
 
 .stat-card {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(53,84,121,0.96), rgba(36,58,87,0.98));
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s, border-color 0.2s;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 10px 24px rgba(7, 15, 30, 0.16);
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
   border-color: var(--border-light);
+  box-shadow: 0 14px 30px rgba(7, 15, 30, 0.22);
 }
 
 .stat-card::before {
@@ -583,27 +587,32 @@ a {
 .stat-icon {
   font-size: 28px;
   margin-bottom: 12px;
+  filter: drop-shadow(0 2px 8px rgba(255,255,255,0.08));
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 800;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.18);
 }
 
 .stat-label {
   font-size: 12px;
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 /* ============================================================
    지도 영역
    ============================================================ */
 .map-section {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(49,76,110,0.96), rgba(36,58,87,0.98));
   border: 1px solid var(--border);
+  box-shadow: 0 10px 26px rgba(7, 15, 30, 0.16);
   border-radius: var(--radius);
   overflow: hidden;
   margin-bottom: 24px;
@@ -723,8 +732,9 @@ a {
    장비 목록 테이블
    ============================================================ */
 .table-section {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(49,76,110,0.96), rgba(36,58,87,0.98));
   border: 1px solid var(--border);
+  box-shadow: 0 10px 26px rgba(7, 15, 30, 0.16);
   border-radius: var(--radius);
   overflow: hidden;
 }
@@ -751,7 +761,7 @@ a {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--bg-dark);
+  background: radial-gradient(circle at top, #27466c 0%, #1c3250 28%, #16283d 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 8px 14px;
@@ -783,7 +793,7 @@ table {
 }
 
 thead th {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.08);
   padding: 12px 16px;
   text-align: left;
   font-size: 12px;
@@ -806,7 +816,7 @@ tbody tr:last-child {
 }
 
 tbody tr:hover {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.08);
 }
 
 tbody td {
@@ -835,8 +845,8 @@ tbody td {
 }
 
 .badge-offline {
-  background: rgba(100,116,139,0.15);
-  color: var(--text-muted);
+  background: rgba(169,189,210,0.18);
+  color: #eef6ff;
 }
 
 .badge-warning {
@@ -915,8 +925,9 @@ tbody td {
 }
 
 .detail-card {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(49,76,110,0.96), rgba(36,58,87,0.98));
   border: 1px solid var(--border);
+  box-shadow: 0 10px 26px rgba(7, 15, 30, 0.16);
   border-radius: var(--radius);
   overflow: hidden;
 }
@@ -1012,7 +1023,7 @@ tbody td {
 }
 
 .status-item {
-  background: var(--bg-dark);
+  background: radial-gradient(circle at top, #27466c 0%, #1c3250 28%, #16283d 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 14px;
@@ -1131,7 +1142,7 @@ tbody td {
 
 .as-progress {
   height: 8px;
-  background: var(--bg-dark);
+  background: radial-gradient(circle at top, #27466c 0%, #1c3250 28%, #16283d 100%);
   border-radius: 99px;
   margin: 10px 0;
   overflow: hidden;
@@ -1199,7 +1210,7 @@ tbody td {
   flex-direction: column;
   gap: 8px;
   padding: 14px;
-  background: var(--bg-dark);
+  background: radial-gradient(circle at top, #27466c 0%, #1c3250 28%, #16283d 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }

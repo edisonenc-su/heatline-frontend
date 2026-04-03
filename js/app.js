@@ -406,7 +406,7 @@
     return `
       <aside style="width:260px;min-height:100vh;background:#0f172a;color:#fff;padding:24px 18px;position:fixed;left:0;top:0;overflow:auto">
         <div style="font-size:22px;font-weight:800;margin-bottom:8px">🛣️ Heatline</div>
-        <div style="font-size:13px;color:#94a3b8;margin-bottom:24px">${escapeHtml(session.fullName || session.username || "사용자")}</div>
+        <div style="font-size:13px;color:#d7e4f3;margin-bottom:24px">${escapeHtml(session.fullName || session.username || "사용자")}</div>
         <nav style="display:grid;gap:8px">
           ${items.map(([key, href, icon, label]) => `
             <a href="${href}" style="padding:12px 14px;border-radius:12px;text-decoration:none;color:#e2e8f0;background:${current === key ? 'rgba(59,130,246,.22)' : 'transparent'};border:1px solid ${current === key ? 'rgba(59,130,246,.4)' : 'transparent'}">${icon} ${label}</a>
@@ -424,11 +424,11 @@
       <header style="padding:24px 28px 16px;border-bottom:1px solid var(--border, #1f2937);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div>
           <div style="font-size:28px;font-weight:800">${escapeHtml(title)}</div>
-          <div style="font-size:14px;color:#94a3b8;margin-top:6px">${escapeHtml(subtitle)}</div>
+          <div style="font-size:14px;color:#d7e4f3;margin-top:6px">${escapeHtml(subtitle)}</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           ${stats.map((item) => `<span class="badge badge-${item.type || 'info'}">${escapeHtml(item.label)} ${escapeHtml(item.value)}</span>`).join("")}
-          <span id="header-clock" style="font-size:13px;color:#94a3b8"></span>
+          <span id="header-clock" style="font-size:13px;color:#d7e4f3"></span>
         </div>
       </header>
     `;
@@ -457,7 +457,7 @@
             <div class="stat-icon">${icon}</div>
             <div class="stat-value">${value}</div>
             <div class="stat-label">${label}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:8px">${session.role === 'admin' ? '전체 관제 기준' : '내 장비 기준'}</div>
+            <div style="font-size:11px;color:#d7e4f3;margin-top:8px">${session.role === 'admin' ? '전체 관제 기준' : '내 장비 기준'}</div>
           </button>
         `).join("")}
       </div>
@@ -471,19 +471,19 @@
       <tr onclick="location.href='detail.html?id=${ctrl.id}'" style="cursor:pointer">
         <td>
           <div style="font-weight:700">${escapeHtml(ctrl.controller_name || "-")}</div>
-          <div style="font-size:12px;color:#94a3b8">${escapeHtml(ctrl.serial_no || "-")}</div>
+          <div style="font-size:12px;color:#d7e4f3">${escapeHtml(ctrl.serial_no || "-")}</div>
         </td>
         ${isAdmin ? `<td>${escapeHtml(customer?.company_name || String(ctrl.customer_id || '-'))}</td>` : ""}
         <td>
           <div>${escapeHtml(ctrl.install_location || "-")}</div>
-          <div style="font-size:12px;color:#94a3b8">${escapeHtml(ctrl.install_address || "-")}</div>
+          <div style="font-size:12px;color:#d7e4f3">${escapeHtml(ctrl.install_address || "-")}</div>
         </td>
         <td>${getStatusBadge(ctrl.status)}</td>
         <td>${ctrl.snow_detected ? '❄️ 감지' : '✅ 없음'}</td>
         <td>${ctrl.heater_on ? '🔥 ON' : 'OFF'}</td>
         <td>${temp}</td>
         <td>${getAsBadge(ctrl.as_expire_at)}</td>
-        <td style="font-size:12px;color:#64748b">${timeAgo(ctrl.last_seen_at)}</td>
+        <td style="font-size:12px;color:#a9bdd2">${timeAgo(ctrl.last_seen_at)}</td>
       </tr>
     `;
   }
@@ -520,12 +520,12 @@
       online: '#10b981',
       warning: '#f59e0b',
       error: '#ef4444',
-      offline: '#64748b'
+      offline: '#a9bdd2'
     };
     const marker = L.circleMarker([ctrl.latitude, ctrl.longitude], {
       radius: 9,
-      color: colorMap[ctrl.status] || '#64748b',
-      fillColor: colorMap[ctrl.status] || '#64748b',
+      color: colorMap[ctrl.status] || '#a9bdd2',
+      fillColor: colorMap[ctrl.status] || '#a9bdd2',
       fillOpacity: 0.9,
       weight: 2
     }).addTo(map);
