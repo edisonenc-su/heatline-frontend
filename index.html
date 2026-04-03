@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#223652">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#223652" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>로그인 - 도로 열선 통합관제 시스템</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="webapp-enabled login-webapp login-webapp-v3">
   <main class="login-page login-page-v3">
@@ -17,6 +24,7 @@
     <section class="login-shell-v3" aria-label="로그인 화면">
       <div class="login-hero-v3">
         <div class="login-hero-v3__badge">모바일 웹앱</div>
+
         <div class="login-hero-v3__brand">
           <span class="login-hero-v3__icon">🛣️</span>
           <div>
@@ -45,7 +53,7 @@
               placeholder="아이디를 입력하세요"
               autocomplete="username"
               required
-            >
+            />
           </div>
 
           <div class="form-group">
@@ -57,7 +65,7 @@
               placeholder="비밀번호를 입력하세요"
               autocomplete="current-password"
               required
-            >
+            />
           </div>
 
           <button type="submit" class="btn btn-primary" id="login-btn">
@@ -67,33 +75,55 @@
 
         <div class="login-quick-note-v3">
           <div class="login-quick-note-v3__title">빠른 안내</div>
-          <div class="login-quick-note-v3__text">로그인 후에는 하단 메뉴 기반의 모바일 관제 화면으로 이동합니다.</div>
+          <div class="login-quick-note-v3__text">
+            로그인 후에는 하단 메뉴 기반의 모바일 관제 화면으로 이동합니다.
+          </div>
         </div>
 
         <div class="login-demo login-demo-v3">
           <h4>🧪 데모 계정</h4>
-          <button type="button" class="demo-account demo-account-v3" onclick="fillDemo('admin','admin1234')">
+
+          <button
+            type="button"
+            class="demo-account demo-account-v3"
+            onclick="fillDemo('admin','admin1234')"
+          >
             <div>
               <span class="demo-id">admin</span>
               <span class="demo-pw">/ admin1234</span>
             </div>
             <span class="demo-role admin">관리자</span>
           </button>
-          <button type="button" class="demo-account demo-account-v3" onclick="fillDemo('kangwon','kw1234')">
+
+          <button
+            type="button"
+            class="demo-account demo-account-v3"
+            onclick="fillDemo('kangwon','kw1234')"
+          >
             <div>
               <span class="demo-id">kangwon</span>
               <span class="demo-pw">/ kw1234</span>
             </div>
             <span class="demo-role customer">강원지사</span>
           </button>
-          <button type="button" class="demo-account demo-account-v3" onclick="fillDemo('seoul','se1234')">
+
+          <button
+            type="button"
+            class="demo-account demo-account-v3"
+            onclick="fillDemo('seoul','se1234')"
+          >
             <div>
               <span class="demo-id">seoul</span>
               <span class="demo-pw">/ se1234</span>
             </div>
             <span class="demo-role customer">서울시 도로교통과</span>
           </button>
-          <button type="button" class="demo-account demo-account-v3" onclick="fillDemo('busan','bs1234')">
+
+          <button
+            type="button"
+            class="demo-account demo-account-v3"
+            onclick="fillDemo('busan','bs1234')"
+          >
             <div>
               <span class="demo-id">busan</span>
               <span class="demo-pw">/ bs1234</span>
@@ -115,7 +145,7 @@
 
         <div class="login-version login-version-v3">
           v1.0.0 &nbsp;|&nbsp; © 2026 도로 열선 통합관제 시스템
-          <br>
+          <br />
           <a href="#" onclick="resetDB(); return false;">데모 데이터 초기화</a>
         </div>
       </div>
@@ -125,103 +155,124 @@
   <div id="toast-container" class="toast-container"></div>
 
   <script>
-  window.HEATLINE_API_BASE_URL = "https://port-0-heatline-backend-mngz3utra2911079.sel3.cloudtype.app/api/v1";
-  try {
-    const saved = localStorage.getItem("HEATLINE_API_BASE_URL") || "";
-    if (!saved || /localhost:8000\/api\/v1/i.test(saved) || /localhost:3000/i.test(saved)) {
-      localStorage.setItem("HEATLINE_API_BASE_URL", window.HEATLINE_API_BASE_URL);
+    window.HEATLINE_API_BASE_URL =
+      "https://port-0-heatline-backend-mngz3utra2911079.sel3.cloudtype.app/api/v1";
+
+    try {
+      const saved = localStorage.getItem("HEATLINE_API_BASE_URL") || "";
+      if (
+        !saved ||
+        /localhost:8000\/api\/v1/i.test(saved) ||
+        /localhost:3000/i.test(saved)
+      ) {
+        localStorage.setItem("HEATLINE_API_BASE_URL", window.HEATLINE_API_BASE_URL);
+      }
+    } catch (e) {
+      console.warn("HEATLINE_API_BASE_URL 저장 실패:", e);
     }
-  } catch (e) {
-    console.warn("HEATLINE_API_BASE_URL 저장 실패:", e);
-  }
   </script>
+
   <script src="js/app.js"></script>
+
   <script>
     LocalDB.init();
 
     if (Auth.isLoggedIn()) {
-      window.location.href = 'dashboard.html';
+      window.location.href = "dashboard.html";
     }
 
     function updateViewportHeight() {
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+      document.documentElement.style.setProperty("--vh", `${window.innerHeight * 0.01}px`);
     }
+
     updateViewportHeight();
-    window.addEventListener('resize', updateViewportHeight);
+    window.addEventListener("resize", updateViewportHeight);
+    window.addEventListener("orientationchange", updateViewportHeight);
 
     function createRoadLines() {
-      const container = document.getElementById('bgAnimation');
+      const container = document.getElementById("bgAnimation");
       if (!container) return;
-      container.innerHTML = '';
+
+      container.innerHTML = "";
       const count = window.innerWidth <= 768 ? 4 : 7;
+
       for (let i = 0; i < count; i++) {
-        const line = document.createElement('div');
-        line.className = 'road-line';
-        line.style.top = Math.random() * 100 + '%';
-        line.style.animationDelay = Math.random() * 4 + 's';
-        line.style.animationDuration = (3 + Math.random() * 3) + 's';
-        line.style.width = (100 + Math.random() * 200) + 'px';
+        const line = document.createElement("div");
+        line.className = "road-line";
+        line.style.top = Math.random() * 100 + "%";
+        line.style.animationDelay = Math.random() * 4 + "s";
+        line.style.animationDuration = 3 + Math.random() * 3 + "s";
+        line.style.width = 100 + Math.random() * 200 + "px";
         container.appendChild(line);
       }
     }
+
     createRoadLines();
-    window.addEventListener('resize', createRoadLines);
+    window.addEventListener("resize", createRoadLines);
 
     function fillDemo(id, pw) {
-      document.getElementById('username').value = id;
-      document.getElementById('password').value = pw;
-      document.getElementById('password').focus();
+      document.getElementById("username").value = id;
+      document.getElementById("password").value = pw;
+      document.getElementById("password").focus();
     }
 
     async function handleLogin(e) {
       e.preventDefault();
 
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      const btn = document.getElementById('login-btn');
-      const alert = document.getElementById('login-alert');
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("login-btn");
+      const alert = document.getElementById("login-alert");
 
       if (!username || !password) {
-        showAlert('아이디와 비밀번호를 입력해주세요.');
+        showAlert("아이디와 비밀번호를 입력해주세요.");
         return;
       }
 
       btn.disabled = true;
       btn.innerHTML = '<div class="loading-spinner"></div> 로그인 중...';
-      alert.classList.add('hidden');
+      alert.classList.add("hidden");
 
       const result = await Auth.login(username, password);
 
       if (result.success) {
-        btn.innerHTML = '✅ 로그인 성공! 이동 중...';
-        Utils.toast('로그인 성공', `${result.session.fullName || username}님, 환영합니다.`, 'success');
+        btn.innerHTML = "✅ 로그인 성공! 이동 중...";
+        Utils.toast(
+          "로그인 성공",
+          `${result.session.fullName || username}님, 환영합니다.`,
+          "success"
+        );
+
         setTimeout(() => {
-          window.location.href = 'dashboard.html';
+          window.location.href = "dashboard.html";
         }, 700);
       } else {
         showAlert(result.message);
         btn.disabled = false;
-        btn.innerHTML = '🔐 로그인';
+        btn.innerHTML = "🔐 로그인";
       }
     }
 
     function showAlert(msg) {
-      const el = document.getElementById('login-alert');
-      el.textContent = '⚠️ ' + msg;
-      el.classList.remove('hidden');
+      const el = document.getElementById("login-alert");
+      el.textContent = "⚠️ " + msg;
+      el.classList.remove("hidden");
     }
 
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.target.closest('form')) {
-        document.getElementById('login-form').requestSubmit();
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.target.closest("form")) {
+        document.getElementById("login-form").requestSubmit();
       }
     });
 
     function resetDB() {
-      if (confirm('샘플 데이터를 초기화하시겠습니까?
-(제어 이력 등 변경 사항이 삭제됩니다)')) {
+      if (
+        confirm(
+          "샘플 데이터를 초기화하시겠습니까?\n(제어 이력 등 변경 사항이 삭제됩니다)"
+        )
+      ) {
         LocalDB.reset();
-        Utils.toast('초기화 완료', '샘플 데이터가 초기화되었습니다.', 'success');
+        Utils.toast("초기화 완료", "샘플 데이터가 초기화되었습니다.", "success");
       }
     }
   </script>
