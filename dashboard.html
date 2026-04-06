@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#0d1b2a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.webmanifest">
+  <!-- manifest.webmanifest 응답이 비정상일 때 콘솔 오류를 줄이기 위해 대시보드에서는 임시 비활성화 -->
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>대시보드 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260406-2">
 </head>
 <body>
   <div id="sidebar-placeholder"></div>
@@ -132,13 +132,51 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20260406-2"></script>
   <script>
+    const BUILD_VERSION = '20260406-2';
     let session = null;
     let map = null;
     let allControllers = [];
     let allCustomers = [];
     let mapMarkers = [];
+
+    function setSectionMessage(targetId, html) {
+      const el = document.getElementById(targetId);
+      if (el) el.innerHTML = html;
+    }
+
+    function showDashboardError(message) {
+      const safeMessage = escapeHtml(message || '대시보드 데이터를 불러오지 못했습니다.');
+      setSectionMessage('warning-list', `<div style="padding:20px;text-align:center;color:#ef4444;font-size:14px">${safeMessage}</div>`);
+      setSectionMessage('event-list', `<div style="padding:20px;text-align:center;color:#ef4444;font-size:14px">${safeMessage}</div>`);
+
+      const tbody = document.getElementById('as-table-body');
+      if (tbody) {
+        const colspan = session && session.role === 'admin' ? 6 : 5;
+        tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center;padding:20px;color:#ef4444">${safeMessage}</td></tr>`;
+      }
+
+      const banner = document.getElementById('alert-banner');
+      const text = document.getElementById('alert-text');
+      if (banner && text) {
+        banner.classList.remove('hidden');
+        text.innerHTML = `<strong>대시보드 오류:</strong> ${safeMessage}`;
+      }
+    }
+
+    function handleDashboardError(error, context = '대시보드 데이터를 불러오지 못했습니다.') {
+      const rawMessage = error && error.message ? error.message : String(error || context);
+      console.error(`[dashboard ${BUILD_VERSION}] ${context}`, error);
+
+      if (/INVALID_TOKEN|UNAUTHORIZED|유효하지 않은 토큰|인증 토큰이 필요합니다/i.test(rawMessage)) {
+        showDashboardError('세션이 만료되었습니다. 다시 로그인해 주세요.');
+        setTimeout(() => Auth.logout(), 1200);
+        return;
+      }
+
+      showDashboardError(`${context} (${rawMessage})`);
+    }
 
     function renderDashboardSummary() {
       const stats = Utils.calcStats(allControllers);
@@ -160,37 +198,45 @@
     }
 
     async function init() {
-      session = Auth.requireAuth();
-      if (!session) return;
+      try {
+        session = Auth.requireAuth();
+        if (!session) return;
 
-      document.getElementById('sidebar-placeholder').innerHTML = renderSidebar(session, 'dashboard');
+        document.getElementById('sidebar-placeholder').innerHTML = renderSidebar(session, 'dashboard');
 
-      await loadData();
-      renderDashboardSummary();
-      startClock();
-
-      if (session.role !== 'admin') {
-        const th = document.getElementById('th-customer');
-        if (th) th.style.display = 'none';
-      }
-
-      renderAlertBanner();
-
-      map = initMap('map');
-      renderMapMarkers();
-      renderWarningList();
-      await renderEventList();
-      renderAsTable();
-
-      setInterval(async () => {
         await loadData();
         renderDashboardSummary();
+        startClock();
+
+        if (session.role !== 'admin') {
+          const th = document.getElementById('th-customer');
+          if (th) th.style.display = 'none';
+        }
+
         renderAlertBanner();
-        renderMapMarkers(true);
+
+        map = initMap('map');
+        renderMapMarkers();
         renderWarningList();
         await renderEventList();
         renderAsTable();
-      }, 30000);
+
+        setInterval(async () => {
+          try {
+            await loadData();
+            renderDashboardSummary();
+            renderAlertBanner();
+            renderMapMarkers(true);
+            renderWarningList();
+            await renderEventList();
+            renderAsTable();
+          } catch (error) {
+            handleDashboardError(error, '대시보드 자동 새로고침에 실패했습니다.');
+          }
+        }, 30000);
+      } catch (error) {
+        handleDashboardError(error, '대시보드 초기화에 실패했습니다.');
+      }
     }
 
     async function loadData() {
