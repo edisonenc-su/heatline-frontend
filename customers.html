@@ -3,18 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0d1b2a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>고객사 관리 - 도로 열선 통합관제 시스템</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-
   <title>고객사 관리 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
@@ -27,22 +16,22 @@
       <div id="header-placeholder"></div>
 
       <div class="page-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+          <div style="color:#94a3b8;font-size:14px;">시스템 관리자가 고객사 정보를 등록, 수정, 삭제할 수 있습니다.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 새로고침</button>
+            <button class="btn btn-primary btn-sm" onclick="openCustomerModal()">➕ 고객사 등록</button>
+          </div>
+        </div>
 
-        <!-- 고객사 카드 목록 -->
-        <div id="customer-grid" style="
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 20px;
-          margin-bottom: 24px;
-        ">
+        <div id="customer-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:20px;margin-bottom:24px;">
           <div style="padding:40px;text-align:center;color:#64748b;grid-column:1/-1">로딩 중...</div>
         </div>
 
-        <!-- 사용자 계정 목록 (관리자 전용) -->
         <div class="table-section" id="users-section">
           <div class="table-header">
             <h2>👤 사용자 계정</h2>
-            <button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 새로고침</button>
+            <div style="font-size:13px;color:#94a3b8;">고객사 삭제 전, 연결된 사용자 계정 유무를 확인하세요.</div>
           </div>
           <div class="table-responsive">
             <table>
@@ -74,9 +63,9 @@
         <div class="modal-title confirm-title">확인</div>
         <button class="modal-close" onclick="closeModal('confirm-modal')">✕</button>
       </div>
-      <div class="modal-body confirm-modal" style="text-align:center;padding:30px">
-        <span class="icon" style="font-size:48px;display:block;margin-bottom:12px">❓</span>
-        <p class="confirm-msg" style="color:#94a3b8"></p>
+      <div class="modal-body confirm-modal" style="text-align:center;padding:30px;">
+        <span class="icon" style="font-size:48px;display:block;margin-bottom:12px;">❓</span>
+        <p class="confirm-msg" style="color:#94a3b8;"></p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">취소</button>
@@ -85,102 +74,269 @@
     </div>
   </div>
 
+  <div id="customer-modal" class="modal-backdrop">
+    <div class="modal-box" style="max-width:720px;">
+      <div class="modal-header">
+        <div class="modal-title" id="customer-modal-title">고객사 등록</div>
+        <button class="modal-close" onclick="closeModal('customer-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:14px;">
+          <div>
+            <label class="form-label">고객사명 *</label>
+            <input id="customer-company-name" class="form-input" type="text" placeholder="예: 강원도 도로관리사업소">
+          </div>
+          <div>
+            <label class="form-label">담당자명</label>
+            <input id="customer-contact-name" class="form-input" type="text" placeholder="예: 홍길동">
+          </div>
+          <div>
+            <label class="form-label">연락처</label>
+            <input id="customer-contact-phone" class="form-input" type="text" placeholder="예: 010-1234-5678">
+          </div>
+          <div>
+            <label class="form-label">이메일</label>
+            <input id="customer-contact-email" class="form-input" type="email" placeholder="예: admin@company.com">
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label class="form-label">주소</label>
+            <input id="customer-address" class="form-input" type="text" placeholder="예: 강원특별자치도 춘천시 ...">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;grid-column:1 / -1;">
+            <input id="customer-is-active" type="checkbox" checked>
+            <label for="customer-is-active">활성 상태</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('customer-modal')">취소</button>
+        <button class="btn btn-primary" id="customer-save-btn">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .form-label { display:block; font-size:13px; color:#94a3b8; margin-bottom:6px; font-weight:600; }
+    .form-input, .form-select, .form-textarea {
+      width:100%; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-primary);
+      border-radius:10px; padding:11px 12px; outline:none; font-size:14px;
+    }
+    .form-textarea { min-height:100px; resize:vertical; }
+    @media (max-width: 720px) {
+      #customer-modal .modal-body > div { grid-template-columns:1fr !important; }
+    }
+  </style>
+
   <script src="js/app.js"></script>
   <script>
     let session;
-    let allCustomers = [], allControllers = [], allUsers = [];
+    let allCustomers = [];
+    let allControllers = [];
+    let allUsers = [];
+    let editingCustomerId = null;
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function openModal(id) {
+      const el = $(id);
+      if (el) el.style.display = 'flex';
+    }
+
+    function showConfirm(message, onConfirm, title = '확인') {
+      document.querySelector('#confirm-modal .confirm-title').textContent = title;
+      document.querySelector('#confirm-modal .confirm-msg').textContent = message;
+      const okBtn = $('confirm-ok-btn');
+      okBtn.onclick = () => {
+        closeModal('confirm-modal');
+        onConfirm();
+      };
+      openModal('confirm-modal');
+    }
+
+    function getCustomerPayloadFromForm() {
+      return {
+        company_name: $('customer-company-name').value.trim(),
+        contact_name: $('customer-contact-name').value.trim() || null,
+        contact_phone: $('customer-contact-phone').value.trim() || null,
+        contact_email: $('customer-contact-email').value.trim() || null,
+        address: $('customer-address').value.trim() || null,
+        is_active: $('customer-is-active').checked
+      };
+    }
+
+    function fillCustomerForm(customer = null) {
+      $('customer-company-name').value = customer?.company_name || '';
+      $('customer-contact-name').value = customer?.contact_name || '';
+      $('customer-contact-phone').value = customer?.contact_phone || '';
+      $('customer-contact-email').value = customer?.contact_email || '';
+      $('customer-address').value = customer?.address || '';
+      $('customer-is-active').checked = customer?.is_active !== false;
+    }
+
+    function openCustomerModal(customerId = null) {
+      editingCustomerId = customerId;
+      const customer = customerId ? allCustomers.find(item => String(item.id) === String(customerId)) : null;
+      $('customer-modal-title').textContent = customer ? '고객사 수정' : '고객사 등록';
+      $('customer-save-btn').textContent = customer ? '수정 저장' : '등록';
+      fillCustomerForm(customer || null);
+      openModal('customer-modal');
+    }
+
+    async function saveCustomer() {
+      const payload = getCustomerPayloadFromForm();
+      if (!payload.company_name) {
+        Utils.toast('입력 필요', '고객사명은 필수입니다.', 'warning');
+        $('customer-company-name').focus();
+        return;
+      }
+
+      const saveBtn = $('customer-save-btn');
+      const prevText = saveBtn.textContent;
+      saveBtn.disabled = true;
+      saveBtn.textContent = '저장 중...';
+
+      try {
+        if (editingCustomerId) {
+          await API.updateCustomer(editingCustomerId, payload);
+          Utils.toast('수정 완료', '고객사 정보가 수정되었습니다.', 'success');
+        } else {
+          await API.createCustomer(payload);
+          Utils.toast('등록 완료', '고객사가 등록되었습니다.', 'success');
+        }
+        closeModal('customer-modal');
+        await loadAll();
+      } catch (error) {
+        Utils.toast('저장 실패', error.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = prevText;
+      }
+    }
+
+    async function removeCustomer(customerId) {
+      const customer = allCustomers.find(item => String(item.id) === String(customerId));
+      if (!customer) return;
+
+      showConfirm(`'${customer.company_name}' 고객사를 삭제하시겠습니까?\n연결된 장비 또는 사용자 계정이 있으면 삭제되지 않습니다.`, async () => {
+        try {
+          await API.deleteCustomer(customerId);
+          Utils.toast('삭제 완료', '고객사가 삭제되었습니다.', 'success');
+          await loadAll();
+        } catch (error) {
+          Utils.toast('삭제 실패', error.message, 'error');
+        }
+      }, '고객사 삭제');
+    }
 
     async function init() {
       session = Auth.requireAuth();
       if (!session) return;
 
-      // 관리자 전용 페이지
       if (session.role !== 'admin') {
         location.href = 'dashboard.html';
         return;
       }
 
-      document.getElementById('sidebar-placeholder').innerHTML = renderSidebar(session, 'customers');
-      document.getElementById('header-placeholder').innerHTML = renderHeader('고객사 관리', '', []);
+      $('sidebar-placeholder').innerHTML = renderSidebar(session, 'customers');
+      $('header-placeholder').innerHTML = renderHeader('고객사 관리', '고객사 및 연결 장비 현황을 관리합니다.', []);
       startClock();
-
+      $('customer-save-btn').addEventListener('click', saveCustomer);
       await loadAll();
     }
 
     async function loadAll() {
-      [allCustomers, allControllers, allUsers] = await Promise.all([
-        API.getAll(APP_TABLES.CUSTOMERS),
-        API.getAll(APP_TABLES.CONTROLLERS),
-        API.getAll(APP_TABLES.USERS)
-      ]);
+      try {
+        [allCustomers, allControllers, allUsers] = await Promise.all([
+          API.getCustomers(),
+          API.getControllers(session),
+          API.getUsers()
+        ]);
 
-      renderCustomerCards();
-      renderUsersTable();
+        const stats = {
+          totalCustomers: allCustomers.length,
+          activeCustomers: allCustomers.filter(item => item.is_active).length,
+          totalControllers: allControllers.length,
+          totalUsers: allUsers.length
+        };
+
+        $('header-placeholder').innerHTML = renderHeader(
+          '고객사 관리',
+          `고객사 ${stats.totalCustomers}개 · 장비 ${stats.totalControllers}대`,
+          [
+            { type: 'info', label: '고객사', value: stats.totalCustomers },
+            { type: 'online', label: '활성', value: stats.activeCustomers },
+            { type: 'warning', label: '장비', value: stats.totalControllers },
+            { type: 'danger', label: '사용자', value: stats.totalUsers }
+          ]
+        );
+        startClock();
+
+        renderCustomerCards();
+        renderUsersTable();
+      } catch (error) {
+        Utils.toast('조회 실패', error.message, 'error');
+      }
     }
 
     function renderCustomerCards() {
-      const grid = document.getElementById('customer-grid');
+      const grid = $('customer-grid');
 
-      if (allCustomers.length === 0) {
-        grid.innerHTML = `<div style="text-align:center;padding:60px;color:#64748b;grid-column:1/-1">등록된 고객사 없음</div>`;
+      if (!allCustomers.length) {
+        grid.innerHTML = `<div style="text-align:center;padding:60px;color:#64748b;grid-column:1/-1">등록된 고객사가 없습니다.</div>`;
         return;
       }
 
       grid.innerHTML = allCustomers.map(cust => {
-        const myCtrl = allControllers.filter(c => c.customer_id === cust.id);
-        const online = myCtrl.filter(c => c.status === 'online').length;
-        const offline = myCtrl.filter(c => c.status === 'offline').length;
-        const asUrgent = myCtrl.filter(c => {
-          const d = Utils.calcAsRemaining(c.as_expire_at);
-          return d !== null && d <= 30;
+        const customerControllers = allControllers.filter(ctrl => String(ctrl.customer_id) === String(cust.id));
+        const customerUsers = allUsers.filter(user => String(user.customer_id) === String(cust.id));
+        const online = customerControllers.filter(ctrl => ctrl.status === 'online').length;
+        const warning = customerControllers.filter(ctrl => ctrl.status === 'warning' || ctrl.status === 'error').length;
+        const asUrgent = customerControllers.filter(ctrl => {
+          const days = Utils.calcAsRemaining(ctrl.as_expire_at);
+          return days !== null && days <= 30;
         }).length;
 
-        const stats = Utils.calcStats(myCtrl);
-
         return `
-          <div class="stat-card total" style="cursor:default">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+          <div class="stat-card total" style="cursor:default;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;">
               <div>
-                <div style="font-size:18px;font-weight:800;margin-bottom:4px">${cust.company_name}</div>
-                <div style="font-size:13px;color:#94a3b8">
-                  👤 ${cust.contact_name || '-'} &nbsp;|&nbsp; 📞 ${cust.contact_phone || '-'}
-                </div>
+                <div style="font-size:18px;font-weight:800;margin-bottom:4px;">${cust.company_name}</div>
+                <div style="font-size:13px;color:#94a3b8;">👤 ${cust.contact_name || '-'} · 📞 ${cust.contact_phone || '-'}</div>
               </div>
-              <span class="badge ${cust.is_active ? 'badge-online' : 'badge-offline'}">
-                ${cust.is_active ? '활성' : '비활성'}
-              </span>
+              <span class="badge ${cust.is_active ? 'badge-online' : 'badge-offline'}">${cust.is_active ? '활성' : '비활성'}</span>
             </div>
 
-            <div style="font-size:12px;color:#64748b;margin-bottom:16px">
-              📧 ${cust.contact_email || '-'}
+            <div style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.6;">
+              <div>📧 ${cust.contact_email || '-'}</div>
+              <div>📍 ${cust.address || '-'}</div>
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-              <div style="text-align:center;background:var(--bg-dark);padding:10px 6px;border-radius:8px">
-                <div style="font-size:20px;font-weight:800">${myCtrl.length}</div>
-                <div style="font-size:11px;color:#64748b">전체</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;">
+              <div style="text-align:center;background:var(--bg-dark);padding:10px 6px;border-radius:8px;">
+                <div style="font-size:20px;font-weight:800;">${customerControllers.length}</div>
+                <div style="font-size:11px;color:#64748b;">장비</div>
               </div>
-              <div style="text-align:center;background:var(--bg-dark);padding:10px 6px;border-radius:8px">
-                <div style="font-size:20px;font-weight:800;color:#10b981">${online}</div>
-                <div style="font-size:11px;color:#64748b">온라인</div>
+              <div style="text-align:center;background:var(--bg-dark);padding:10px 6px;border-radius:8px;">
+                <div style="font-size:20px;font-weight:800;color:#10b981;">${online}</div>
+                <div style="font-size:11px;color:#64748b;">온라인</div>
               </div>
-              <div style="text-align:center;background:var(--bg-dark);padding:10px 6px;border-radius:8px">
-                <div style="font-size:20px;font-weight:800;color:#64748b">${offline}</div>
-                <div style="font-size:11px;color:#64748b">오프라인</div>
+              <div style="text-align:center;background:var(--bg-dark);padding:10px 6px;border-radius:8px;">
+                <div style="font-size:20px;font-weight:800;color:#f59e0b;">${warning}</div>
+                <div style="font-size:11px;color:#64748b;">경고</div>
               </div>
-              <div style="text-align:center;background:var(--bg-dark);padding:10px 6px;border-radius:8px">
-                <div style="font-size:20px;font-weight:800;color:${asUrgent > 0 ? '#ef4444' : '#10b981'}">${asUrgent}</div>
-                <div style="font-size:11px;color:#64748b">AS임박</div>
+              <div style="text-align:center;background:var(--bg-dark);padding:10px 6px;border-radius:8px;">
+                <div style="font-size:20px;font-weight:800;color:${asUrgent > 0 ? '#ef4444' : '#10b981'};">${customerUsers.length}</div>
+                <div style="font-size:11px;color:#64748b;">사용자</div>
               </div>
             </div>
 
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-secondary btn-sm" onclick="viewCustomerControllers('${cust.id}')">
-                📋 장비 보기
-              </button>
-              ${asUrgent > 0 ? `
-                <span class="badge badge-danger">🚨 AS 만료 임박 ${asUrgent}건</span>
-              ` : ''}
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button class="btn btn-secondary btn-sm" onclick="viewCustomerControllers('${cust.id}')">📋 장비 보기</button>
+              <button class="btn btn-primary btn-sm" onclick="openCustomerModal('${cust.id}')">✏️ 수정</button>
+              <button class="btn btn-danger btn-sm" onclick="removeCustomer('${cust.id}')">🗑️ 삭제</button>
+              ${asUrgent > 0 ? `<span class="badge badge-danger">🚨 AS 임박 ${asUrgent}건</span>` : ''}
             </div>
           </div>
         `;
@@ -188,42 +344,30 @@
     }
 
     function renderUsersTable() {
-      const tbody = document.getElementById('users-tbody');
-      const custMap = {};
-      allCustomers.forEach(c => custMap[c.id] = c);
+      const tbody = $('users-tbody');
+      const custMap = Object.fromEntries(allCustomers.map(item => [String(item.id), item]));
 
-      if (allUsers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#64748b">사용자 없음</td></tr>`;
+      if (!allUsers.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#64748b;">사용자 없음</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = allUsers.map(u => {
-        const cust = custMap[u.customer_id];
+      tbody.innerHTML = allUsers.map(user => {
+        const customer = custMap[String(user.customer_id)] || null;
         return `
           <tr>
-            <td>
-              <div style="font-weight:600;font-family:monospace">${u.username}</div>
-            </td>
-            <td>${u.full_name || '-'}</td>
-            <td>
-              <span class="badge ${u.role === 'admin' ? 'badge-danger' : 'badge-info'}">
-                ${u.role === 'admin' ? '👑 관리자' : '👤 고객'}
-              </span>
-            </td>
-            <td style="font-size:13px">${cust ? cust.company_name : u.role === 'admin' ? '시스템' : '-'}</td>
-            <td>
-              <span class="badge ${u.is_active ? 'badge-online' : 'badge-offline'}">
-                ${u.is_active ? '활성' : '비활성'}
-              </span>
-            </td>
-            <td style="font-size:12px;color:#64748b">${Utils.timeAgo(u.created_at)}</td>
+            <td><div style="font-weight:600;font-family:monospace;">${user.username}</div></td>
+            <td>${user.full_name || '-'}</td>
+            <td><span class="badge ${user.role === 'admin' ? 'badge-danger' : 'badge-info'}">${user.role === 'admin' ? '👑 관리자' : '👤 고객'}</span></td>
+            <td style="font-size:13px;">${customer ? customer.company_name : (user.role === 'admin' ? '시스템' : '-')}</td>
+            <td><span class="badge ${user.is_active ? 'badge-online' : 'badge-offline'}">${user.is_active ? '활성' : '비활성'}</span></td>
+            <td style="font-size:12px;color:#64748b;">${Utils.timeAgo(user.created_at)}</td>
           </tr>
         `;
       }).join('');
     }
 
     function viewCustomerControllers(customerId) {
-      // 고객사 ID 필터로 장비 목록 이동
       location.href = 'controllers.html?customer=' + customerId;
     }
 

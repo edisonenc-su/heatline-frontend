@@ -2,13 +2,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#223652">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d1b2a">
   <title>장비 목록 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -19,25 +16,15 @@
       <div id="header-placeholder"></div>
 
       <div class="page-body">
-        <!-- 통계 카드 -->
         <div id="stats-container"></div>
 
-        <!-- 필터 바 -->
-        <div class="filter-toolbar">
-          <div class="search-box" style="min-width:240px">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <div class="search-box" style="min-width:240px;">
             <span>🔍</span>
             <input type="text" id="search-input" placeholder="제어기명, 주소, 시리얼 검색..." oninput="filterTable()">
           </div>
 
-          <select id="filter-status" onchange="filterTable()" style="
-            background:var(--bg-dark);
-            border:1px solid var(--border);
-            border-radius:8px;
-            padding:9px 14px;
-            color:var(--text-primary);
-            font-size:14px;
-            outline:none;cursor:pointer;
-          ">
+          <select id="filter-status" onchange="filterTable()" class="form-select compact-select">
             <option value="">전체 상태</option>
             <option value="online">🟢 온라인</option>
             <option value="offline">⚫ 오프라인</option>
@@ -45,68 +32,37 @@
             <option value="error">🔴 오류</option>
           </select>
 
-          <select id="filter-heater" onchange="filterTable()" style="
-            background:var(--bg-dark);
-            border:1px solid var(--border);
-            border-radius:8px;
-            padding:9px 14px;
-            color:var(--text-primary);
-            font-size:14px;
-            outline:none;cursor:pointer;
-          ">
+          <select id="filter-heater" onchange="filterTable()" class="form-select compact-select">
             <option value="">히터 전체</option>
             <option value="on">🔥 히터 ON</option>
             <option value="off">❄️ 히터 OFF</option>
           </select>
 
-          <select id="filter-as" onchange="filterTable()" style="
-            background:var(--bg-dark);
-            border:1px solid var(--border);
-            border-radius:8px;
-            padding:9px 14px;
-            color:var(--text-primary);
-            font-size:14px;
-            outline:none;cursor:pointer;
-          ">
+          <select id="filter-as" onchange="filterTable()" class="form-select compact-select">
             <option value="">AS 전체</option>
             <option value="urgent">🚨 만료 임박 (30일 이내)</option>
             <option value="caution">⚠️ 주의 (90일 이내)</option>
             <option value="good">✅ 정상</option>
           </select>
 
-          <div id="admin-filter-wrap" style="display:none">
-            <select id="filter-customer" onchange="filterTable()" style="
-              background:var(--bg-dark);
-              border:1px solid var(--border);
-              border-radius:8px;
-              padding:9px 14px;
-              color:var(--text-primary);
-              font-size:14px;
-              outline:none;cursor:pointer;
-            ">
+          <div id="admin-filter-wrap" style="display:none;">
+            <select id="filter-customer" onchange="filterTable()" class="form-select compact-select">
               <option value="">전체 고객사</option>
             </select>
           </div>
 
-          <div class="filter-toolbar__spacer">
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <button class="btn btn-secondary btn-sm" onclick="resetFilters()">필터 초기화</button>
-            <span id="result-count" style="
-              display:flex;align-items:center;
-              font-size:13px;color:#94a3b8;
-              padding:0 4px;
-            "></span>
+            <button id="admin-add-btn" class="btn btn-primary btn-sm" style="display:none;" onclick="openControllerModal()">➕ 장비 등록</button>
+            <span id="result-count" style="display:flex;align-items:center;font-size:13px;color:#94a3b8;padding:0 4px;"></span>
           </div>
         </div>
 
-        <!-- 테이블 -->
-        <div class="table-section has-mobile-list">
+        <div class="table-section">
           <div class="table-header">
             <h2>📋 <span id="list-title">장비 목록</span></h2>
-            <div style="display:flex;gap:8px">
+            <div style="display:flex;gap:8px;">
               <button class="btn btn-secondary btn-sm" onclick="loadData()">🔄 새로고침</button>
-              <div id="admin-add-btn" style="display:none">
-                <button class="btn btn-primary btn-sm" onclick="openAddModal()">➕ 장비 등록</button>
-              </div>
             </div>
           </div>
 
@@ -115,7 +71,7 @@
               <thead>
                 <tr>
                   <th>제어기명 / 시리얼</th>
-                  <th id="th-customer" style="display:none">고객사</th>
+                  <th id="th-customer" style="display:none;">고객사</th>
                   <th>설치 위치</th>
                   <th>상태</th>
                   <th>눈 감지</th>
@@ -123,31 +79,27 @@
                   <th>온도</th>
                   <th>잔여 AS</th>
                   <th>마지막 통신</th>
+                  <th id="th-actions" style="display:none;">관리</th>
                 </tr>
               </thead>
               <tbody id="controllers-tbody">
-                <tr><td colspan="9" style="text-align:center;padding:40px;color:#64748b">
-                  <div class="loading-spinner" style="margin:0 auto 10px"></div><br>로딩 중...
-                </td></tr>
+                <tr><td colspan="10" style="text-align:center;padding:40px;color:#64748b;"><div class="loading-spinner" style="margin:0 auto 10px"></div><br>로딩 중...</td></tr>
               </tbody>
             </table>
           </div>
-          <div id="controllers-mobile-list" class="mobile-record-list"></div>
 
-          <div id="empty-state" class="hidden" style="padding:60px 20px;text-align:center;color:#64748b">
-            <div style="font-size:48px;margin-bottom:12px">📭</div>
-            <div style="font-size:16px;font-weight:600;margin-bottom:8px">장비가 없습니다</div>
-            <div style="font-size:14px">검색 조건을 변경해보세요.</div>
+          <div id="empty-state" class="hidden" style="padding:60px 20px;text-align:center;color:#64748b;">
+            <div style="font-size:48px;margin-bottom:12px;">📭</div>
+            <div style="font-size:16px;font-weight:600;margin-bottom:8px;">장비가 없습니다</div>
+            <div style="font-size:14px;">검색 조건을 변경해보세요.</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 토스트 -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- 확인 모달 -->
   <div id="confirm-modal" class="modal-backdrop">
     <div class="modal-box">
       <div class="modal-header">
@@ -165,87 +117,316 @@
     </div>
   </div>
 
+  <div id="controller-modal" class="modal-backdrop">
+    <div class="modal-box" style="max-width:900px;">
+      <div class="modal-header">
+        <div class="modal-title" id="controller-modal-title">장비 등록</div>
+        <button class="modal-close" onclick="closeModal('controller-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:14px;">
+          <div>
+            <label class="form-label">고객사 *</label>
+            <select id="form-customer-id" class="form-select"></select>
+          </div>
+          <div>
+            <label class="form-label">장비명 *</label>
+            <input id="form-controller-name" class="form-input" type="text" placeholder="예: 춘천 1번 제어기">
+          </div>
+          <div>
+            <label class="form-label">시리얼 번호 *</label>
+            <input id="form-serial-no" class="form-input" type="text" placeholder="예: HL-CTRL-001">
+          </div>
+          <div>
+            <label class="form-label">설치 위치명 *</label>
+            <input id="form-install-location" class="form-input" type="text" placeholder="예: 춘천IC 진입로">
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label class="form-label">설치 주소 *</label>
+            <input id="form-install-address" class="form-input" type="text" placeholder="예: 강원특별자치도 춘천시 ...">
+          </div>
+          <div>
+            <label class="form-label">위도</label>
+            <input id="form-latitude" class="form-input" type="number" step="0.000001" placeholder="예: 37.8813">
+          </div>
+          <div>
+            <label class="form-label">경도</label>
+            <input id="form-longitude" class="form-input" type="number" step="0.000001" placeholder="예: 127.7298">
+          </div>
+          <div>
+            <label class="form-label">AS 만료일</label>
+            <input id="form-as-expire-at" class="form-input" type="date">
+          </div>
+          <div>
+            <label class="form-label">운전 모드</label>
+            <select id="form-heater-mode" class="form-select">
+              <option value="auto">auto</option>
+              <option value="manual">manual</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">눈 감지 임계값</label>
+            <input id="form-snow-threshold" class="form-input" type="number" min="0" max="1" step="0.01" value="0.8">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input id="form-allow-customer-control" type="checkbox" checked>
+            <label for="form-allow-customer-control">고객사 제어 허용</label>
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label class="form-label">카메라 URL</label>
+            <input id="form-camera-url" class="form-input" type="text" placeholder="예: http://device-ip/stream.mjpg">
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label class="form-label">장비 API Base URL *</label>
+            <input id="form-device-api-base" class="form-input" type="text" placeholder="예: http://device-ip:8000/api/v1">
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label class="form-label">비고</label>
+            <textarea id="form-note" class="form-textarea" placeholder="메모를 입력하세요."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('controller-modal')">취소</button>
+        <button class="btn btn-primary" id="controller-save-btn">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .form-label { display:block; font-size:13px; color:#94a3b8; margin-bottom:6px; font-weight:600; }
+    .form-input, .form-select, .form-textarea {
+      width:100%; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-primary);
+      border-radius:10px; padding:11px 12px; outline:none; font-size:14px;
+    }
+    .compact-select { min-width:170px; }
+    .form-textarea { min-height:100px; resize:vertical; }
+    .table-action-buttons { display:flex; gap:6px; flex-wrap:wrap; }
+    .table-action-buttons .btn { white-space:nowrap; }
+    @media (max-width: 900px) {
+      #controller-modal .modal-body > div { grid-template-columns:1fr !important; }
+    }
+  </style>
+
   <script src="js/app.js"></script>
   <script>
     let session = null;
     let allControllers = [];
     let allCustomers = [];
     let filtered = [];
+    let editingControllerId = null;
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function openModal(id) {
+      const el = $(id);
+      if (el) el.style.display = 'flex';
+    }
+
+    function showConfirm(message, onConfirm, title = '확인') {
+      document.querySelector('#confirm-modal .confirm-title').textContent = title;
+      document.querySelector('#confirm-modal .confirm-msg').textContent = message;
+      const okBtn = $('confirm-ok-btn');
+      okBtn.onclick = () => {
+        closeModal('confirm-modal');
+        onConfirm();
+      };
+      openModal('confirm-modal');
+    }
+
+    function customerNameById(customerId) {
+      const customer = allCustomers.find(item => String(item.id) === String(customerId));
+      return customer?.company_name || String(customerId || '-');
+    }
+
+    function fillCustomerOptions(selectedId = '') {
+      const select = $('form-customer-id');
+      select.innerHTML = '<option value="">고객사를 선택하세요</option>';
+      allCustomers.forEach(customer => {
+        select.innerHTML += `<option value="${customer.id}">${customer.company_name}</option>`;
+      });
+      select.value = selectedId ? String(selectedId) : '';
+    }
+
+    function fillControllerForm(controller = null) {
+      fillCustomerOptions(controller?.customer_id || '');
+      $('form-controller-name').value = controller?.controller_name || '';
+      $('form-serial-no').value = controller?.serial_no || '';
+      $('form-install-address').value = controller?.install_address || '';
+      $('form-install-location').value = controller?.install_location || '';
+      $('form-latitude').value = controller?.latitude ?? '';
+      $('form-longitude').value = controller?.longitude ?? '';
+      $('form-as-expire-at').value = controller?.as_expire_at || '';
+      $('form-heater-mode').value = controller?.heater_mode || 'auto';
+      $('form-snow-threshold').value = controller?.snow_threshold ?? 0.8;
+      $('form-camera-url').value = controller?.camera_url || '';
+      $('form-device-api-base').value = controller?.device_api_base || '';
+      $('form-allow-customer-control').checked = controller?.allow_customer_control !== false;
+      $('form-note').value = controller?.note || '';
+    }
+
+    function getControllerPayloadFromForm() {
+      const latitude = $('form-latitude').value.trim();
+      const longitude = $('form-longitude').value.trim();
+      const thresholdRaw = $('form-snow-threshold').value.trim();
+      return {
+        customer_id: Number($('form-customer-id').value),
+        controller_name: $('form-controller-name').value.trim(),
+        serial_no: $('form-serial-no').value.trim(),
+        install_address: $('form-install-address').value.trim(),
+        install_location: $('form-install-location').value.trim(),
+        latitude: latitude ? Number(latitude) : null,
+        longitude: longitude ? Number(longitude) : null,
+        as_expire_at: $('form-as-expire-at').value || null,
+        camera_url: $('form-camera-url').value.trim() || null,
+        device_api_base: $('form-device-api-base').value.trim(),
+        heater_mode: $('form-heater-mode').value,
+        snow_threshold: thresholdRaw ? Number(thresholdRaw) : 0.8,
+        allow_customer_control: $('form-allow-customer-control').checked,
+        note: $('form-note').value.trim() || ''
+      };
+    }
+
+    function validateControllerPayload(payload) {
+      if (!payload.customer_id || !payload.controller_name || !payload.serial_no || !payload.install_address || !payload.install_location || !payload.device_api_base) {
+        throw new Error('필수 항목을 모두 입력해주세요.');
+      }
+      if (payload.latitude !== null && Number.isNaN(payload.latitude)) throw new Error('위도 값을 확인해주세요.');
+      if (payload.longitude !== null && Number.isNaN(payload.longitude)) throw new Error('경도 값을 확인해주세요.');
+      if (Number.isNaN(payload.snow_threshold)) throw new Error('눈 감지 임계값을 확인해주세요.');
+    }
+
+    function openControllerModal(controllerId = null) {
+      editingControllerId = controllerId;
+      const controller = controllerId ? allControllers.find(item => String(item.id) === String(controllerId)) : null;
+      $('controller-modal-title').textContent = controller ? '장비 수정' : '장비 등록';
+      $('controller-save-btn').textContent = controller ? '수정 저장' : '등록';
+      fillControllerForm(controller || null);
+      openModal('controller-modal');
+    }
+
+    async function saveController() {
+      const saveBtn = $('controller-save-btn');
+      const prevText = saveBtn.textContent;
+      saveBtn.disabled = true;
+      saveBtn.textContent = '저장 중...';
+
+      try {
+        const payload = getControllerPayloadFromForm();
+        validateControllerPayload(payload);
+
+        if (editingControllerId) {
+          await API.updateController(editingControllerId, payload);
+          Utils.toast('수정 완료', '장비 정보가 수정되었습니다.', 'success');
+        } else {
+          await API.createController(payload);
+          Utils.toast('등록 완료', '장비가 등록되었습니다.', 'success');
+        }
+
+        closeModal('controller-modal');
+        await loadData();
+      } catch (error) {
+        Utils.toast('저장 실패', error.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = prevText;
+      }
+    }
+
+    function removeController(controllerId) {
+      const controller = allControllers.find(item => String(item.id) === String(controllerId));
+      if (!controller) return;
+      showConfirm(`'${controller.controller_name}' 장비를 삭제하시겠습니까?\n연결된 이벤트/제어 이력도 함께 정리될 수 있습니다.`, async () => {
+        try {
+          await API.deleteController(controllerId);
+          Utils.toast('삭제 완료', '장비가 삭제되었습니다.', 'success');
+          await loadData();
+        } catch (error) {
+          Utils.toast('삭제 실패', error.message, 'error');
+        }
+      }, '장비 삭제');
+    }
 
     async function init() {
       session = Auth.requireAuth();
       if (!session) return;
 
-      document.getElementById('sidebar-placeholder').innerHTML = renderSidebar(session, 'controllers');
+      $('sidebar-placeholder').innerHTML = renderSidebar(session, 'controllers');
 
       if (session.role === 'admin') {
-        document.getElementById('list-title').textContent = '전체 장비 목록';
-        document.getElementById('th-customer').style.display = '';
-        document.getElementById('admin-filter-wrap').style.display = '';
-        document.getElementById('admin-add-btn').style.display = '';
+        $('list-title').textContent = '전체 장비 목록';
+        $('th-customer').style.display = '';
+        $('admin-filter-wrap').style.display = '';
+        $('admin-add-btn').style.display = '';
+        $('th-actions').style.display = '';
       }
 
+      $('controller-save-btn').addEventListener('click', saveController);
       await loadData();
-
-      const stats = Utils.calcStats(allControllers);
-      document.getElementById('header-placeholder').innerHTML = renderHeader(
-        session.role === 'admin' ? '장비 목록' : '내 장비 목록',
-        `총 ${allControllers.length}대`,
-        [
-          { type: 'online', label: '온라인', value: stats.online },
-          { type: 'warning', label: '경고', value: stats.warning },
-          { type: 'danger', label: 'AS임박', value: stats.asUrgent }
-        ]
-      );
-
-      document.getElementById('stats-container').innerHTML = renderStatsCards(stats, session);
-
       startClock();
 
-      // URL 쿼리파라미터에서 고객사 필터 읽기
       const params = new URLSearchParams(window.location.search);
       const customerParam = params.get('customer');
       if (customerParam && session.role === 'admin') {
-        setTimeout(() => {
-          const sel = document.getElementById('filter-customer');
-          if (sel) { sel.value = customerParam; filterTable(); }
-        }, 100);
+        const select = $('filter-customer');
+        if (select) {
+          select.value = customerParam;
+          filterTable();
+        }
       }
-
-      renderTable();
     }
 
     async function loadData() {
-      [allControllers, allCustomers] = await Promise.all([
-        API.getControllers(session),
-        API.getCustomers()
-      ]);
+      try {
+        [allControllers, allCustomers] = await Promise.all([
+          API.getControllers(session),
+          API.getCustomers()
+        ]);
 
-      // 고객사 필터 옵션 채우기
-      if (session.role === 'admin') {
-        const sel = document.getElementById('filter-customer');
-        sel.innerHTML = '<option value="">전체 고객사</option>';
-        allCustomers.forEach(c => {
-          sel.innerHTML += `<option value="${c.id}">${c.company_name}</option>`;
-        });
+        if (session.role === 'admin') {
+          const select = $('filter-customer');
+          const currentValue = select.value;
+          select.innerHTML = '<option value="">전체 고객사</option>';
+          allCustomers.forEach(customer => {
+            select.innerHTML += `<option value="${customer.id}">${customer.company_name}</option>`;
+          });
+          if ([...select.options].some(option => option.value === currentValue)) {
+            select.value = currentValue;
+          }
+        }
+
+        const stats = Utils.calcStats(allControllers);
+        $('header-placeholder').innerHTML = renderHeader(
+          session.role === 'admin' ? '장비 목록' : '내 장비 목록',
+          `총 ${allControllers.length}대`,
+          [
+            { type: 'online', label: '온라인', value: stats.online },
+            { type: 'warning', label: '경고', value: stats.warning },
+            { type: 'danger', label: 'AS임박', value: stats.asUrgent }
+          ]
+        );
+        $('stats-container').innerHTML = renderStatsCards(stats, session);
+        startClock();
+        filterTable();
+      } catch (error) {
+        Utils.toast('조회 실패', error.message, 'error');
       }
-
-      filterTable();
     }
 
     function filterTable() {
-      const search = document.getElementById('search-input').value.toLowerCase();
-      const status = document.getElementById('filter-status').value;
-      const heater = document.getElementById('filter-heater').value;
-      const asFilter = document.getElementById('filter-as').value;
-      const customer = session.role === 'admin'
-        ? document.getElementById('filter-customer').value : null;
+      const search = $('search-input').value.toLowerCase();
+      const status = $('filter-status').value;
+      const heater = $('filter-heater').value;
+      const asFilter = $('filter-as').value;
+      const customer = session.role === 'admin' ? $('filter-customer').value : null;
 
       filtered = allControllers.filter(ctrl => {
         if (status && ctrl.status !== status) return false;
         if (heater === 'on' && !ctrl.heater_on) return false;
         if (heater === 'off' && ctrl.heater_on) return false;
-        if (customer && ctrl.customer_id !== customer) return false;
+        if (customer && String(ctrl.customer_id) !== String(customer)) return false;
 
         if (asFilter) {
           const days = Utils.calcAsRemaining(ctrl.as_expire_at);
@@ -256,12 +437,7 @@
         }
 
         if (search) {
-          const haystack = [
-            ctrl.controller_name,
-            ctrl.install_address,
-            ctrl.install_location,
-            ctrl.serial_no
-          ].join(' ').toLowerCase();
+          const haystack = [ctrl.controller_name, ctrl.install_address, ctrl.install_location, ctrl.serial_no].join(' ').toLowerCase();
           if (!haystack.includes(search)) return false;
         }
 
@@ -272,75 +448,67 @@
     }
 
     function resetFilters() {
-      document.getElementById('search-input').value = '';
-      document.getElementById('filter-status').value = '';
-      document.getElementById('filter-heater').value = '';
-      document.getElementById('filter-as').value = '';
-      if (session.role === 'admin') document.getElementById('filter-customer').value = '';
+      $('search-input').value = '';
+      $('filter-status').value = '';
+      $('filter-heater').value = '';
+      $('filter-as').value = '';
+      if (session.role === 'admin') $('filter-customer').value = '';
       filterTable();
     }
 
     function renderTable() {
-      const tbody = document.getElementById('controllers-tbody');
-      const emptyState = document.getElementById('empty-state');
-      const resultCount = document.getElementById('result-count');
+      const tbody = $('controllers-tbody');
+      const emptyState = $('empty-state');
+      const resultCount = $('result-count');
       const isAdmin = session.role === 'admin';
-
       resultCount.textContent = `${filtered.length}개 장비`;
 
-      if (filtered.length === 0) {
+      if (!filtered.length) {
         tbody.innerHTML = '';
         emptyState.classList.remove('hidden');
-        renderMobileCards();
         return;
       }
 
       emptyState.classList.add('hidden');
 
-      tbody.innerHTML = filtered.map(ctrl => renderControllerRow(ctrl, allCustomers, isAdmin)).join('');
-      renderMobileCards();
-    }
-
-
-
-    function renderMobileCards() {
-      const container = document.getElementById('controllers-mobile-list');
-      const isAdmin = session.role === 'admin';
-      if (!container) return;
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="mobile-record-card"><div class="mobile-record-card__title">표시할 장비가 없습니다</div><div class="mobile-record-card__sub">필터 조건을 변경해 보세요.</div></div>`;
-        return;
-      }
-
-      container.innerHTML = filtered.map(ctrl => {
-        const customer = allCustomers.find(item => String(item.id) === String(ctrl.customer_id));
-        const temp = typeof ctrl.temperature === 'number' ? `${ctrl.temperature.toFixed(1)}°C` : '-';
-        const asDays = Utils.calcAsRemaining(ctrl.as_expire_at);
-        const asText = asDays === null ? '-' : (asDays < 0 ? `만료 ${Math.abs(asDays)}일` : `${asDays}일`);
+      tbody.innerHTML = filtered.map(ctrl => {
+        const temp = typeof ctrl.temperature === 'number' ? `${Number(ctrl.temperature).toFixed(1)}℃` : '-';
         return `
-          <div class="mobile-record-card" onclick="location.href='detail.html?id=${ctrl.id}'">
-            <div class="mobile-record-card__top">
-              <div>
-                <div class="mobile-record-card__title">${ctrl.controller_name || '-'}</div>
-                <div class="mobile-record-card__sub">${ctrl.serial_no || '-'}${isAdmin && customer ? ` · ${customer.company_name}` : ''}</div>
-                <div class="mobile-record-card__sub">${ctrl.install_location || ctrl.install_address || '-'}</div>
-              </div>
-              ${Utils.getStatusBadge(ctrl.status)}
-            </div>
-            <div class="mobile-record-grid">
-              <div class="mobile-record-item"><div class="label">눈 감지</div><div class="value">${ctrl.snow_detected ? '감지' : '없음'}</div></div>
-              <div class="mobile-record-item"><div class="label">히터</div><div class="value">${ctrl.heater_on ? 'ON' : 'OFF'}</div></div>
-              <div class="mobile-record-item"><div class="label">온도</div><div class="value">${temp}</div></div>
-              <div class="mobile-record-item"><div class="label">잔여 AS</div><div class="value">${asText}</div></div>
-            </div>
-            <div class="mobile-record-card__sub" style="margin-top:12px">마지막 통신 ${Utils.timeAgo(ctrl.last_seen_at)}</div>
-          </div>
+          <tr onclick="location.href='detail.html?id=${ctrl.id}'" style="cursor:pointer;">
+            <td>
+              <div style="font-weight:700;">${ctrl.controller_name || '-'}</div>
+              <div style="font-size:12px;color:#94a3b8;font-family:monospace;">${ctrl.serial_no || '-'}</div>
+            </td>
+            ${isAdmin ? `<td>${customerNameById(ctrl.customer_id)}</td>` : ''}
+            <td>
+              <div>${ctrl.install_location || '-'}</div>
+              <div style="font-size:12px;color:#94a3b8;">${ctrl.install_address || '-'}</div>
+            </td>
+            <td>${Utils.getStatusBadge(ctrl.status)}</td>
+            <td>${ctrl.snow_detected ? '❄️ 감지' : '✅ 없음'}</td>
+            <td>${ctrl.heater_on ? '🔥 ON' : 'OFF'}</td>
+            <td>${temp}</td>
+            <td>${(function(){
+              const days = Utils.calcAsRemaining(ctrl.as_expire_at);
+              const status = Utils.getAsStatus(days);
+              if (status === 'unknown') return '<span class="badge badge-offline">-</span>';
+              if (status === 'expired') return '<span class="badge badge-danger">만료</span>';
+              if (status === 'urgent') return `<span class="badge badge-danger">${days}일</span>`;
+              if (status === 'caution') return `<span class="badge badge-warning">${days}일</span>`;
+              return `<span class="badge badge-online">${days}일</span>`;
+            })()}</td>
+            <td style="font-size:12px;color:#64748b;">${Utils.timeAgo(ctrl.last_seen_at)}</td>
+            ${isAdmin ? `
+              <td onclick="event.stopPropagation();">
+                <div class="table-action-buttons">
+                  <button class="btn btn-secondary btn-sm" onclick="openControllerModal('${ctrl.id}')">수정</button>
+                  <button class="btn btn-danger btn-sm" onclick="removeController('${ctrl.id}')">삭제</button>
+                </div>
+              </td>
+            ` : ''}
+          </tr>
         `;
       }).join('');
-    }
-
-    function openAddModal() {
-      Utils.toast('준비 중', '장비 등록 기능은 준비 중입니다.', 'info');
     }
 
     init();
