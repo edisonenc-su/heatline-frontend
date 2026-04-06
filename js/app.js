@@ -479,6 +479,30 @@
   }
 
 
+  function renderStatsCards(stats = {}, session = {}) {
+    const cards = [
+      ["total", "📦", stats.total ?? 0, "전체 장비"],
+      ["online", "🟢", stats.online ?? 0, "온라인"],
+      ["warning", "🟡", (stats.warning ?? 0) + (stats.error ?? 0), "주의/오류"],
+      ["danger", "🛠️", stats.asUrgent ?? 0, "AS 임박"],
+      ["info", "🔥", stats.heaterOn ?? 0, "히터 작동"],
+      ["info", "❄️", stats.snowDetected ?? 0, "눈 감지"]
+    ];
+
+    return `
+      <div class="stats-grid" style="margin-bottom:24px">
+        ${cards.map(([klass, icon, value, label]) => `
+          <div class="stat-card ${klass}">
+            <div class="stat-icon">${icon}</div>
+            <div class="stat-value">${value}</div>
+            <div class="stat-label">${label}</div>
+            <div style="font-size:11px;color:#a9bdd2;margin-top:8px">${session.role === 'admin' ? '전체 관제 기준' : '내 장비 기준'}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
   function renderControllerRow(ctrl, customers = [], isAdmin = false) {
     const customer = customers.find((item) => String(item.id) === String(ctrl.customer_id));
     const temp = typeof ctrl.temperature === "number" ? `${ctrl.temperature.toFixed(1)}°C` : "-";
