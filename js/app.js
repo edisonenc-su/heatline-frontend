@@ -393,6 +393,11 @@
       const result = await request(`/controllers/${id}`, { method: "PUT", body: payload });
       return result?.data ?? result;
     },
+    async issueProvisionKey(id, payload = {}) {
+      const result = await request(`/controllers/${id}/provision-key`, { method: "POST", body: payload });
+      return result?.data ?? result;
+    },
+
     async deleteController(id) {
       const result = await request(`/controllers/${id}`, { method: "DELETE" });
       return result?.data ?? result;
