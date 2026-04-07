@@ -367,14 +367,6 @@
     async getUsers() {
       return normalizeList(await request("/users"));
     },
-    async createUser(payload) {
-      const result = await request("/users", { method: "POST", body: payload });
-      return result?.data ?? result;
-    },
-    async updateUser(id, payload) {
-      const result = await request(`/users/${id}`, { method: "PUT", body: payload });
-      return result?.data ?? result;
-    },
     async getAll(tableName) {
       if (tableName === APP_TABLES.CUSTOMERS) return this.getCustomers();
       if (tableName === APP_TABLES.CONTROLLERS) return this.getControllers(Auth.getSession());

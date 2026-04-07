@@ -176,46 +176,9 @@
             <label class="form-label">카메라 URL</label>
             <input id="form-camera-url" class="form-input" type="text" placeholder="예: http://device-ip/stream.mjpg">
           </div>
-          <div>
-            <label class="form-label">연결 방식</label>
-            <select id="form-pairing-mode" class="form-select">
-              <option value="manual">수동 연결</option>
-              <option value="auto-provision">자동 프로비저닝</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label">페어링 상태</label>
-            <input id="form-pairing-status" class="form-input" type="text" readonly placeholder="pending / claimed / active">
-          </div>
-          <div>
-            <label class="form-label">마지막 Claim 시각</label>
-            <input id="form-last-claimed-at" class="form-input" type="text" readonly placeholder="-">
-          </div>
           <div style="grid-column:1 / -1;">
-            <label class="form-label">장비 API Base URL</label>
+            <label class="form-label">장비 API Base URL *</label>
             <input id="form-device-api-base" class="form-input" type="text" placeholder="예: http://device-ip:8000/api/v1">
-            <div style="font-size:12px;color:#94a3b8;margin-top:6px;">
-              자동 프로비저닝 모드에서는 비워둬도 됩니다. Pi가 claim 후 자동 등록합니다.
-            </div>
-          </div>
-          <div style="grid-column:1 / -1;padding:12px;border:1px dashed var(--border);border-radius:12px;background:rgba(15,23,42,.35);">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-              <div>
-                <div style="font-size:13px;font-weight:700;color:var(--text-primary);">자동 프로비저닝</div>
-                <div style="font-size:12px;color:#94a3b8;margin-top:4px;">저장 후 프로비전 키를 발급해서 Pi의 PROVISION_KEY 값으로 넣습니다.</div>
-              </div>
-              <button type="button" class="btn btn-secondary btn-sm" id="issue-provision-key-btn" onclick="issueProvisionKey()">🔑 프로비전 키 발급</button>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 220px;gap:12px;margin-top:12px;">
-              <div>
-                <label class="form-label">발급된 프로비전 키</label>
-                <input id="form-provision-key" class="form-input" type="text" readonly placeholder="저장 후 발급">
-              </div>
-              <div>
-                <label class="form-label">키 만료 시각</label>
-                <input id="form-provision-key-expires-at" class="form-input" type="text" readonly placeholder="-">
-              </div>
-            </div>
           </div>
           <div style="grid-column:1 / -1;">
             <label class="form-label">비고</label>
@@ -245,7 +208,7 @@
     }
   </style>
 
-  <script src="js/app.js?v=20260407-1"></script>
+  <script src="js/app.js"></script>
   <script>
     let session = null;
     let allControllers = [];
@@ -300,11 +263,6 @@
       $('form-snow-threshold').value = controller?.snow_threshold ?? 0.8;
       $('form-camera-url').value = controller?.camera_url || '';
       $('form-device-api-base').value = controller?.device_api_base || '';
-      $('form-pairing-mode').value = controller?.device_api_base ? 'manual' : 'auto-provision';
-      $('form-pairing-status').value = controller?.pairing_status || 'pending';
-      $('form-last-claimed-at').value = controller?.last_claimed_at || '';
-      $('form-provision-key').value = '';
-      $('form-provision-key-expires-at').value = controller?.provision_key_expires_at || '';
       $('form-allow-customer-control').checked = controller?.allow_customer_control !== false;
       $('form-note').value = controller?.note || '';
     }
@@ -313,8 +271,6 @@
       const latitude = $('form-latitude').value.trim();
       const longitude = $('form-longitude').value.trim();
       const thresholdRaw = $('form-snow-threshold').value.trim();
-      const pairingMode = $('form-pairing-mode').value;
-      const deviceApiBase = $('form-device-api-base').value.trim();
       return {
         customer_id: Number($('form-customer-id').value),
         controller_name: $('form-controller-name').value.trim(),
@@ -325,7 +281,7 @@
         longitude: longitude ? Number(longitude) : null,
         as_expire_at: $('form-as-expire-at').value || null,
         camera_url: $('form-camera-url').value.trim() || null,
-        device_api_base: pairingMode === 'manual' ? (deviceApiBase || null) : null,
+        device_api_base: $('form-device-api-base').value.trim(),
         heater_mode: $('form-heater-mode').value,
         snow_threshold: thresholdRaw ? Number(thresholdRaw) : 0.8,
         allow_customer_control: $('form-allow-customer-control').checked,
@@ -334,33 +290,12 @@
     }
 
     function validateControllerPayload(payload) {
-      if (!payload.customer_id || !payload.controller_name || !payload.serial_no || !payload.install_address || !payload.install_location) {
+      if (!payload.customer_id || !payload.controller_name || !payload.serial_no || !payload.install_address || !payload.install_location || !payload.device_api_base) {
         throw new Error('필수 항목을 모두 입력해주세요.');
-      }
-      const pairingMode = $('form-pairing-mode').value;
-      if (pairingMode === 'manual' && !payload.device_api_base) {
-        throw new Error('수동 연결 모드에서는 장비 API Base URL 이 필요합니다.');
       }
       if (payload.latitude !== null && Number.isNaN(payload.latitude)) throw new Error('위도 값을 확인해주세요.');
       if (payload.longitude !== null && Number.isNaN(payload.longitude)) throw new Error('경도 값을 확인해주세요.');
       if (Number.isNaN(payload.snow_threshold)) throw new Error('눈 감지 임계값을 확인해주세요.');
-    }
-
-    async function issueProvisionKey() {
-      if (!editingControllerId) {
-        Utils.toast('먼저 저장 필요', '장비를 먼저 저장한 뒤 프로비전 키를 발급하세요.', 'warning');
-        return;
-      }
-
-      try {
-        const result = await API.issueProvisionKey(editingControllerId, { ttl_minutes: 30 });
-        $('form-provision-key').value = result.provision_key || '';
-        $('form-provision-key-expires-at').value = result.provision_key_expires_at || '';
-        $('form-pairing-status').value = result.pairing_status || 'pending';
-        Utils.toast('발급 완료', '프로비전 키가 발급되었습니다. Pi의 PROVISION_KEY 값으로 넣으세요.', 'success');
-      } catch (error) {
-        Utils.toast('발급 실패', error.message, 'error');
-      }
     }
 
     function openControllerModal(controllerId = null) {
@@ -382,28 +317,15 @@
         const payload = getControllerPayloadFromForm();
         validateControllerPayload(payload);
 
-        let saved;
         if (editingControllerId) {
-          saved = await API.updateController(editingControllerId, payload);
+          await API.updateController(editingControllerId, payload);
+          Utils.toast('수정 완료', '장비 정보가 수정되었습니다.', 'success');
         } else {
-          saved = await API.createController(payload);
+          await API.createController(payload);
+          Utils.toast('등록 완료', '장비가 등록되었습니다.', 'success');
         }
 
-        const savedId = saved?.id || saved?.controller_id || editingControllerId;
-        if (savedId) editingControllerId = savedId;
-
-        const pairingMode = $('form-pairing-mode').value;
-        if (pairingMode === 'auto-provision' && editingControllerId) {
-          const provision = await API.issueProvisionKey(editingControllerId, { ttl_minutes: 30 });
-          $('form-provision-key').value = provision.provision_key || '';
-          $('form-provision-key-expires-at').value = provision.provision_key_expires_at || '';
-          $('form-pairing-status').value = provision.pairing_status || 'pending';
-          Utils.toast('저장 및 키 발급 완료', '장비 저장 후 프로비전 키까지 발급되었습니다. Pi의 PROVISION_KEY 값으로 입력하세요.', 'success');
-        } else {
-          Utils.toast(editingControllerId ? '수정 완료' : '등록 완료', editingControllerId ? '장비 정보가 수정되었습니다.' : '장비가 등록되었습니다.', 'success');
-          closeModal('controller-modal');
-        }
-
+        closeModal('controller-modal');
         await loadData();
       } catch (error) {
         Utils.toast('저장 실패', error.message, 'error');
