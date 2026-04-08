@@ -400,6 +400,30 @@
     async deleteController(id) {
       const result = await request(`/controllers/${id}`, { method: "DELETE" });
       return result?.data ?? result;
+    },
+    async getControllerManualSchedules(id) {
+      const result = await request(`/controllers/${id}/manual-schedules`);
+      return result?.data?.items ?? result?.items ?? [];
+    },
+    async getControllerManualScheduleSummary(id) {
+      const result = await request(`/controllers/${id}/manual-schedules/summary`);
+      return result?.data ?? result;
+    },
+    async createControllerManualSchedule(id, payload) {
+      const result = await request(`/controllers/${id}/manual-schedules`, { method: "POST", body: payload });
+      return result?.data ?? result;
+    },
+    async updateControllerManualSchedule(id, scheduleId, payload) {
+      const result = await request(`/controllers/${id}/manual-schedules/${scheduleId}`, { method: "PUT", body: payload });
+      return result?.data ?? result;
+    },
+    async deleteControllerManualSchedule(id, scheduleId) {
+      const result = await request(`/controllers/${id}/manual-schedules/${scheduleId}`, { method: "DELETE" });
+      return result?.data ?? result;
+    },
+    async syncControllerManualSchedules(id) {
+      const result = await request(`/controllers/${id}/manual-schedules/sync`, { method: "POST" });
+      return result?.data ?? result;
     }
   };
 
@@ -418,6 +442,7 @@
     const items = [
       ["dashboard", "dashboard.html", "📊", "대시보드"],
       ["controllers", "controllers.html", "🖥️", "장비 목록"],
+      ["manual-schedules", "schedules.html", "🗓️", "수동 스케줄"],
       ["logs", "logs.html", "📜", "로그 / 이력"],
       ["events", "events.html", "🔔", "이벤트"],
       ...(session.role === "admin" ? [["customers", "customers.html", "🏢", "고객사 관리"]] : [])

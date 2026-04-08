@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d1b2a">
+  <title>수동 스케줄 관리 - 도로 열선 통합관제 시스템</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="sidebar-placeholder"></div>
+  <div id="toast-container" class="toast-container"></div>
+  <div class="app-layout">
+    <div class="main-content">
+      <div id="header-placeholder"></div>
+      <div class="page-body">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <select id="controller-select" class="form-select" style="min-width:260px;"></select>
+            <button class="btn btn-secondary btn-sm" onclick="reloadAll()">🔄 새로고침</button>
+            <button class="btn btn-secondary btn-sm" onclick="syncSchedules()">📡 Pi 재동기화</button>
+          </div>
+          <button class="btn btn-primary" onclick="openScheduleModal()">➕ 스케줄 추가</button>
+        </div>
+
+        <div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;">
+          <div class="stat-card info"><div class="stat-icon">🗓️</div><div class="stat-value" id="stat-total">0</div><div class="stat-label">전체 스케줄</div></div>
+          <div class="stat-card online"><div class="stat-icon">✅</div><div class="stat-value" id="stat-enabled">0</div><div class="stat-label">활성 스케줄</div></div>
+          <div class="stat-card warning"><div class="stat-icon">📴</div><div class="stat-value" id="stat-offline">0</div><div class="stat-label">오프라인 허용</div></div>
+          <div class="stat-card danger"><div class="stat-icon">🔥</div><div class="stat-value" id="stat-source">idle</div><div class="stat-label">현재 제어 소스</div></div>
+        </div>
+
+        <div class="table-section">
+          <div class="table-header">
+            <h2>🧩 수동 스케줄 목록</h2>
+            <div id="controller-runtime-badge" class="badge badge-offline">장비 미선택</div>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>유형</th>
+                  <th>시간/요일</th>
+                  <th>예열</th>
+                  <th>우선순위</th>
+                  <th>오프라인</th>
+                  <th>상태</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-tbody">
+                <tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">장비를 선택하세요.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="schedule-modal" class="modal-backdrop">
+    <div class="modal-box" style="max-width:900px;">
+      <div class="modal-header">
+        <div class="modal-title" id="schedule-modal-title">스케줄 추가</div>
+        <button class="modal-close" onclick="closeModal('schedule-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:14px;">
+          <div>
+            <label class="form-label">스케줄 이름 *</label>
+            <input id="schedule-name" class="form-input" type="text" placeholder="예: 평일 새벽 예열">
+          </div>
+          <div>
+            <label class="form-label">유형 *</label>
+            <select id="schedule-type" class="form-select" onchange="toggleScheduleType()">
+              <option value="weekly">주간 반복</option>
+              <option value="once">1회 실행</option>
+            </select>
+          </div>
+
+          <div id="weekly-fields" style="grid-column:1 / -1;display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:14px;">
+            <div>
+              <label class="form-label">요일 *</label>
+              <div id="weekday-wrap" class="weekday-wrap"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+              <div>
+                <label class="form-label">시작 시간 *</label>
+                <input id="schedule-start-time" class="form-input" type="time" value="05:00">
+              </div>
+              <div>
+                <label class="form-label">종료 시간 *</label>
+                <input id="schedule-end-time" class="form-input" type="time" value="08:00">
+              </div>
+            </div>
+          </div>
+
+          <div id="once-fields" style="grid-column:1 / -1;display:none;grid-template-columns:repeat(2, minmax(0, 1fr));gap:14px;">
+            <div>
+              <label class="form-label">시작 일시 *</label>
+              <input id="schedule-once-start" class="form-input" type="datetime-local">
+            </div>
+            <div>
+              <label class="form-label">종료 일시 *</label>
+              <input id="schedule-once-end" class="form-input" type="datetime-local">
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">예열 시간(분)</label>
+            <input id="schedule-preheat-minutes" class="form-input" type="number" min="0" value="30">
+          </div>
+          <div>
+            <label class="form-label">우선순위</label>
+            <input id="schedule-priority" class="form-input" type="number" min="0" value="50">
+          </div>
+          <div>
+            <label class="form-label">최저 온도 조건(℃)</label>
+            <input id="schedule-min-temperature" class="form-input" type="number" step="0.1" placeholder="예: 1.0">
+          </div>
+          <div>
+            <label class="form-label">최고 온도 조건(℃)</label>
+            <input id="schedule-max-temperature" class="form-input" type="number" step="0.1" placeholder="예: 5.0">
+          </div>
+          <div style="display:flex;gap:18px;align-items:center;grid-column:1 / -1;flex-wrap:wrap;">
+            <label style="display:flex;gap:8px;align-items:center;"><input id="schedule-enabled" type="checkbox" checked> 스케줄 활성화</label>
+            <label style="display:flex;gap:8px;align-items:center;"><input id="schedule-offline-enabled" type="checkbox" checked> 오프라인 시에도 실행</label>
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label class="form-label">비고</label>
+            <textarea id="schedule-note" class="form-textarea" placeholder="설치 위치/정책 메모"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('schedule-modal')">취소</button>
+        <button class="btn btn-primary" id="schedule-save-btn" onclick="saveSchedule()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .form-label { display:block; font-size:13px; color:#94a3b8; margin-bottom:6px; font-weight:600; }
+    .form-input, .form-select, .form-textarea { width:100%; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-primary); border-radius:10px; padding:11px 12px; outline:none; font-size:14px; }
+    .form-textarea { min-height:100px; resize:vertical; }
+    .weekday-wrap { display:flex; gap:8px; flex-wrap:wrap; }
+    .weekday-chip { background:#0f172a; border:1px solid #334155; color:#e2e8f0; border-radius:999px; padding:8px 12px; font-size:13px; cursor:pointer; user-select:none; }
+    .weekday-chip.active { background:#1d4ed8; border-color:#60a5fa; }
+    .mono { font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    @media (max-width: 900px) {
+      #schedule-modal .modal-body > div, #weekly-fields, #once-fields { grid-template-columns:1fr !important; }
+    }
+  </style>
+
+  <script src="js/app.js"></script>
+  <script>
+    let session = null;
+    let controllers = [];
+    let schedules = [];
+    let summary = null;
+    let editingScheduleId = null;
+    const weekdays = [
+      { value: 0, label: '일' },
+      { value: 1, label: '월' },
+      { value: 2, label: '화' },
+      { value: 3, label: '수' },
+      { value: 4, label: '목' },
+      { value: 5, label: '금' },
+      { value: 6, label: '토' }
+    ];
+
+    function $(id) { return document.getElementById(id); }
+    function selectedControllerId() { return $('controller-select').value; }
+    function currentController() { return controllers.find(item => String(item.id) === String(selectedControllerId())); }
+
+    function renderWeekdaySelector(values = [1,2,3,4,5]) {
+      $('weekday-wrap').innerHTML = weekdays.map(day => {
+        const active = values.includes(day.value) ? 'active' : '';
+        return `<button type="button" class="weekday-chip ${active}" data-value="${day.value}" onclick="toggleWeekday(${day.value}, event)">${day.label}</button>`;
+      }).join('');
+    }
+
+    function toggleWeekday(value, event) {
+      event.preventDefault();
+      const chip = event.currentTarget;
+      chip.classList.toggle('active');
+    }
+
+    function getSelectedWeekdays() {
+      return [...document.querySelectorAll('.weekday-chip.active')].map(el => Number(el.dataset.value)).sort((a,b) => a-b);
+    }
+
+    function formatWeekdays(values = []) {
+      if (!values.length) return '-';
+      return values.map(v => weekdays.find(day => day.value === v)?.label || v).join(', ');
+    }
+
+    function formatDateTimeLocal(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString('ko-KR');
+    }
+
+    function openScheduleModal(scheduleId = null) {
+      editingScheduleId = scheduleId;
+      const item = scheduleId ? schedules.find(row => String(row.id) === String(scheduleId)) : null;
+      $('schedule-modal-title').textContent = item ? '스케줄 수정' : '스케줄 추가';
+      $('schedule-name').value = item?.name || '';
+      $('schedule-type').value = item?.schedule_type || 'weekly';
+      $('schedule-start-time').value = item?.start_time || '05:00';
+      $('schedule-end-time').value = item?.end_time || '08:00';
+      $('schedule-once-start').value = item?.once_started_at ? item.once_started_at.slice(0,16) : '';
+      $('schedule-once-end').value = item?.once_ended_at ? item.once_ended_at.slice(0,16) : '';
+      $('schedule-preheat-minutes').value = item?.preheat_minutes ?? 30;
+      $('schedule-priority').value = item?.priority ?? 50;
+      $('schedule-min-temperature').value = item?.min_temperature ?? '';
+      $('schedule-max-temperature').value = item?.max_temperature ?? '';
+      $('schedule-enabled').checked = item?.enabled !== false;
+      $('schedule-offline-enabled').checked = item?.offline_enabled !== false;
+      $('schedule-note').value = item?.note || '';
+      renderWeekdaySelector(item?.days_of_week?.length ? item.days_of_week : [1,2,3,4,5]);
+      toggleScheduleType();
+      document.getElementById('schedule-modal').style.display = 'flex';
+    }
+
+    function toggleScheduleType() {
+      const type = $('schedule-type').value;
+      $('weekly-fields').style.display = type === 'weekly' ? 'grid' : 'none';
+      $('once-fields').style.display = type === 'once' ? 'grid' : 'none';
+    }
+
+    function buildPayload() {
+      const type = $('schedule-type').value;
+      return {
+        name: $('schedule-name').value.trim(),
+        schedule_type: type,
+        days_of_week: type === 'weekly' ? getSelectedWeekdays() : [],
+        start_time: type === 'weekly' ? $('schedule-start-time').value : null,
+        end_time: type === 'weekly' ? $('schedule-end-time').value : null,
+        once_started_at: type === 'once' && $('schedule-once-start').value ? new Date($('schedule-once-start').value).toISOString() : null,
+        once_ended_at: type === 'once' && $('schedule-once-end').value ? new Date($('schedule-once-end').value).toISOString() : null,
+        preheat_minutes: Number($('schedule-preheat-minutes').value || 0),
+        priority: Number($('schedule-priority').value || 50),
+        min_temperature: $('schedule-min-temperature').value === '' ? null : Number($('schedule-min-temperature').value),
+        max_temperature: $('schedule-max-temperature').value === '' ? null : Number($('schedule-max-temperature').value),
+        enabled: $('schedule-enabled').checked,
+        offline_enabled: $('schedule-offline-enabled').checked,
+        note: $('schedule-note').value.trim()
+      };
+    }
+
+    function validatePayload(payload) {
+      if (!payload.name) throw new Error('스케줄 이름을 입력해주세요.');
+      if (payload.schedule_type === 'weekly') {
+        if (!payload.days_of_week.length) throw new Error('요일을 1개 이상 선택해주세요.');
+        if (!payload.start_time || !payload.end_time) throw new Error('시작/종료 시간을 입력해주세요.');
+      }
+      if (payload.schedule_type === 'once') {
+        if (!payload.once_started_at || !payload.once_ended_at) throw new Error('1회 실행 시작/종료 일시를 입력해주세요.');
+      }
+    }
+
+    async function saveSchedule() {
+      const controllerId = selectedControllerId();
+      if (!controllerId) return Utils.toast('저장 실패', '장비를 먼저 선택해주세요.', 'error');
+      const payload = buildPayload();
+      try {
+        validatePayload(payload);
+        if (editingScheduleId) {
+          await API.updateControllerManualSchedule(controllerId, editingScheduleId, payload);
+          Utils.toast('수정 완료', '수동 스케줄을 수정했습니다.', 'success');
+        } else {
+          await API.createControllerManualSchedule(controllerId, payload);
+          Utils.toast('등록 완료', '수동 스케줄을 등록했습니다.', 'success');
+        }
+        closeModal('schedule-modal');
+        await reloadAll();
+      } catch (error) {
+        Utils.toast('저장 실패', error.message, 'error');
+      }
+    }
+
+    async function deleteSchedule(scheduleId) {
+      const controllerId = selectedControllerId();
+      if (!controllerId) return;
+      if (!confirm('정말 삭제하시겠습니까?')) return;
+      try {
+        await API.deleteControllerManualSchedule(controllerId, scheduleId);
+        Utils.toast('삭제 완료', '수동 스케줄을 삭제했습니다.', 'success');
+        await reloadAll();
+      } catch (error) {
+        Utils.toast('삭제 실패', error.message, 'error');
+      }
+    }
+
+    async function syncSchedules() {
+      const controllerId = selectedControllerId();
+      if (!controllerId) return Utils.toast('동기화 실패', '장비를 먼저 선택해주세요.', 'error');
+      try {
+        await API.syncControllerManualSchedules(controllerId);
+        Utils.toast('동기화 완료', 'Pi 수동 스케줄을 재동기화했습니다.', 'success');
+        await reloadAll();
+      } catch (error) {
+        Utils.toast('동기화 실패', error.message, 'error');
+      }
+    }
+
+    function renderSummary() {
+      $('stat-total').textContent = summary?.total ?? 0;
+      $('stat-enabled').textContent = summary?.enabled ?? 0;
+      $('stat-offline').textContent = summary?.offline_enabled ?? 0;
+      $('stat-source').textContent = summary?.current_control_source || 'idle';
+      $('controller-runtime-badge').className = `badge ${summary?.offline_mode ? 'badge-warning' : 'badge-online'}`;
+      $('controller-runtime-badge').textContent = summary ? `${summary.offline_mode ? '오프라인 운영중' : '중앙 연결'} · ${summary.active_schedule_name || '활성 스케줄 없음'}` : '장비 미선택';
+    }
+
+    function renderTable() {
+      const tbody = $('schedule-tbody');
+      if (!selectedControllerId()) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">장비를 선택하세요.</td></tr>';
+        return;
+      }
+      if (!schedules.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;">등록된 수동 스케줄이 없습니다.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = schedules.map(item => `
+        <tr>
+          <td>
+            <div style="font-weight:700;">${item.name}</div>
+            <div style="font-size:12px;color:#94a3b8;">${item.note || '-'}</div>
+          </td>
+          <td>${item.schedule_type === 'weekly' ? '주간 반복' : '1회 실행'}</td>
+          <td>
+            ${item.schedule_type === 'weekly'
+              ? `<div class="mono">${item.start_time || '-'} ~ ${item.end_time || '-'}</div><div style="font-size:12px;color:#94a3b8;">${formatWeekdays(item.days_of_week)}</div>`
+              : `<div>${formatDateTimeLocal(item.once_started_at)}</div><div style="font-size:12px;color:#94a3b8;">~ ${formatDateTimeLocal(item.once_ended_at)}</div>`}
+          </td>
+          <td>${item.preheat_minutes || 0}분</td>
+          <td>${item.priority}</td>
+          <td>${item.offline_enabled ? '허용' : '중앙 연결시만'}</td>
+          <td>${item.enabled ? '<span class="badge badge-online">활성</span>' : '<span class="badge badge-offline">비활성</span>'}</td>
+          <td>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="openScheduleModal('${item.id}')">수정</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteSchedule('${item.id}')">삭제</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function reloadAll() {
+      const controllerId = selectedControllerId();
+      const controller = currentController();
+      $('header-placeholder').innerHTML = renderHeader('수동 스케줄 관리', controller ? `${controller.controller_name} · ${controller.install_location || ''}` : '장비를 선택하세요', []);
+      if (!controllerId) {
+        schedules = [];
+        summary = null;
+        renderSummary();
+        renderTable();
+        return;
+      }
+      [schedules, summary] = await Promise.all([
+        API.getControllerManualSchedules(controllerId),
+        API.getControllerManualScheduleSummary(controllerId)
+      ]);
+      renderSummary();
+      renderTable();
+    }
+
+    async function init() {
+      session = Auth.requireAuth();
+      if (!session) return;
+      $('sidebar-placeholder').innerHTML = renderSidebar(session, 'manual-schedules');
+      controllers = await API.getControllers(session);
+      const params = new URLSearchParams(window.location.search);
+      const selected = params.get('controller_id') || controllers[0]?.id || '';
+      $('controller-select').innerHTML = ['<option value="">장비 선택</option>'].concat(
+        controllers.map(item => `<option value="${item.id}">${item.controller_name} · ${item.install_location || item.serial_no}</option>`)
+      ).join('');
+      $('controller-select').value = String(selected || '');
+      $('controller-select').addEventListener('change', reloadAll);
+      renderWeekdaySelector();
+      startClock();
+      await reloadAll();
+    }
+
+    init().catch(error => Utils.toast('초기화 실패', error.message, 'error'));
+  </script>
+</body>
+</html>

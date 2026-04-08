@@ -162,6 +162,7 @@
             <select id="form-heater-mode" class="form-select">
               <option value="auto">auto</option>
               <option value="manual">manual</option>
+              <option value="schedule">schedule</option>
             </select>
           </div>
           <div>
@@ -501,6 +502,7 @@
             ${isAdmin ? `
               <td onclick="event.stopPropagation();">
                 <div class="table-action-buttons">
+                  <button class="btn btn-secondary btn-sm" onclick="location.href='schedules.html?controller_id=${ctrl.id}'">스케줄</button>
                   <button class="btn btn-secondary btn-sm" onclick="openControllerModal('${ctrl.id}')">수정</button>
                   <button class="btn btn-danger btn-sm" onclick="removeController('${ctrl.id}')">삭제</button>
                 </div>
