@@ -443,7 +443,7 @@
       ["dashboard", "dashboard.html", "📊", "대시보드"],
       ["controllers", "controllers.html", "🖥️", "장비 목록"],
       ["manual-schedules", "schedules.html", "🗓️", "수동 스케줄"],
-      ["logs", "logs.html", "📜", "로그 / 이력"],
+      ["logs", "logs.html", "📜", "제어 로그"],
       ["events", "events.html", "🔔", "이벤트"],
       ...(session.role === "admin" ? [["customers", "customers.html", "🏢", "고객사 관리"]] : [])
     ];

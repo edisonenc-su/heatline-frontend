@@ -6,9 +6,8 @@
   <meta name="theme-color" content="#223652">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>로그 / 이력 - 도로 열선 통합관제 시스템</title>
+  <title>제어 로그 - 도로 열선 통합관제 시스템</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -19,10 +18,9 @@
       <div id="header-placeholder"></div>
 
       <div class="page-body">
-        <!-- 제어 이력 -->
         <div class="table-section has-mobile-list" style="margin-bottom:24px">
           <div class="table-header">
-            <h2>📜 제어 이력</h2>
+            <h2>📜 제어 로그</h2>
             <button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 새로고침</button>
           </div>
           <div class="table-responsive">
@@ -44,32 +42,6 @@
             </table>
           </div>
           <div id="log-mobile-list" class="mobile-record-list"></div>
-        </div>
-
-        <!-- 이벤트 로그 -->
-        <div class="table-section has-mobile-list">
-          <div class="table-header">
-            <h2>🔔 이벤트 로그</h2>
-            <a href="events.html" class="btn btn-secondary btn-sm">전체 보기</a>
-          </div>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>제어기명</th>
-                  <th id="th-evt-customer">고객사</th>
-                  <th>이벤트</th>
-                  <th>메시지</th>
-                  <th>심각도</th>
-                  <th>시간</th>
-                </tr>
-              </thead>
-              <tbody id="evt-tbody">
-                <tr><td colspan="6" style="text-align:center;padding:40px;color:#64748b">로딩 중...</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div id="evt-mobile-list" class="mobile-record-list"></div>
         </div>
       </div>
     </div>
@@ -93,23 +65,16 @@
       REBOOT: '재부팅', THRESHOLD_CHANGE: '임계값 변경'
     };
 
-    const evtIcons = {
-      SNOW_DETECTED: '❄️', SNOW_CLEARED: '☀️',
-      HEATER_ON: '🔥', HEATER_OFF: '💧',
-      DEVICE_OFFLINE: '⚫', DEVICE_ONLINE: '🟢', ALARM: '🚨'
-    };
-
     async function init() {
       session = Auth.requireAuth();
       if (!session) return;
 
       document.getElementById('sidebar-placeholder').innerHTML = renderSidebar(session, 'logs');
-      document.getElementById('header-placeholder').innerHTML = renderHeader('제어 이력 / 이벤트 로그', '', []);
+      document.getElementById('header-placeholder').innerHTML = renderHeader('제어 로그', '', []);
       startClock();
 
       if (session.role !== 'admin') {
         document.getElementById('th-customer').style.display = 'none';
-        document.getElementById('th-evt-customer').style.display = 'none';
       }
 
       await loadAll();
@@ -127,16 +92,13 @@
       allCustomers.forEach(c => custMap[c.id] = c);
 
       await renderLogs(ctrlMap, custMap);
-      await renderEvents(ctrlMap, custMap);
     }
-
-
 
     function renderLogsMobile(logs, ctrlMap, custMap, isAdmin) {
       const container = document.getElementById('log-mobile-list');
       if (!container) return;
       if (!logs.length) {
-        container.innerHTML = `<div class="mobile-record-card"><div class="mobile-record-card__title">제어 이력 없음</div><div class="mobile-record-card__sub">최근 제어 이력이 없습니다.</div></div>`;
+        container.innerHTML = `<div class="mobile-record-card"><div class="mobile-record-card__title">제어 로그 없음</div><div class="mobile-record-card__sub">최근 제어 로그가 없습니다.</div></div>`;
         return;
       }
       container.innerHTML = logs.map(log => {
@@ -161,39 +123,11 @@
       }).join('');
     }
 
-    function renderEventsMobile(events, ctrlMap, custMap, isAdmin, severityColor, severityLabel) {
-      const container = document.getElementById('evt-mobile-list');
-      if (!container) return;
-      if (!events.length) {
-        container.innerHTML = `<div class="mobile-record-card"><div class="mobile-record-card__title">이벤트 없음</div><div class="mobile-record-card__sub">최근 이벤트가 없습니다.</div></div>`;
-        return;
-      }
-      container.innerHTML = events.map(evt => {
-        const ctrl = ctrlMap[evt.controller_id];
-        const cust = ctrl ? custMap[ctrl.customer_id] : null;
-        const sevColor = severityColor[evt.severity] || '#d7e4f3';
-        return `
-          <div class="mobile-record-card" onclick="location.href='detail.html?id=${evt.controller_id}'">
-            <div class="mobile-record-card__top">
-              <div>
-                <div class="mobile-record-card__title">${evtIcons[evt.event_type] || '📌'} ${evt.event_type}</div>
-                <div class="mobile-record-card__sub">${ctrl ? ctrl.controller_name : evt.controller_id}${isAdmin && cust ? ` · ${cust.company_name}` : ''}</div>
-              </div>
-              <span class="badge" style="background:${sevColor}20;color:${sevColor}">${severityLabel[evt.severity] || evt.severity}</span>
-            </div>
-            <div class="mobile-record-item"><div class="label">메시지</div><div class="value">${evt.message || '-'}</div></div>
-            <div class="mobile-record-card__sub" style="margin-top:12px">${Utils.timeAgo(evt.updated_at || evt.created_at)}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
     async function renderLogs(ctrlMap, custMap) {
       const logs = await API.getControlLogs(null, 50);
       const tbody = document.getElementById('log-tbody');
       const isAdmin = session.role === 'admin';
 
-      // 권한 필터
       const filtered = isAdmin
         ? logs
         : logs.filter(l => {
@@ -204,7 +138,7 @@
       renderLogsMobile(filtered, ctrlMap, custMap, isAdmin);
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}" style="text-align:center;padding:30px;color:#64748b">이력 없음</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}" style="text-align:center;padding:30px;color:#64748b">제어 로그 없음</td></tr>`;
         return;
       }
 
@@ -234,58 +168,6 @@
             </td>
             <td style="font-size:12px;color:#94a3b8">${log.note || '-'}</td>
             <td style="font-size:12px;color:#64748b;white-space:nowrap">${Utils.timeAgo(log.updated_at || log.created_at)}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    async function renderEvents(ctrlMap, custMap) {
-      const events = await API.getEventLogs(null, 30);
-      const tbody = document.getElementById('evt-tbody');
-      const isAdmin = session.role === 'admin';
-
-      const filtered = isAdmin
-        ? events
-        : events.filter(e => {
-          const c = ctrlMap[e.controller_id];
-          return c && c.customer_id === session.customerId;
-        });
-
-      const severityColor = { info: '#10b981', warning: '#f59e0b', critical: '#ef4444' };
-      const severityLabel = { info: '정보', warning: '경고', critical: '긴급' };
-
-      renderEventsMobile(filtered, ctrlMap, custMap, isAdmin, severityColor, severityLabel);
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="text-align:center;padding:30px;color:#64748b">이벤트 없음</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(evt => {
-        const ctrl = ctrlMap[evt.controller_id];
-        const cust = ctrl ? custMap[ctrl.customer_id] : null;
-        return `
-          <tr onclick="location.href='detail.html?id=${evt.controller_id}'" style="cursor:pointer">
-            <td>
-              <div style="font-weight:600">${ctrl ? ctrl.controller_name : evt.controller_id}</div>
-            </td>
-            ${isAdmin ? `<td style="font-size:13px;color:#94a3b8">${cust ? cust.company_name : '-'}</td>` : ''}
-            <td>
-              <span style="display:inline-flex;align-items:center;gap:5px">
-                ${evtIcons[evt.event_type] || '📌'}
-                <span style="font-size:13px">${evt.event_type}</span>
-              </span>
-            </td>
-            <td style="font-size:13px">${evt.message || '-'}</td>
-            <td>
-              <span class="badge" style="
-                background:${severityColor[evt.severity] || '#94a3b8'}20;
-                color:${severityColor[evt.severity] || '#94a3b8'};
-              ">
-                ${severityLabel[evt.severity] || evt.severity}
-              </span>
-            </td>
-            <td style="font-size:12px;color:#64748b;white-space:nowrap">${Utils.timeAgo(evt.updated_at || evt.created_at)}</td>
           </tr>
         `;
       }).join('');
