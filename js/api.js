@@ -283,6 +283,15 @@ export async function getControllerControlLogs(controllerId, params = { limit: 1
   return { data: { items: normalizeListPayload(result) } };
 }
 
+export async function getControllerWeatherSummary(controllerId) {
+  const id = validateControllerId(controllerId);
+  const result = await request(registryApiBaseUrl, `/controllers/${id}/weather-summary`, {
+    method: "GET",
+    headers: getRegistryHeaders()
+  });
+  return result?.data ?? result;
+}
+
 export function canControlController(controller, session = getSession()) {
   if (!session || !controller) return false;
   if (session.role === "admin") return true;
