@@ -307,7 +307,8 @@ export async function sendControllerCommand(
   controllerId,
   { commandType, commandValue = null, reason = "", requestedBy = null, expiresInSec = 120 } = {}
 ) {
-  const controller = await getControllerRegistry(controllerId);
+  const id = validateControllerId(controllerId);
+  const controller = await getControllerRegistry(id);
   if (!canControlController(controller)) {
     throw new Error("이 장비를 제어할 권한이 없습니다.");
   }
@@ -323,11 +324,13 @@ export async function sendControllerCommand(
     }
   };
 
-  return request(getDeviceBaseUrl(controller), `/commands`, {
+  const result = await request(registryApiBaseUrl, `/controllers/${id}/commands`, {
     method: "POST",
-    headers: getDeviceHeaders(controller),
+    headers: getRegistryHeaders(),
     body
   });
+
+  return result?.data ?? result;
 }
 
 export function buildDetailCommands(controllerId, currentUser = null) {
