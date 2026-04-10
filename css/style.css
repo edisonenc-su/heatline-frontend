@@ -40,6 +40,11 @@ body {
   overflow-x: hidden;
 }
 
+body.sidebar-open {
+  overflow: hidden;
+  touch-action: none;
+}
+
 a {
   color: var(--accent);
   text-decoration: none;
@@ -1428,7 +1433,8 @@ input[type="range"] {
 
   .sidebar {
     transform: translateX(-280px);
-    width: 280px;
+    width: min(280px, 84vw);
+    max-width: 84vw;
   }
 
   .sidebar.open {
@@ -1441,6 +1447,18 @@ input[type="range"] {
 
   .menu-toggle {
     display: block;
+  }
+
+  .top-header {
+    padding: 0 16px;
+  }
+
+  .header-title {
+    font-size: 16px;
+  }
+
+  .header-title span {
+    display: none;
   }
 
   .stats-grid {
