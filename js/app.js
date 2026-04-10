@@ -438,6 +438,56 @@
     }
   };
 
+  function isMobileViewport() {
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
+
+  function setSidebarOpen(open) {
+    const sidebar = document.getElementById("app-sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+
+    if (sidebar) sidebar.classList.toggle("open", !!open);
+    if (overlay) overlay.classList.toggle("show", !!open);
+
+    if (isMobileViewport()) {
+      document.body.classList.toggle("sidebar-open", !!open);
+      document.body.style.overflow = open ? "hidden" : "";
+    } else {
+      document.body.classList.remove("sidebar-open");
+      document.body.style.overflow = "";
+    }
+  }
+
+  function openSidebar() {
+    if (!isMobileViewport()) return;
+    setSidebarOpen(true);
+  }
+
+  function closeSidebar() {
+    setSidebarOpen(false);
+  }
+
+  function toggleSidebar() {
+    const sidebar = document.getElementById("app-sidebar");
+    if (!isMobileViewport()) return;
+    setSidebarOpen(!(sidebar && sidebar.classList.contains("open")));
+  }
+
+  function handleSidebarNavClick() {
+    if (isMobileViewport()) closeSidebar();
+    return true;
+  }
+
+  window.addEventListener("resize", () => {
+    if (!isMobileViewport()) {
+      setSidebarOpen(false);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeSidebar();
+  });
+
   function renderSidebar(session, current = "dashboard") {
     const items = [
       ["dashboard", "dashboard.html", "📊", "대시보드"],
@@ -449,30 +499,66 @@
     ];
 
     return `
-      <aside style="width:260px;min-height:100vh;background:#0f172a;color:#fff;padding:24px 18px;position:fixed;left:0;top:0;overflow:auto">
-        <div style="font-size:22px;font-weight:800;margin-bottom:8px">🛣️ Heatline</div>
-        <div style="font-size:13px;color:#94a3b8;margin-bottom:24px">${escapeHtml(session.fullName || session.username || "사용자")}</div>
-        <nav style="display:grid;gap:8px">
+      <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+      <aside id="app-sidebar" class="sidebar" aria-label="주 메뉴">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <span class="logo-icon">🛣️</span>
+            <div>
+              <div class="logo-text">Heatline 통합관제</div>
+              <div class="logo-sub">도로 열선 관제 시스템</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-user">
+          <div class="user-avatar ${session.role === "admin" ? "admin" : "customer"}">${escapeHtml((session.fullName || session.username || "사").slice(0, 1))}</div>
+          <div class="user-info">
+            <div class="user-name">${escapeHtml(session.fullName || session.username || "사용자")}</div>
+            <div class="user-role">${session.role === "admin" ? "관리자" : "고객사 사용자"}</div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <div class="nav-section-title">메뉴</div>
           ${items.map(([key, href, icon, label]) => `
-            <a href="${href}" style="padding:12px 14px;border-radius:12px;text-decoration:none;color:#e2e8f0;background:${current === key ? 'rgba(59,130,246,.22)' : 'transparent'};border:1px solid ${current === key ? 'rgba(59,130,246,.4)' : 'transparent'}">${icon} ${label}</a>
+            <a href="${href}" class="nav-item ${current === key ? "active" : ""}" onclick="return handleSidebarNavClick(event)">
+              <span class="nav-icon">${icon}</span>
+              <span>${label}</span>
+            </a>
           `).join("")}
         </nav>
-        <div style="margin-top:24px">
-          <button onclick="Auth.logout()" class="btn btn-secondary" style="width:100%">로그아웃</button>
+
+        <div class="sidebar-footer">
+          <button onclick="Auth.logout()" class="btn btn-secondary btn-block">로그아웃</button>
         </div>
       </aside>
     `;
   }
 
   function renderHeader(title, subtitle = "", stats = []) {
+    const dotClassMap = {
+      online: "dot-online",
+      offline: "dot-offline",
+      warning: "dot-warning",
+      danger: "dot-danger",
+      info: "dot-online"
+    };
+
     return `
-      <header style="padding:24px 28px 16px;border-bottom:1px solid var(--border, #1f2937);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <div>
-          <div style="font-size:28px;font-weight:800">${escapeHtml(title)}</div>
-          <div style="font-size:14px;color:#94a3b8;margin-top:6px">${escapeHtml(subtitle)}</div>
+      <header class="top-header">
+        <button class="menu-toggle" type="button" aria-label="메뉴 열기" onclick="toggleSidebar()">☰</button>
+        <div class="header-title">
+          ${escapeHtml(title)}
+          ${subtitle ? `<span>${escapeHtml(subtitle)}</span>` : ""}
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          ${stats.map((item) => `<span class="badge badge-${item.type || 'info'}">${escapeHtml(item.label)} ${escapeHtml(item.value)}</span>`).join("")}
+        <div class="header-actions">
+          ${stats.map((item) => `
+            <div class="header-stat">
+              <span class="dot ${dotClassMap[item.type] || "dot-online"}"></span>
+              <span>${escapeHtml(item.label)} ${escapeHtml(item.value)}</span>
+            </div>
+          `).join("")}
           <span id="header-clock" style="font-size:13px;color:#94a3b8"></span>
         </div>
       </header>
@@ -594,4 +680,8 @@
   window.startClock = startClock;
   window.initMap = initMap;
   window.createControllerMarker = createControllerMarker;
+  window.openSidebar = openSidebar;
+  window.closeSidebar = closeSidebar;
+  window.toggleSidebar = toggleSidebar;
+  window.handleSidebarNavClick = handleSidebarNavClick;
 })();
