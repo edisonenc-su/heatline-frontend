@@ -58,7 +58,7 @@
           </div>
         </div>
 
-        <div class="table-section">
+        <div class="table-section has-mobile-list controllers-v4-preview">
           <div class="table-header">
             <h2>📋 <span id="list-title">장비 목록</span></h2>
             <div class="controllers-table-actions" style="display:flex;gap:8px;">
@@ -87,6 +87,8 @@
               </tbody>
             </table>
           </div>
+
+          <div id="controllers-mobile-list" class="mobile-record-list"></div>
 
           <div id="empty-state" class="hidden" style="padding:60px 20px;text-align:center;color:#64748b;">
             <div style="font-size:48px;margin-bottom:12px;">📭</div>
@@ -194,6 +196,63 @@
     </div>
   </div>
 
+  <div id="provision-modal" class="modal-backdrop">
+    <div class="modal-box provision-modal-box" style="max-width:560px;">
+      <div class="modal-header">
+        <div class="modal-title">프로비전키 재발급</div>
+        <button class="modal-close" onclick="closeModal('provision-modal')">✕</button>
+      </div>
+      <div class="modal-body provision-modal-body">
+        <div class="provision-modal-summary">
+          <div class="provision-modal-summary__label">대상 장비</div>
+          <div class="provision-modal-summary__value" id="provision-controller-name">-</div>
+          <div class="provision-modal-summary__sub" id="provision-controller-serial">-</div>
+        </div>
+
+        <div class="provision-modal-field">
+          <label class="form-label" for="provision-ttl">키 유효 시간</label>
+          <select id="provision-ttl" class="form-select">
+            <option value="10">10분</option>
+            <option value="30" selected>30분</option>
+            <option value="60">1시간</option>
+            <option value="180">3시간</option>
+            <option value="1440">24시간</option>
+          </select>
+        </div>
+
+        <div class="provision-modal-notice">
+          재발급 시 최신 키만 유효합니다. 발급 직후 바로 복사해 장비 등록에 사용하세요.
+        </div>
+
+        <div id="provision-result" class="provision-result hidden">
+          <div class="provision-result__header">새 프로비전키</div>
+          <div class="provision-result__key-row">
+            <code id="provision-key-value">발급 후 여기에 표시됩니다.</code>
+            <button class="btn btn-secondary btn-sm" id="provision-copy-btn" type="button">복사</button>
+          </div>
+          <div class="provision-result__meta">
+            <div class="provision-result__meta-item">
+              <span>발급 시각</span>
+              <strong id="provision-issued-at">-</strong>
+            </div>
+            <div class="provision-result__meta-item">
+              <span>만료 시각</span>
+              <strong id="provision-expires-at">-</strong>
+            </div>
+            <div class="provision-result__meta-item">
+              <span>상태</span>
+              <strong id="provision-pairing-status">-</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer provision-modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('provision-modal')">닫기</button>
+        <button class="btn btn-warning" id="provision-issue-btn" type="button">새 키 발급</button>
+      </div>
+    </div>
+  </div>
+
   <style>
     .form-label { display:block; font-size:13px; color:#94a3b8; margin-bottom:6px; font-weight:600; }
     .form-input, .form-select, .form-textarea {
@@ -204,8 +263,109 @@
     .form-textarea { min-height:100px; resize:vertical; }
     .table-action-buttons { display:flex; gap:6px; flex-wrap:wrap; }
     .table-action-buttons .btn { white-space:nowrap; }
+    .btn-provision-trigger {
+      box-shadow: 0 8px 18px rgba(245, 158, 11, 0.18);
+    }
+    .provision-modal-body {
+      display:grid;
+      gap:14px;
+    }
+    .provision-modal-summary {
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid rgba(245, 158, 11, 0.22);
+      background:linear-gradient(180deg, rgba(245,158,11,0.12), rgba(15,23,42,0.28));
+    }
+    .provision-modal-summary__label {
+      font-size:12px;
+      color:#fbbf24;
+      font-weight:700;
+      margin-bottom:6px;
+      letter-spacing:0.04em;
+    }
+    .provision-modal-summary__value {
+      font-size:18px;
+      font-weight:800;
+      color:#fff;
+      line-height:1.35;
+    }
+    .provision-modal-summary__sub {
+      margin-top:6px;
+      font-size:13px;
+      color:#cbd5e1;
+      font-family:monospace;
+    }
+    .provision-modal-field {
+      display:grid;
+      gap:6px;
+    }
+    .provision-modal-notice {
+      padding:12px 14px;
+      border-radius:12px;
+      background:rgba(15, 23, 42, 0.72);
+      border:1px solid rgba(148, 163, 184, 0.18);
+      color:#cbd5e1;
+      font-size:13px;
+      line-height:1.55;
+    }
+    .provision-result {
+      display:grid;
+      gap:12px;
+      padding:14px;
+      border-radius:14px;
+      background:rgba(8, 16, 28, 0.34);
+      border:1px solid rgba(0, 174, 255, 0.2);
+    }
+    .provision-result__header {
+      font-size:13px;
+      color:#94a3b8;
+      font-weight:700;
+    }
+    .provision-result__key-row {
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .provision-result__key-row code {
+      flex:1 1 240px;
+      display:block;
+      padding:12px 14px;
+      border-radius:12px;
+      background:#06101c;
+      border:1px dashed rgba(0, 174, 255, 0.28);
+      color:#7dd3fc;
+      font-size:14px;
+      font-weight:700;
+      line-height:1.5;
+      word-break:break-all;
+    }
+    .provision-result__meta {
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:10px;
+    }
+    .provision-result__meta-item {
+      display:grid;
+      gap:4px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.06);
+    }
+    .provision-result__meta-item span {
+      font-size:11px;
+      color:#94a3b8;
+    }
+    .provision-result__meta-item strong {
+      color:#fff;
+      font-size:13px;
+      line-height:1.45;
+      word-break:break-word;
+    }
     @media (max-width: 900px) {
       #controller-modal .modal-body > div { grid-template-columns:1fr !important; }
+      .provision-result__meta { grid-template-columns:1fr; }
     }
   </style>
 
@@ -216,6 +376,7 @@
     let allCustomers = [];
     let filtered = [];
     let editingControllerId = null;
+    let provisioningControllerId = null;
 
     function $(id) {
       return document.getElementById(id);
@@ -308,6 +469,97 @@
       openModal('controller-modal');
     }
 
+    function getPairingStatusLabel(status) {
+      const map = {
+        issued: '발급됨',
+        claimed: '등록 완료',
+        expired: '만료',
+        pending: '대기 중'
+      };
+      return map[status] || (status || '-');
+    }
+
+    function resetProvisionModal(controller = null) {
+      provisioningControllerId = controller ? String(controller.id) : null;
+      $('provision-controller-name').textContent = controller?.controller_name || '-';
+      $('provision-controller-serial').textContent = controller?.serial_no || '-';
+      $('provision-ttl').value = '30';
+      $('provision-key-value').textContent = '발급 후 여기에 표시됩니다.';
+      $('provision-issued-at').textContent = '-';
+      $('provision-expires-at').textContent = '-';
+      $('provision-pairing-status').textContent = '-';
+      $('provision-result').classList.add('hidden');
+      $('provision-copy-btn').disabled = true;
+      $('provision-issue-btn').disabled = !controller;
+      $('provision-issue-btn').textContent = '새 키 발급';
+    }
+
+    function openProvisionKeyModal(controllerId) {
+      const controller = allControllers.find(item => String(item.id) === String(controllerId));
+      if (!controller) {
+        Utils.toast('장비 확인 실패', '대상 장비 정보를 찾을 수 없습니다.', 'error');
+        return;
+      }
+      resetProvisionModal(controller);
+      openModal('provision-modal');
+    }
+
+    async function issueProvisionKeyFromModal() {
+      if (!provisioningControllerId) {
+        Utils.toast('발급 실패', '대상 장비가 선택되지 않았습니다.', 'error');
+        return;
+      }
+
+      const issueBtn = $('provision-issue-btn');
+      const prevText = issueBtn.textContent;
+      issueBtn.disabled = true;
+      issueBtn.textContent = '발급 중...';
+
+      try {
+        const ttlMinutes = Number($('provision-ttl').value || 30);
+        const controller = allControllers.find(item => String(item.id) === String(provisioningControllerId));
+        const result = await API.issueProvisionKey(provisioningControllerId, { ttl_minutes: ttlMinutes });
+
+        $('provision-key-value').textContent = result?.provision_key || '-';
+        $('provision-issued-at').textContent = Utils.formatDateTime(result?.provision_key_issued_at || new Date().toISOString());
+        $('provision-expires-at').textContent = Utils.formatDateTime(result?.provision_key_expires_at || '-');
+        $('provision-pairing-status').textContent = getPairingStatusLabel(result?.pairing_status);
+        $('provision-result').classList.remove('hidden');
+        $('provision-copy-btn').disabled = !(result?.provision_key);
+
+        Utils.toast('재발급 완료', `${controller?.controller_name || '장비'} 프로비전키가 발급되었습니다.`, 'success');
+      } catch (error) {
+        Utils.toast('재발급 실패', error.message, 'error');
+      } finally {
+        issueBtn.disabled = false;
+        issueBtn.textContent = prevText;
+      }
+    }
+
+    async function copyProvisionKeyToClipboard() {
+      const value = $('provision-key-value').textContent.trim();
+      if (!value || value === '발급 후 여기에 표시됩니다.' || value === '-') {
+        Utils.toast('복사할 키 없음', '먼저 새 프로비전키를 발급해주세요.', 'error');
+        return;
+      }
+
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(value);
+        } else {
+          const tempInput = document.createElement('textarea');
+          tempInput.value = value;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempInput);
+        }
+        Utils.toast('복사 완료', '프로비전키를 클립보드에 복사했습니다.', 'success');
+      } catch (error) {
+        Utils.toast('복사 실패', '클립보드 복사에 실패했습니다. 직접 복사해주세요.', 'error');
+      }
+    }
+
     async function saveController() {
       const saveBtn = $('controller-save-btn');
       const prevText = saveBtn.textContent;
@@ -365,6 +617,8 @@
       }
 
       $('controller-save-btn').addEventListener('click', saveController);
+      $('provision-issue-btn').addEventListener('click', issueProvisionKeyFromModal);
+      $('provision-copy-btn').addEventListener('click', copyProvisionKeyToClipboard);
       await loadData();
       startClock();
 
@@ -457,8 +711,59 @@
       filterTable();
     }
 
+    function renderAsBadge(ctrl) {
+      const days = Utils.calcAsRemaining(ctrl.as_expire_at);
+      const status = Utils.getAsStatus(days);
+      if (status === 'unknown') return '<span class="badge badge-offline">-</span>';
+      if (status === 'expired') return '<span class="badge badge-danger">만료</span>';
+      if (status === 'urgent') return `<span class="badge badge-danger">${days}일</span>`;
+      if (status === 'caution') return `<span class="badge badge-warning">${days}일</span>`;
+      return `<span class="badge badge-online">${days}일</span>`;
+    }
+
+    function renderMobileCard(ctrl, isAdmin) {
+      const temp = typeof ctrl.temperature === 'number' ? `${Number(ctrl.temperature).toFixed(1)}℃` : '-';
+      const locationLabel = ctrl.install_location || '-';
+      const addressLabel = ctrl.install_address || '-';
+      const customerLabel = customerNameById(ctrl.customer_id);
+      const snowLabel = ctrl.snow_detected ? '❄️ 감지' : '✅ 없음';
+      const heaterLabel = ctrl.heater_on ? '🔥 ON' : '❄️ OFF';
+      const statusTone = ['online', 'offline', 'warning', 'error'].includes(ctrl.status) ? ctrl.status : 'offline';
+      return `
+        <article class="mobile-record-card status-${statusTone}" onclick="location.href='detail.html?id=${ctrl.id}'">
+          <div class="mobile-record-card__accent"></div>
+          <div class="mobile-record-card__top">
+            <div class="mobile-record-card__heading">
+              <div class="mobile-record-card__title">${ctrl.controller_name || '-'}</div>
+              <div class="mobile-record-card__sub">${ctrl.serial_no || '-'} · ${locationLabel}</div>
+            </div>
+            <div class="mobile-record-card__status">${Utils.getStatusBadge(ctrl.status)}</div>
+          </div>
+          <div class="mobile-record-card__meta">${addressLabel}</div>
+          <div class="mobile-summary-strip mobile-summary-strip--controllers">
+            <div class="mobile-summary-chip compact"><div class="label">눈 감지</div><div class="value">${snowLabel}</div></div>
+            <div class="mobile-summary-chip compact"><div class="label">히터</div><div class="value">${heaterLabel}</div></div>
+            <div class="mobile-summary-chip compact"><div class="label">온도</div><div class="value">${temp}</div></div>
+          </div>
+          <div class="mobile-record-grid mobile-record-grid--controllers">
+            ${isAdmin ? `<div class="mobile-record-item emphasized"><div class="label">고객사</div><div class="value">${customerLabel}</div></div>` : ''}
+            <div class="mobile-record-item emphasized"><div class="label">잔여 AS</div><div class="value">${renderAsBadge(ctrl)}</div></div>
+            <div class="mobile-record-item wide"><div class="label">마지막 통신</div><div class="value">${Utils.timeAgo(ctrl.last_seen_at)}</div></div>
+          </div>
+          <div class="mobile-record-actions ${isAdmin ? 'mobile-record-actions--admin' : 'mobile-record-actions--viewer'}" onclick="event.stopPropagation();">
+            <button class="btn btn-primary btn-sm btn-priority" onclick="location.href='detail.html?id=${ctrl.id}'">상세 보기</button>
+            ${isAdmin ? `<button class="btn btn-secondary btn-sm btn-edit" onclick="openControllerModal('${ctrl.id}')">수정</button>` : ''}
+            ${isAdmin ? `<button class="btn btn-secondary btn-sm btn-schedule" onclick="location.href='schedules.html?controller_id=${ctrl.id}'">스케줄</button>` : ''}
+            ${isAdmin ? `<button class="btn btn-warning btn-sm btn-provision-trigger" onclick="openProvisionKeyModal('${ctrl.id}')">키 재발급</button>` : ''}
+            ${isAdmin ? `<button class="btn btn-danger btn-sm btn-delete" onclick="removeController('${ctrl.id}')">삭제</button>` : ''}
+          </div>
+        </article>
+      `;
+    }
+
     function renderTable() {
       const tbody = $('controllers-tbody');
+      const mobileList = $('controllers-mobile-list');
       const emptyState = $('empty-state');
       const resultCount = $('result-count');
       const isAdmin = session.role === 'admin';
@@ -466,6 +771,7 @@
 
       if (!filtered.length) {
         tbody.innerHTML = '';
+        mobileList.innerHTML = '';
         emptyState.classList.remove('hidden');
         return;
       }
@@ -489,21 +795,14 @@
             <td>${ctrl.snow_detected ? '❄️ 감지' : '✅ 없음'}</td>
             <td>${ctrl.heater_on ? '🔥 ON' : 'OFF'}</td>
             <td>${temp}</td>
-            <td>${(function(){
-              const days = Utils.calcAsRemaining(ctrl.as_expire_at);
-              const status = Utils.getAsStatus(days);
-              if (status === 'unknown') return '<span class="badge badge-offline">-</span>';
-              if (status === 'expired') return '<span class="badge badge-danger">만료</span>';
-              if (status === 'urgent') return `<span class="badge badge-danger">${days}일</span>`;
-              if (status === 'caution') return `<span class="badge badge-warning">${days}일</span>`;
-              return `<span class="badge badge-online">${days}일</span>`;
-            })()}</td>
+            <td>${renderAsBadge(ctrl)}</td>
             <td style="font-size:12px;color:#64748b;">${Utils.timeAgo(ctrl.last_seen_at)}</td>
             ${isAdmin ? `
               <td onclick="event.stopPropagation();">
                 <div class="table-action-buttons">
                   <button class="btn btn-secondary btn-sm" onclick="location.href='schedules.html?controller_id=${ctrl.id}'">스케줄</button>
                   <button class="btn btn-secondary btn-sm" onclick="openControllerModal('${ctrl.id}')">수정</button>
+                  <button class="btn btn-warning btn-sm btn-provision-trigger" onclick="openProvisionKeyModal('${ctrl.id}')">프로비전키</button>
                   <button class="btn btn-danger btn-sm" onclick="removeController('${ctrl.id}')">삭제</button>
                 </div>
               </td>
@@ -511,6 +810,8 @@
           </tr>
         `;
       }).join('');
+
+      mobileList.innerHTML = filtered.map(ctrl => renderMobileCard(ctrl, isAdmin)).join('');
     }
 
     init();
