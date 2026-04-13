@@ -18,8 +18,8 @@
       <div class="page-body">
         <div id="stats-container"></div>
 
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-          <div class="search-box" style="min-width:240px;">
+        <div class="filter-toolbar controllers-filter-toolbar" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <div class="search-box controllers-search-box" style="min-width:240px;">
             <span>🔍</span>
             <input type="text" id="search-input" placeholder="제어기명, 주소, 시리얼 검색..." oninput="filterTable()">
           </div>
@@ -45,23 +45,23 @@
             <option value="good">✅ 정상</option>
           </select>
 
-          <div id="admin-filter-wrap" style="display:none;">
+          <div id="admin-filter-wrap" class="controllers-admin-filter" style="display:none;">
             <select id="filter-customer" onchange="filterTable()" class="form-select compact-select">
               <option value="">전체 고객사</option>
             </select>
           </div>
 
-          <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div class="filter-toolbar__spacer controllers-filter-actions" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <button class="btn btn-secondary btn-sm" onclick="resetFilters()">필터 초기화</button>
             <button id="admin-add-btn" class="btn btn-primary btn-sm" style="display:none;" onclick="openControllerModal()">➕ 장비 등록</button>
-            <span id="result-count" style="display:flex;align-items:center;font-size:13px;color:#94a3b8;padding:0 4px;"></span>
+            <span id="result-count" class="controllers-result-count" style="display:flex;align-items:center;font-size:13px;color:#94a3b8;padding:0 4px;"></span>
           </div>
         </div>
 
         <div class="table-section">
           <div class="table-header">
             <h2>📋 <span id="list-title">장비 목록</span></h2>
-            <div style="display:flex;gap:8px;">
+            <div class="controllers-table-actions" style="display:flex;gap:8px;">
               <button class="btn btn-secondary btn-sm" onclick="loadData()">🔄 새로고침</button>
             </div>
           </div>
