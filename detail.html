@@ -19,12 +19,12 @@
       <div class="page-body">
         <div class="detail-page">
     <div class="detail-shell">
-      <div class="detail-topbar">
+      <div class="detail-topbar detail-page-topbar">
         <div class="title-group">
           <h1 id="controllerTitle">장비 상세</h1>
           <p id="controllerSubtitle">컨트롤러 정보를 불러오는 중입니다.</p>
         </div>
-        <div class="top-actions">
+        <div class="top-actions detail-top-actions">
           <button class="btn btn-secondary" id="btnBack">목록으로</button>
           <button class="btn btn-primary" id="btnRefresh">새로고침</button>
         </div>
@@ -38,7 +38,7 @@
               <span class="video-tip">HTTPS camera_url 권장</span>
             </div>
             <div class="detail-card-body">
-              <div class="badge-row">
+              <div class="badge-row detail-badge-row">
                 <span id="badgeStatus" class="badge status-offline">상태 -</span>
                 <span id="badgeSnow" class="badge snow-off">눈 감지 -</span>
                 <span id="badgeHeater" class="badge heater-off">열선 -</span>
@@ -106,7 +106,7 @@
                 <div class="k">메시지</div><div id="weatherLastMessage" class="v">-</div>
                 <div class="k">오류</div><div id="weatherLastError" class="v">-</div>
               </div>
-              <div class="metrics" style="margin-top: 16px;">
+              <div class="metrics detail-weather-metrics" style="margin-top: 16px;">
                 <div class="metric">
                   <div class="label">오늘</div>
                   <div id="weatherDay0" class="value">-</div>
