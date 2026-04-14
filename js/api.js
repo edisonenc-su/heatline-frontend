@@ -28,7 +28,6 @@ try {
   localStorage.setItem("HEATLINE_API_BASE_URL", registryApiBaseUrl);
 } catch (_) {}
 
-
 function toQueryString(params = {}) {
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -47,7 +46,6 @@ export function setApiBaseUrl(url) {
   registryApiBaseUrl = isInvalidLegacyUrl(normalized) ? PROD_API_BASE_URL : normalized;
   localStorage.setItem("HEATLINE_API_BASE_URL", registryApiBaseUrl);
 }
-
 
 export function getApiBaseUrl() {
   return registryApiBaseUrl;
@@ -89,8 +87,96 @@ function normalizeErrorPayload(payload, fallback = "요청 처리 중 오류가 
   return new Error(fallback);
 }
 
+function isAbsoluteHttpUrl(value = "") {
+  return /^https?:\/\//i.test(String(value || "").trim());
+}
+
+function safeParseUrl(value = "") {
+  try {
+    return new URL(String(value || "").trim());
+  } catch (_) {
+    return null;
+  }
+}
+
+function ensureApiV1(base = "") {
+  const normalized = stripTrailingSlash(base);
+  if (!normalized) return "";
+  if (/\/api\/v\d+$/i.test(normalized)) return normalized;
+  return `${normalized}/api/v1`;
+}
+
+function inferApiBaseFromPublicBaseUrl(publicBaseUrl = "") {
+  const parsed = safeParseUrl(publicBaseUrl);
+  if (!parsed) return "";
+
+  let path = parsed.pathname.replace(/\/+$/, "");
+  if (/\/api\/v\d+$/i.test(path)) {
+    return stripTrailingSlash(`${parsed.origin}${path}`);
+  }
+
+  return stripTrailingSlash(`${parsed.origin}${path}/api/v1`);
+}
+
+function inferApiBaseFromCameraUrl(cameraUrl = "") {
+  const parsed = safeParseUrl(cameraUrl);
+  if (!parsed) return "";
+
+  let path = parsed.pathname.replace(/\/+$/, "");
+
+  if (/\/snapshot\.jpg$/i.test(path)) {
+    path = path.replace(/\/snapshot\.jpg$/i, "");
+  } else if (/\/stream\.mjpg$/i.test(path)) {
+    path = path.replace(/\/stream\.mjpg$/i, "");
+  } else if (/\/api\/v\d+\/?/i.test(path)) {
+    path = path.replace(/\/+$/, "");
+    return stripTrailingSlash(`${parsed.origin}${path}`);
+  }
+
+  return stripTrailingSlash(`${parsed.origin}${path}/api/v1`);
+}
+
+function inferDeviceBaseUrl(controller) {
+  const directBase =
+    controller?.device_api_base ||
+    controller?.device_api_url ||
+    controller?.api_base_url ||
+    "";
+
+  if (directBase && isAbsoluteHttpUrl(directBase)) {
+    return ensureApiV1(directBase);
+  }
+
+  const publicBaseCandidates = [
+    controller?.public_base_url,
+    controller?.publicBaseUrl
+  ].filter(Boolean);
+
+  for (const publicBase of publicBaseCandidates) {
+    const inferred = inferApiBaseFromPublicBaseUrl(publicBase);
+    if (inferred) return inferred;
+  }
+
+  const cameraCandidates = [
+    controller?.camera_url,
+    controller?.cameraUrl
+  ].filter(Boolean);
+
+  for (const cameraUrl of cameraCandidates) {
+    const inferred = inferApiBaseFromCameraUrl(cameraUrl);
+    if (inferred) return inferred;
+  }
+
+  return "";
+}
+
 async function request(baseUrl, path, options = {}) {
-  const url = `${stripTrailingSlash(baseUrl)}${path.startsWith("/") ? path : `/${path}`}`;
+  const normalizedBase = stripTrailingSlash(baseUrl);
+  if (!normalizedBase) {
+    throw new Error("장비 API 주소를 확인할 수 없습니다. device_api_base 또는 camera_url 설정을 확인하세요.");
+  }
+
+  const url = `${normalizedBase}${path.startsWith("/") ? path : `/${path}`}`;
   const headers = {
     ...(options.headers || {})
   };
@@ -169,18 +255,30 @@ function getDeviceHeaders(controller, extra = {}) {
 }
 
 function getDeviceBaseUrl(controller) {
-  return stripTrailingSlash(
-    controller?.device_api_base ||
-    controller?.device_api_url ||
-    controller?.api_base_url ||
-    ""
-  );
+  return stripTrailingSlash(inferDeviceBaseUrl(controller));
 }
 
 function getDeviceOrigin(controller) {
   const base = getDeviceBaseUrl(controller);
-  if (!base) return "";
-  return base.replace(/\/api\/v\d+$/i, "");
+  if (base) {
+    return base.replace(/\/api\/v\d+$/i, "");
+  }
+
+  const publicBase = stripTrailingSlash(
+    controller?.public_base_url ||
+    controller?.publicBaseUrl ||
+    ""
+  );
+  if (publicBase) {
+    return publicBase.replace(/\/api\/v\d+$/i, "");
+  }
+
+  const cameraUrl = controller?.camera_url || controller?.cameraUrl || "";
+  const parsed = safeParseUrl(cameraUrl);
+  if (!parsed) return "";
+  let path = parsed.pathname.replace(/\/+$/, "");
+  path = path.replace(/\/stream\.mjpg$/i, "").replace(/\/snapshot\.jpg$/i, "");
+  return stripTrailingSlash(`${parsed.origin}${path}`);
 }
 
 function normalizeListPayload(result) {
@@ -198,13 +296,13 @@ function mergeController(registryController, liveStatus = null) {
     ...(liveStatus || {})
   };
 
-  if (!merged.camera_url) {
-    const origin = getDeviceOrigin(registryController);
-    if (origin) merged.camera_url = `${origin}/stream.mjpg`;
+  if (!merged.device_api_base) {
+    merged.device_api_base = getDeviceBaseUrl(merged) || getDeviceBaseUrl(registryController);
   }
 
-  if (!merged.device_api_base && registryController?.device_api_base) {
-    merged.device_api_base = registryController.device_api_base;
+  if (!merged.camera_url) {
+    const origin = getDeviceOrigin(merged) || getDeviceOrigin(registryController);
+    if (origin) merged.camera_url = `${origin}/stream.mjpg`;
   }
 
   if (!merged.status) merged.status = "offline";
@@ -240,7 +338,7 @@ export async function getControllerRegistry(controllerId) {
 
 export async function getDeviceStatus(controller) {
   const base = getDeviceBaseUrl(controller);
-  if (!base) throw new Error("device_api_base 가 등록되지 않았습니다.");
+  if (!base) throw new Error("device_api_base 를 확인할 수 없습니다. camera_url 또는 public_base_url 설정을 확인하세요.");
 
   const result = await request(base, `/status`, {
     method: "GET",
@@ -252,8 +350,10 @@ export async function getDeviceStatus(controller) {
 
 export async function getControllerDetail(controllerId) {
   const controller = await getControllerRegistry(controllerId);
+  const mergedController = mergeController(controller, null);
+
   try {
-    const live = await getDeviceStatus(controller);
+    const live = await getDeviceStatus(mergedController);
     return { data: mergeController(controller, live) };
   } catch (err) {
     return {
@@ -266,8 +366,11 @@ export async function getControllerDetail(controllerId) {
 }
 
 export async function getControllerEvents(controllerId, params = { limit: 10 }) {
-  const controller = await getControllerRegistry(controllerId);
-  const result = await request(getDeviceBaseUrl(controller), `/events${toQueryString(params)}`, {
+  const controller = mergeController(await getControllerRegistry(controllerId), null);
+  const base = getDeviceBaseUrl(controller);
+  if (!base) throw new Error("이벤트 조회용 device_api_base 를 확인할 수 없습니다.");
+
+  const result = await request(base, `/events${toQueryString(params)}`, {
     method: "GET",
     headers: getDeviceHeaders(controller)
   });
@@ -275,8 +378,11 @@ export async function getControllerEvents(controllerId, params = { limit: 10 }) 
 }
 
 export async function getControllerControlLogs(controllerId, params = { limit: 10 }) {
-  const controller = await getControllerRegistry(controllerId);
-  const result = await request(getDeviceBaseUrl(controller), `/control-logs${toQueryString(params)}`, {
+  const controller = mergeController(await getControllerRegistry(controllerId), null);
+  const base = getDeviceBaseUrl(controller);
+  if (!base) throw new Error("제어 로그 조회용 device_api_base 를 확인할 수 없습니다.");
+
+  const result = await request(base, `/control-logs${toQueryString(params)}`, {
     method: "GET",
     headers: getDeviceHeaders(controller)
   });
@@ -286,7 +392,7 @@ export async function getControllerControlLogs(controllerId, params = { limit: 1
 export function canControlController(controller, session = getSession()) {
   if (!session || !controller) return false;
   if (session.role === "admin") return true;
-  const sessionCustomerId = String(session.customer_id ?? session.customerId ?? "");
+  const sessionCustomerId = String(session.customer_id ?? sessionCustomerId ?? "");
   const controllerCustomerId = String(controller.customer_id ?? "");
   if (session.role === "customer" && sessionCustomerId === controllerCustomerId) {
     return controller.allow_customer_control !== false;
@@ -298,9 +404,14 @@ export async function sendControllerCommand(
   controllerId,
   { commandType, commandValue = null, reason = "", requestedBy = null, expiresInSec = 120 } = {}
 ) {
-  const controller = await getControllerRegistry(controllerId);
+  const controller = mergeController(await getControllerRegistry(controllerId), null);
   if (!canControlController(controller)) {
     throw new Error("이 장비를 제어할 권한이 없습니다.");
+  }
+
+  const base = getDeviceBaseUrl(controller);
+  if (!base) {
+    throw new Error("장비 제어 주소를 확인할 수 없습니다. device_api_base 또는 camera_url 설정을 확인하세요.");
   }
 
   const body = {
@@ -314,7 +425,7 @@ export async function sendControllerCommand(
     }
   };
 
-  return request(getDeviceBaseUrl(controller), `/commands`, {
+  return request(base, `/commands`, {
     method: "POST",
     headers: getDeviceHeaders(controller),
     body
