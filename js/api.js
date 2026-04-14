@@ -13,6 +13,23 @@ function normalizeDeviceApiBaseUrl(url = "") {
   return `${normalized}/api/v1`;
 }
 
+function isPrivateOrLocalUrl(url = "") {
+  try {
+    const parsed = new URL(url);
+    const host = String(parsed.hostname || "").toLowerCase();
+    if (!host) return false;
+    if (host === "localhost" || host === "127.0.0.1" || host === "::1") return true;
+    if (host.endsWith('.local')) return true;
+    if (/^127\./.test(host)) return true;
+    if (/^10\./.test(host)) return true;
+    if (/^192\.168\./.test(host)) return true;
+    if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true;
+    return false;
+  } catch (_) {
+    return false;
+  }
+}
+
 function isInvalidLegacyUrl(url = "") {
   return (
     !url ||
@@ -177,13 +194,19 @@ function getDeviceHeaders(controller, extra = {}) {
 }
 
 function getDeviceBaseUrl(controller) {
-  return normalizeDeviceApiBaseUrl(
+  const rawDeviceApiBase = stripTrailingSlash(
     controller?.device_api_base ||
     controller?.device_api_url ||
     controller?.api_base_url ||
-    controller?.public_base_url ||
     ""
   );
+  const rawPublicBaseUrl = stripTrailingSlash(controller?.public_base_url || "");
+
+  const preferredBase = rawPublicBaseUrl && (!rawDeviceApiBase || isPrivateOrLocalUrl(rawDeviceApiBase))
+    ? rawPublicBaseUrl
+    : (rawDeviceApiBase || rawPublicBaseUrl);
+
+  return normalizeDeviceApiBaseUrl(preferredBase);
 }
 
 function getDeviceOrigin(controller) {
