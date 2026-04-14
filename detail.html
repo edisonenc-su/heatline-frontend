@@ -10,6 +10,93 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .control-row--stateful {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .btn-stateful {
+      position:relative;
+      min-height:58px;
+      font-weight:800;
+      border-width:2px;
+      transition:transform .16s ease, box-shadow .16s ease, filter .16s ease, opacity .16s ease;
+    }
+    .btn-stateful:hover:not(:disabled) {
+      transform:translateY(-1px);
+    }
+    .btn-stateful.is-active {
+      box-shadow:0 0 0 3px rgba(255,255,255,0.10), 0 12px 24px rgba(15,23,42,0.32);
+      filter:saturate(1.18) brightness(1.05);
+    }
+    .btn-stateful.is-active::after {
+      content:'선택됨';
+      position:absolute;
+      top:6px;
+      right:8px;
+      font-size:10px;
+      font-weight:900;
+      line-height:1;
+      padding:4px 6px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.18);
+      color:#fff;
+      letter-spacing:.02em;
+    }
+    .btn-stateful.is-inactive:not(:disabled) {
+      opacity:.72;
+      filter:saturate(.85);
+    }
+    .btn-stateful.is-pending {
+      box-shadow:0 0 0 3px rgba(0,174,255,0.22), 0 0 0 6px rgba(0,174,255,0.08);
+      animation:controlPulse .95s ease-in-out infinite alternate;
+    }
+    .btn-stateful:disabled {
+      opacity:.45;
+      cursor:not-allowed;
+      box-shadow:none;
+      transform:none;
+    }
+    .control-status-pill {
+      margin-top:10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,0.20);
+      background:rgba(15,23,42,0.32);
+      color:#cbd5e1;
+      font-size:12px;
+      font-weight:700;
+    }
+    .control-status-pill strong {
+      color:#fff;
+      font-size:13px;
+    }
+    .control-status-pill.active {
+      border-color:rgba(34,197,94,0.34);
+      background:rgba(34,197,94,0.10);
+    }
+    .control-status-pill.warning {
+      border-color:rgba(245,158,11,0.32);
+      background:rgba(245,158,11,0.10);
+    }
+    .control-status-pill.info {
+      border-color:rgba(0,174,255,0.28);
+      background:rgba(0,174,255,0.10);
+    }
+    .control-status-pill.danger {
+      border-color:rgba(239,68,68,0.30);
+      background:rgba(239,68,68,0.10);
+    }
+    @keyframes controlPulse {
+      from { transform:translateY(0); }
+      to { transform:translateY(-1px); }
+    }
+  </style>
 </head>
 <body>
   <div id="sidebar-placeholder"></div>
@@ -138,19 +225,21 @@
               <div class="control-grid">
                 <div class="control-block">
                   <h3>열선 제어</h3>
-                  <div class="control-row">
-                    <button class="btn btn-danger" id="btnHeatOn">열선 켜기</button>
-                    <button class="btn btn-success" id="btnHeatOff">열선 끄기</button>
+                  <div class="control-row control-row--stateful">
+                    <button class="btn btn-danger btn-stateful" id="btnHeatOn">열선 켜기</button>
+                    <button class="btn btn-success btn-stateful" id="btnHeatOff">열선 끄기</button>
                   </div>
+                  <div id="heaterControlHint" class="control-status-pill info"><span>현재 열선 상태</span><strong>확인 중</strong></div>
                   <div class="footer-note">직접 열선 ON/OFF 명령은 manual 모드 전환 후 적용되도록 운영하는 구성이 안전합니다.</div>
                 </div>
 
                 <div class="control-block">
                   <h3>모드 변경</h3>
-                  <div class="control-row">
-                    <button class="btn btn-primary" id="btnAutoMode">자동 모드</button>
-                    <button class="btn btn-secondary" id="btnManualMode">수동 모드</button>
+                  <div class="control-row control-row--stateful">
+                    <button class="btn btn-primary btn-stateful" id="btnAutoMode">자동 모드</button>
+                    <button class="btn btn-secondary btn-stateful" id="btnManualMode">수동 모드</button>
                   </div>
+                  <div id="modeControlHint" class="control-status-pill info"><span>현재 운전 모드</span><strong>확인 중</strong></div>
                 </div>
 
                 <div class="control-block">
@@ -161,16 +250,18 @@
                       현재 설정값: <strong id="snowThresholdCurrent">0.80</strong>
                     </div>
                     <div class="control-row">
-                      <button class="btn btn-warning" id="btnSaveThreshold">임계값 저장</button>
+                      <button class="btn btn-warning btn-stateful" id="btnSaveThreshold">임계값 저장</button>
                     </div>
+                    <div id="thresholdControlHint" class="control-status-pill info"><span>저장 상태</span><strong>현재값과 동일</strong></div>
                   </div>
                 </div>
 
                 <div class="control-block">
                   <h3>장비 재부팅</h3>
                   <div class="control-row">
-                    <button class="btn btn-danger" id="btnReboot">재부팅</button>
+                    <button class="btn btn-danger btn-stateful" id="btnReboot">재부팅</button>
                   </div>
+                  <div id="rebootControlHint" class="control-status-pill danger"><span>주의</span><strong>즉시 재부팅됩니다</strong></div>
                 </div>
               </div>
             </div>
@@ -316,6 +407,7 @@
 
   function updateThresholdLabel() {
     $("snowThresholdCurrent").textContent = Number($("snowThresholdRange").value).toFixed(2);
+    if (currentController) renderControlState(currentController);
   }
 
   function buildWeatherMain(day) {
@@ -377,6 +469,49 @@
     }
   }
 
+  function setButtonVisualState(buttonId, { active = false, inactive = false, pending = false } = {}) {
+    const el = $(buttonId);
+    if (!el) return;
+    el.classList.toggle("is-active", !!active);
+    el.classList.toggle("is-inactive", !!inactive);
+    el.classList.toggle("is-pending", !!pending);
+  }
+
+  function setHintState(id, tone, title, value) {
+    const el = $(id);
+    if (!el) return;
+    el.className = `control-status-pill ${tone || "info"}`;
+    el.innerHTML = `<span>${title}</span><strong>${value}</strong>`;
+  }
+
+  function renderControlState(controller) {
+    const mode = String(controller?.heater_mode || "-").toLowerCase();
+    const isManualMode = mode === "manual";
+    const heaterOn = !!controller?.heater_on;
+    const thresholdValue = Number($("snowThresholdRange")?.value ?? controller?.snow_threshold ?? 0);
+    const currentThreshold = Number(controller?.snow_threshold ?? thresholdValue ?? 0);
+    const dirtyThreshold = Math.abs(thresholdValue - currentThreshold) >= 0.005;
+
+    setButtonVisualState("btnAutoMode", { active: mode === "auto", inactive: mode !== "auto" });
+    setButtonVisualState("btnManualMode", { active: mode === "manual", inactive: mode !== "manual" });
+    setButtonVisualState("btnHeatOn", { active: heaterOn, inactive: !heaterOn });
+    setButtonVisualState("btnHeatOff", { active: !heaterOn, inactive: heaterOn });
+    setButtonVisualState("btnSaveThreshold", { active: dirtyThreshold, inactive: !dirtyThreshold });
+    setButtonVisualState("btnReboot", { active: false, inactive: false });
+
+    setHintState("modeControlHint", mode === "manual" ? "active" : "info", "현재 운전 모드", mode === "manual" ? "수동 선택됨" : mode === "auto" ? "자동 선택됨" : `${String(controller?.heater_mode || "-").toUpperCase()} 선택됨`);
+    setHintState("heaterControlHint", heaterOn ? "active" : "warning", "현재 열선 상태", heaterOn ? "열선 켜짐" : "열선 꺼짐");
+    setHintState("thresholdControlHint", dirtyThreshold ? "warning" : "info", "저장 상태", dirtyThreshold ? `저장 필요 (${thresholdValue.toFixed(2)})` : "현재값과 동일");
+    setHintState("rebootControlHint", "danger", "주의", "누르면 즉시 재부팅");
+
+    const heatButtonsLocked = !isManualMode;
+    ["btnHeatOn", "btnHeatOff"].forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      el.dataset.lockedByMode = heatButtonsLocked ? "true" : "false";
+    });
+  }
+
   function setControlPermission(controller) {
     const allowed = canControlController(controller);
     const isManualMode = String(controller?.heater_mode || "").toLowerCase() === "manual";
@@ -392,7 +527,7 @@
       el.disabled = !allowed || !isManualMode;
       el.title = !allowed
         ? "제어 권한이 없습니다."
-        : (isManualMode ? "" : "수동 모드에서만 열선 ON/OFF가 가능합니다.");
+        : (isManualMode ? "현재 수동 모드입니다. 바로 동작합니다." : "수동 모드에서만 열선 ON/OFF가 가능합니다.");
     });
 
     if (!allowed) {
@@ -400,8 +535,10 @@
         `${controller.install_location || "-"} · 조회만 가능 (제어 권한 없음)`;
     } else if (!isManualMode) {
       $("controllerSubtitle").textContent =
-        `${controller.install_location || "-"} · ${String(controller?.heater_mode || "auto").toUpperCase()} 모드에서는 열선 ON/OFF가 비활성화됩니다.`;
+        `${controller.install_location || "-"} · ${String(controller?.heater_mode || "auto").toUpperCase()} 모드 선택 상태 · 열선 ON/OFF는 비활성화`;
     }
+
+    renderControlState(controller);
   }
 
   function renderControlLogs(items) {
@@ -498,7 +635,7 @@
     }
   }
 
-  async function guardedAction(question, fn) {
+  async function guardedAction(question, fn, buttonId = null) {
     if (!currentController || !canControlController(currentController)) {
       alert("이 장비에 대한 제어 권한이 없습니다.");
       return;
@@ -506,12 +643,17 @@
 
     if (!confirm(question)) return;
 
+    if (buttonId) setButtonVisualState(buttonId, { pending: true });
+
     try {
       await fn();
       await fetchAll();
     } catch (err) {
       console.error(err);
       alert(err.message);
+    } finally {
+      if (buttonId) setButtonVisualState(buttonId, { pending: false });
+      if (currentController) renderControlState(currentController);
     }
   }
 
@@ -536,31 +678,32 @@
     $("snowThresholdRange").addEventListener("input", updateThresholdLabel);
 
     $("btnHeatOn").addEventListener("click", () =>
-      guardedAction("열선을 켭니다. 계속하시겠습니까?", () => commands.heatOn())
+      guardedAction("열선을 켭니다. 계속하시겠습니까?", () => commands.heatOn(), "btnHeatOn")
     );
 
     $("btnHeatOff").addEventListener("click", () =>
-      guardedAction("열선을 끕니다. 계속하시겠습니까?", () => commands.heatOff())
+      guardedAction("열선을 끕니다. 계속하시겠습니까?", () => commands.heatOff(), "btnHeatOff")
     );
 
     $("btnAutoMode").addEventListener("click", () =>
-      guardedAction("자동 모드로 변경하시겠습니까?", () => commands.setAutoMode())
+      guardedAction("자동 모드로 변경하시겠습니까?", () => commands.setAutoMode(), "btnAutoMode")
     );
 
     $("btnManualMode").addEventListener("click", () =>
-      guardedAction("수동 모드로 변경하시겠습니까?", () => commands.setManualMode())
+      guardedAction("수동 모드로 변경하시겠습니까?", () => commands.setManualMode(), "btnManualMode")
     );
 
     $("btnSaveThreshold").addEventListener("click", () => {
       const value = Number($("snowThresholdRange").value);
       guardedAction(
         `눈 감지 임계값을 ${value.toFixed(2)} 로 변경하시겠습니까?`,
-        () => commands.setSnowThreshold(value)
+        () => commands.setSnowThreshold(value),
+        "btnSaveThreshold"
       );
     });
 
     $("btnReboot").addEventListener("click", () =>
-      guardedAction("장비를 재부팅하시겠습니까?", () => commands.reboot())
+      guardedAction("장비를 재부팅하시겠습니까?", () => commands.reboot(), "btnReboot")
     );
 
     updateThresholdLabel();
