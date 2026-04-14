@@ -5,6 +5,14 @@ function stripTrailingSlash(url = "") {
   return String(url || "").replace(/\/+$/, "");
 }
 
+function normalizeDeviceApiBaseUrl(url = "") {
+  const normalized = stripTrailingSlash(url);
+  if (!normalized) return "";
+  if (/\/api\/v\d+$/i.test(normalized)) return normalized;
+  if (/\/api$/i.test(normalized)) return `${normalized}/v1`;
+  return `${normalized}/api/v1`;
+}
+
 function isInvalidLegacyUrl(url = "") {
   return (
     !url ||
@@ -169,10 +177,11 @@ function getDeviceHeaders(controller, extra = {}) {
 }
 
 function getDeviceBaseUrl(controller) {
-  return stripTrailingSlash(
+  return normalizeDeviceApiBaseUrl(
     controller?.device_api_base ||
     controller?.device_api_url ||
     controller?.api_base_url ||
+    controller?.public_base_url ||
     ""
   );
 }
@@ -180,7 +189,7 @@ function getDeviceBaseUrl(controller) {
 function getDeviceOrigin(controller) {
   const base = getDeviceBaseUrl(controller);
   if (!base) return "";
-  return base.replace(/\/api\/v\d+$/i, "");
+  return base.replace(/\/api(?:\/v\d+)?$/i, "");
 }
 
 function normalizeListPayload(result) {
