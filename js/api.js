@@ -181,14 +181,19 @@ function getRegistryHeaders(extra = {}) {
   };
 }
 
+function sanitizeHeaderValue(value, fallback = "") {
+  const raw = String(value ?? fallback);
+  return raw.replace(/[^\x20-\x7E\xA0-\xFF]/g, "").trim() || fallback;
+}
+
 function getDeviceHeaders(controller, extra = {}) {
   const session = getSession() || {};
   return {
-    "X-User-Role": session.role || "guest",
-    "X-User-Id": String(session.user_id ?? session.userId ?? session.id ?? ""),
-    "X-User-Name": session.user_name || session.username || session.fullName || session.full_name || "unknown",
-    "X-Customer-Id": String(session.customer_id ?? session.customerId ?? ""),
-    ...(controller?.serial_no ? { "X-Controller-Serial": controller.serial_no } : {}),
+    "X-User-Role": sanitizeHeaderValue(session.role || "guest", "guest"),
+    "X-User-Id": sanitizeHeaderValue(String(session.user_id ?? session.userId ?? session.id ?? ""), ""),
+    "X-User-Name": sanitizeHeaderValue(session.user_name || session.username || session.fullName || session.full_name || "unknown", "unknown"),
+    "X-Customer-Id": sanitizeHeaderValue(String(session.customer_id ?? session.customerId ?? ""), ""),
+    ...(controller?.serial_no ? { "X-Controller-Serial": sanitizeHeaderValue(controller.serial_no, "") } : {}),
     ...extra
   };
 }
