@@ -38,6 +38,66 @@ function toQueryString(params = {}) {
   return query ? `?${query}` : "";
 }
 
+function safeParseUrl(value) {
+  if (!value || typeof value !== "string") return null;
+  try {
+    return new URL(value);
+  } catch (_) {
+    return null;
+  }
+}
+
+function ensureAbsoluteHttpUrl(value = "") {
+  const parsed = safeParseUrl(value);
+  if (!parsed) return "";
+  if (!/^https?:$/i.test(parsed.protocol)) return "";
+  return stripTrailingSlash(parsed.toString());
+}
+
+function getUrlOrigin(value = "") {
+  const parsed = safeParseUrl(value);
+  if (!parsed) return "";
+  if (!/^https?:$/i.test(parsed.protocol)) return "";
+  return stripTrailingSlash(parsed.origin);
+}
+
+function ensureApiV1(value = "") {
+  const normalized = stripTrailingSlash(value);
+  if (!normalized) return "";
+  if (/\/api\/v\d+$/i.test(normalized)) return normalized;
+  return `${normalized}/api/v1`;
+}
+
+function inferOriginFromCameraUrl(cameraUrl = "") {
+  const parsed = safeParseUrl(cameraUrl);
+  if (!parsed) return "";
+  if (!/^https?:$/i.test(parsed.protocol)) return "";
+  return stripTrailingSlash(parsed.origin);
+}
+
+function inferApiBaseFromCameraUrl(cameraUrl = "") {
+  const origin = inferOriginFromCameraUrl(cameraUrl);
+  return origin ? ensureApiV1(origin) : "";
+}
+
+function inferApiBaseFromPublicBaseUrl(publicBaseUrl = "") {
+  const absolute = ensureAbsoluteHttpUrl(publicBaseUrl);
+  if (!absolute) return "";
+  return ensureApiV1(absolute);
+}
+
+function inferCameraUrlFromBase(base = "") {
+  const origin = getUrlOrigin(base) || stripTrailingSlash(base).replace(/\/api\/v\d+$/i, "");
+  return origin ? `${origin}/stream.mjpg` : "";
+}
+
+function toAsciiHeaderValue(value, fallback = "") {
+  const source = String(value ?? "").trim();
+  if (!source) return fallback;
+  const ascii = source.replace(/[^\x20-\x7E]/g, "");
+  return ascii || fallback;
+}
+
 export function setApiBaseUrl(url) {
   if (!url || typeof url !== "string") {
     throw new Error("유효한 API Base URL이 필요합니다.");
@@ -87,98 +147,10 @@ function normalizeErrorPayload(payload, fallback = "요청 처리 중 오류가 
   return new Error(fallback);
 }
 
-function isAbsoluteHttpUrl(value = "") {
-  return /^https?:\/\//i.test(String(value || "").trim());
-}
-
-function safeParseUrl(value = "") {
-  try {
-    return new URL(String(value || "").trim());
-  } catch (_) {
-    return null;
-  }
-}
-
-function ensureApiV1(base = "") {
-  const normalized = stripTrailingSlash(base);
-  if (!normalized) return "";
-  if (/\/api\/v\d+$/i.test(normalized)) return normalized;
-  return `${normalized}/api/v1`;
-}
-
-function toAsciiHeaderValue(value, fallback = "") {
-  const raw = String(value ?? "").trim();
-  if (!raw) return fallback;
-  return /^[\x20-\x7E]*$/.test(raw) ? raw : fallback;
-}
-
-function inferApiBaseFromPublicBaseUrl(publicBaseUrl = "") {
-  const parsed = safeParseUrl(publicBaseUrl);
-  if (!parsed) return "";
-
-  let path = parsed.pathname.replace(/\/+$/, "");
-  if (/\/api\/v\d+$/i.test(path)) {
-    return stripTrailingSlash(`${parsed.origin}${path}`);
-  }
-
-  return stripTrailingSlash(`${parsed.origin}${path}/api/v1`);
-}
-
-function inferApiBaseFromCameraUrl(cameraUrl = "") {
-  const parsed = safeParseUrl(cameraUrl);
-  if (!parsed) return "";
-
-  let path = parsed.pathname.replace(/\/+$/, "");
-
-  if (/\/snapshot\.jpg$/i.test(path)) {
-    path = path.replace(/\/snapshot\.jpg$/i, "");
-  } else if (/\/stream\.mjpg$/i.test(path)) {
-    path = path.replace(/\/stream\.mjpg$/i, "");
-  } else if (/\/api\/v\d+$/i.test(path)) {
-    return stripTrailingSlash(`${parsed.origin}${path}`);
-  }
-
-  return stripTrailingSlash(`${parsed.origin}${path}/api/v1`);
-}
-
-function inferDeviceBaseUrl(controller) {
-  const directBase =
-    controller?.device_api_base ||
-    controller?.device_api_url ||
-    controller?.api_base_url ||
-    "";
-
-  if (directBase && isAbsoluteHttpUrl(directBase)) {
-    return ensureApiV1(directBase);
-  }
-
-  const publicBaseCandidates = [
-    controller?.public_base_url,
-    controller?.publicBaseUrl
-  ].filter(Boolean);
-
-  for (const publicBase of publicBaseCandidates) {
-    const inferred = inferApiBaseFromPublicBaseUrl(publicBase);
-    if (inferred) return inferred;
-  }
-
-  const cameraCandidates = [
-    controller?.camera_url,
-    controller?.cameraUrl
-  ].filter(Boolean);
-
-  for (const cameraUrl of cameraCandidates) {
-    const inferred = inferApiBaseFromCameraUrl(cameraUrl);
-    if (inferred) return inferred;
-  }
-
-  return "";
-}
-
 async function request(baseUrl, path, options = {}) {
   const normalizedBase = stripTrailingSlash(baseUrl);
   if (!normalizedBase) {
-    throw new Error("장비 API 주소를 확인할 수 없습니다. device_api_base 또는 camera_url 설정을 확인하세요.");
+    throw new Error("장비 API 주소를 확인할 수 없습니다.");
   }
 
   const url = `${normalizedBase}${path.startsWith("/") ? path : `/${path}`}`;
@@ -250,46 +222,86 @@ function getRegistryHeaders(extra = {}) {
 function getDeviceHeaders(controller, extra = {}) {
   const session = getSession() || {};
 
-  const userRole = toAsciiHeaderValue(session.role || "guest", "guest");
-  const userId = String(session.user_id ?? session.userId ?? session.id ?? "");
-  const customerId = String(session.customer_id ?? session.customerId ?? "");
-  const controllerSerial = toAsciiHeaderValue(controller?.serial_no || "", "");
+  const role = toAsciiHeaderValue(session.role || "guest", "guest");
+  const userId = toAsciiHeaderValue(
+    String(session.user_id ?? session.userId ?? session.id ?? ""),
+    ""
+  );
+  const customerId = toAsciiHeaderValue(
+    String(session.customer_id ?? session.customerId ?? ""),
+    ""
+  );
+  const serial = toAsciiHeaderValue(controller?.serial_no || "", "");
+  const safeUserName = toAsciiHeaderValue(
+    session.username || session.user_name || session.fullName || session.full_name || "user",
+    "user"
+  );
 
   return {
-    "X-User-Role": userRole,
+    "X-User-Role": role,
     "X-User-Id": userId,
-    "X-User-Name": "user",
+    "X-User-Name": safeUserName,
     "X-Customer-Id": customerId,
-    ...(controllerSerial ? { "X-Controller-Serial": controllerSerial } : {}),
+    ...(serial ? { "X-Controller-Serial": serial } : {}),
     ...extra
   };
 }
 
+function enrichControllerEndpoints(controller = {}) {
+  const enriched = { ...(controller || {}) };
+
+  const directBase =
+    ensureAbsoluteHttpUrl(enriched.device_api_base) ||
+    ensureAbsoluteHttpUrl(enriched.device_api_url) ||
+    ensureAbsoluteHttpUrl(enriched.api_base_url);
+
+  const inferredBase =
+    ensureApiV1(directBase) ||
+    inferApiBaseFromPublicBaseUrl(enriched.public_base_url) ||
+    inferApiBaseFromCameraUrl(enriched.camera_url);
+
+  if (!enriched.device_api_base && inferredBase) {
+    enriched.device_api_base = inferredBase;
+  }
+
+  if (!enriched.device_api_url && inferredBase) {
+    enriched.device_api_url = inferredBase;
+  }
+
+  if (!enriched.api_base_url && inferredBase) {
+    enriched.api_base_url = inferredBase;
+  }
+
+  if (!enriched.public_base_url) {
+    const origin = getUrlOrigin(inferredBase) || inferOriginFromCameraUrl(enriched.camera_url);
+    if (origin) enriched.public_base_url = origin;
+  }
+
+  if (!enriched.camera_url) {
+    const inferredCamera =
+      inferCameraUrlFromBase(inferredBase) ||
+      (enriched.public_base_url ? `${stripTrailingSlash(enriched.public_base_url)}/stream.mjpg` : "");
+    if (inferredCamera) enriched.camera_url = inferredCamera;
+  }
+
+  return enriched;
+}
+
 function getDeviceBaseUrl(controller) {
-  return stripTrailingSlash(inferDeviceBaseUrl(controller));
+  const enriched = enrichControllerEndpoints(controller);
+  return stripTrailingSlash(
+    enriched.device_api_base ||
+    enriched.device_api_url ||
+    enriched.api_base_url ||
+    ""
+  );
 }
 
 function getDeviceOrigin(controller) {
-  const base = getDeviceBaseUrl(controller);
-  if (base) {
-    return base.replace(/\/api\/v\d+$/i, "");
-  }
-
-  const publicBase = stripTrailingSlash(
-    controller?.public_base_url ||
-    controller?.publicBaseUrl ||
-    ""
-  );
-  if (publicBase) {
-    return publicBase.replace(/\/api\/v\d+$/i, "");
-  }
-
-  const cameraUrl = controller?.camera_url || controller?.cameraUrl || "";
-  const parsed = safeParseUrl(cameraUrl);
-  if (!parsed) return "";
-  let path = parsed.pathname.replace(/\/+$/, "");
-  path = path.replace(/\/stream\.mjpg$/i, "").replace(/\/snapshot\.jpg$/i, "");
-  return stripTrailingSlash(`${parsed.origin}${path}`);
+  const enriched = enrichControllerEndpoints(controller);
+  const base = getDeviceBaseUrl(enriched);
+  if (base) return base.replace(/\/api\/v\d+$/i, "");
+  return stripTrailingSlash(enriched.public_base_url || inferOriginFromCameraUrl(enriched.camera_url) || "");
 }
 
 function normalizeListPayload(result) {
@@ -302,18 +314,21 @@ function normalizeListPayload(result) {
 }
 
 function mergeController(registryController, liveStatus = null) {
-  const merged = {
+  const merged = enrichControllerEndpoints({
     ...(registryController || {}),
     ...(liveStatus || {})
-  };
-
-  if (!merged.device_api_base) {
-    merged.device_api_base = getDeviceBaseUrl(merged) || getDeviceBaseUrl(registryController);
-  }
+  });
 
   if (!merged.camera_url) {
-    const origin = getDeviceOrigin(merged) || getDeviceOrigin(registryController);
+    const origin = getDeviceOrigin(merged);
     if (origin) merged.camera_url = `${origin}/stream.mjpg`;
+  }
+
+  if (!merged.device_api_base) {
+    const inferredBase =
+      inferApiBaseFromPublicBaseUrl(merged.public_base_url) ||
+      inferApiBaseFromCameraUrl(merged.camera_url);
+    if (inferredBase) merged.device_api_base = inferredBase;
   }
 
   if (!merged.status) merged.status = "offline";
@@ -344,29 +359,29 @@ export async function getControllerRegistry(controllerId) {
     method: "GET",
     headers: getRegistryHeaders()
   });
-  return result?.data ?? result;
+  return enrichControllerEndpoints(result?.data ?? result);
 }
 
 export async function getDeviceStatus(controller) {
-  const base = getDeviceBaseUrl(controller);
+  const enriched = enrichControllerEndpoints(controller);
+  const base = getDeviceBaseUrl(enriched);
+
   if (!base) {
-    throw new Error("device_api_base 를 확인할 수 없습니다. camera_url 또는 public_base_url 설정을 확인하세요.");
+    throw new Error("device_api_base 가 등록되지 않았고 camera_url/public_base_url 에서도 추론하지 못했습니다.");
   }
 
   const result = await request(base, `/status`, {
     method: "GET",
-    headers: getDeviceHeaders(controller)
+    headers: getDeviceHeaders(enriched)
   });
 
-  return result?.data ?? result;
+  return enrichControllerEndpoints(result?.data ?? result);
 }
 
 export async function getControllerDetail(controllerId) {
   const controller = await getControllerRegistry(controllerId);
-  const mergedController = mergeController(controller, null);
-
   try {
-    const live = await getDeviceStatus(mergedController);
+    const live = await getDeviceStatus(controller);
     return { data: mergeController(controller, live) };
   } catch (err) {
     return {
@@ -379,9 +394,11 @@ export async function getControllerDetail(controllerId) {
 }
 
 export async function getControllerEvents(controllerId, params = { limit: 10 }) {
-  const controller = mergeController(await getControllerRegistry(controllerId), null);
+  const controller = await getControllerRegistry(controllerId);
   const base = getDeviceBaseUrl(controller);
-  if (!base) throw new Error("이벤트 조회용 device_api_base 를 확인할 수 없습니다.");
+  if (!base) {
+    throw new Error("장비 이벤트 조회용 API 주소를 확인할 수 없습니다.");
+  }
 
   const result = await request(base, `/events${toQueryString(params)}`, {
     method: "GET",
@@ -391,9 +408,11 @@ export async function getControllerEvents(controllerId, params = { limit: 10 }) 
 }
 
 export async function getControllerControlLogs(controllerId, params = { limit: 10 }) {
-  const controller = mergeController(await getControllerRegistry(controllerId), null);
+  const controller = await getControllerRegistry(controllerId);
   const base = getDeviceBaseUrl(controller);
-  if (!base) throw new Error("제어 로그 조회용 device_api_base 를 확인할 수 없습니다.");
+  if (!base) {
+    throw new Error("장비 제어 로그 조회용 API 주소를 확인할 수 없습니다.");
+  }
 
   const result = await request(base, `/control-logs${toQueryString(params)}`, {
     method: "GET",
@@ -405,10 +424,8 @@ export async function getControllerControlLogs(controllerId, params = { limit: 1
 export function canControlController(controller, session = getSession()) {
   if (!session || !controller) return false;
   if (session.role === "admin") return true;
-
   const sessionCustomerId = String(session.customer_id ?? session.customerId ?? "");
   const controllerCustomerId = String(controller.customer_id ?? "");
-
   if (session.role === "customer" && sessionCustomerId === controllerCustomerId) {
     return controller.allow_customer_control !== false;
   }
@@ -419,40 +436,46 @@ export async function sendControllerCommand(
   controllerId,
   { commandType, commandValue = null, reason = "", requestedBy = null, expiresInSec = 120 } = {}
 ) {
-  const controller = mergeController(await getControllerRegistry(controllerId), null);
+  const controller = await getControllerRegistry(controllerId);
+  const enriched = enrichControllerEndpoints(controller);
 
-  if (!canControlController(controller)) {
+  if (!canControlController(enriched)) {
     throw new Error("이 장비를 제어할 권한이 없습니다.");
   }
 
-  const base = getDeviceBaseUrl(controller);
+  const base = getDeviceBaseUrl(enriched);
   if (!base) {
-    throw new Error("장비 제어 주소를 확인할 수 없습니다. device_api_base 또는 camera_url 설정을 확인하세요.");
+    throw new Error("장비 제어용 API 주소를 확인할 수 없습니다.");
   }
 
-  const session = getSession() || {};
-  const fallbackUserName =
-    requestedBy?.user_name ||
-    session.user_name ||
-    session.username ||
-    session.fullName ||
-    session.full_name ||
-    "unknown";
+  const safeRequestedBy = requestedBy
+    ? {
+        user_id: requestedBy?.user_id ?? requestedBy?.userId ?? null,
+        user_name: toAsciiHeaderValue(
+          requestedBy?.username ||
+          requestedBy?.user_name ||
+          requestedBy?.fullName ||
+          requestedBy?.full_name ||
+          "user",
+          "user"
+        )
+      }
+    : {
+        user_id: null,
+        user_name: "user"
+      };
 
   const body = {
     command_type: commandType,
     command_value: commandValue,
     reason,
     expires_in_sec: expiresInSec,
-    requested_by: {
-      user_id: requestedBy?.user_id ?? session.user_id ?? session.userId ?? session.id ?? null,
-      user_name: fallbackUserName
-    }
+    requested_by: safeRequestedBy
   };
 
   return request(base, `/commands`, {
     method: "POST",
-    headers: getDeviceHeaders(controller),
+    headers: getDeviceHeaders(enriched),
     body
   });
 }
