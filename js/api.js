@@ -106,6 +106,12 @@ function ensureApiV1(base = "") {
   return `${normalized}/api/v1`;
 }
 
+function toAsciiHeaderValue(value, fallback = "") {
+  const raw = String(value ?? "").trim();
+  if (!raw) return fallback;
+  return /^[\x20-\x7E]*$/.test(raw) ? raw : fallback;
+}
+
 function inferApiBaseFromPublicBaseUrl(publicBaseUrl = "") {
   const parsed = safeParseUrl(publicBaseUrl);
   if (!parsed) return "";
@@ -128,8 +134,7 @@ function inferApiBaseFromCameraUrl(cameraUrl = "") {
     path = path.replace(/\/snapshot\.jpg$/i, "");
   } else if (/\/stream\.mjpg$/i.test(path)) {
     path = path.replace(/\/stream\.mjpg$/i, "");
-  } else if (/\/api\/v\d+\/?/i.test(path)) {
-    path = path.replace(/\/+$/, "");
+  } else if (/\/api\/v\d+$/i.test(path)) {
     return stripTrailingSlash(`${parsed.origin}${path}`);
   }
 
@@ -244,12 +249,18 @@ function getRegistryHeaders(extra = {}) {
 
 function getDeviceHeaders(controller, extra = {}) {
   const session = getSession() || {};
+
+  const userRole = toAsciiHeaderValue(session.role || "guest", "guest");
+  const userId = String(session.user_id ?? session.userId ?? session.id ?? "");
+  const customerId = String(session.customer_id ?? session.customerId ?? "");
+  const controllerSerial = toAsciiHeaderValue(controller?.serial_no || "", "");
+
   return {
-    "X-User-Role": session.role || "guest",
-    "X-User-Id": String(session.user_id ?? session.userId ?? session.id ?? ""),
-    "X-User-Name": session.user_name || session.username || session.fullName || session.full_name || "unknown",
-    "X-Customer-Id": String(session.customer_id ?? session.customerId ?? ""),
-    ...(controller?.serial_no ? { "X-Controller-Serial": controller.serial_no } : {}),
+    "X-User-Role": userRole,
+    "X-User-Id": userId,
+    "X-User-Name": "user",
+    "X-Customer-Id": customerId,
+    ...(controllerSerial ? { "X-Controller-Serial": controllerSerial } : {}),
     ...extra
   };
 }
@@ -338,7 +349,9 @@ export async function getControllerRegistry(controllerId) {
 
 export async function getDeviceStatus(controller) {
   const base = getDeviceBaseUrl(controller);
-  if (!base) throw new Error("device_api_base 를 확인할 수 없습니다. camera_url 또는 public_base_url 설정을 확인하세요.");
+  if (!base) {
+    throw new Error("device_api_base 를 확인할 수 없습니다. camera_url 또는 public_base_url 설정을 확인하세요.");
+  }
 
   const result = await request(base, `/status`, {
     method: "GET",
@@ -392,8 +405,10 @@ export async function getControllerControlLogs(controllerId, params = { limit: 1
 export function canControlController(controller, session = getSession()) {
   if (!session || !controller) return false;
   if (session.role === "admin") return true;
-  const sessionCustomerId = String(session.customer_id ?? sessionCustomerId ?? "");
+
+  const sessionCustomerId = String(session.customer_id ?? session.customerId ?? "");
   const controllerCustomerId = String(controller.customer_id ?? "");
+
   if (session.role === "customer" && sessionCustomerId === controllerCustomerId) {
     return controller.allow_customer_control !== false;
   }
@@ -405,6 +420,7 @@ export async function sendControllerCommand(
   { commandType, commandValue = null, reason = "", requestedBy = null, expiresInSec = 120 } = {}
 ) {
   const controller = mergeController(await getControllerRegistry(controllerId), null);
+
   if (!canControlController(controller)) {
     throw new Error("이 장비를 제어할 권한이 없습니다.");
   }
@@ -414,14 +430,23 @@ export async function sendControllerCommand(
     throw new Error("장비 제어 주소를 확인할 수 없습니다. device_api_base 또는 camera_url 설정을 확인하세요.");
   }
 
+  const session = getSession() || {};
+  const fallbackUserName =
+    requestedBy?.user_name ||
+    session.user_name ||
+    session.username ||
+    session.fullName ||
+    session.full_name ||
+    "unknown";
+
   const body = {
     command_type: commandType,
     command_value: commandValue,
     reason,
     expires_in_sec: expiresInSec,
     requested_by: {
-      user_id: requestedBy?.user_id ?? null,
-      user_name: requestedBy?.user_name ?? "unknown"
+      user_id: requestedBy?.user_id ?? session.user_id ?? session.userId ?? session.id ?? null,
+      user_name: fallbackUserName
     }
   };
 
