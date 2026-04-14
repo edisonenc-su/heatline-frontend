@@ -379,23 +379,28 @@
 
   function setControlPermission(controller) {
     const allowed = canControlController(controller);
-    const buttons = [
-      "btnHeatOn",
-      "btnHeatOff",
-      "btnAutoMode",
-      "btnManualMode",
-      "btnSaveThreshold",
-      "btnReboot"
-    ];
+    const isManualMode = String(controller?.heater_mode || "").toLowerCase() === "manual";
 
-    buttons.forEach(id => {
+    ["btnAutoMode", "btnManualMode", "btnSaveThreshold", "btnReboot"].forEach(id => {
       const el = $(id);
       if (el) el.disabled = !allowed;
+    });
+
+    ["btnHeatOn", "btnHeatOff"].forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      el.disabled = !allowed || !isManualMode;
+      el.title = !allowed
+        ? "제어 권한이 없습니다."
+        : (isManualMode ? "" : "수동 모드에서만 열선 ON/OFF가 가능합니다.");
     });
 
     if (!allowed) {
       $("controllerSubtitle").textContent =
         `${controller.install_location || "-"} · 조회만 가능 (제어 권한 없음)`;
+    } else if (!isManualMode) {
+      $("controllerSubtitle").textContent =
+        `${controller.install_location || "-"} · ${String(controller?.heater_mode || "auto").toUpperCase()} 모드에서는 열선 ON/OFF가 비활성화됩니다.`;
     }
   }
 
