@@ -416,6 +416,8 @@
   let detailTimer = null;
   let weatherTimer = null;
   let lastCameraUrl = null;
+  let lastCameraAssignedAt = 0;
+  const CAMERA_STREAM_RELOAD_MS = 30000;
   let currentController = null;
 
   function $(id) {
@@ -493,6 +495,16 @@
     }
   }
 
+  function buildSnapshotUrl(cameraUrl) {
+    if (!cameraUrl) return "";
+    try {
+      const parsed = new URL(cameraUrl, window.location.href);
+      return `${parsed.origin}/snapshot.jpg?_t=${Date.now()}`;
+    } catch (_) {
+      return "";
+    }
+  }
+
   function renderCamera(cameraUrl) {
     const img = $("cameraStream");
     const empty = $("cameraEmpty");
@@ -500,17 +512,53 @@
     if (!cameraUrl) {
       img.style.display = "none";
       img.removeAttribute("src");
+      img.dataset.failed = "false";
+      img.dataset.cameraMode = "none";
+      empty.textContent = "카메라 스트림이 등록되지 않았습니다.";
       empty.style.display = "block";
       lastCameraUrl = null;
+      lastCameraAssignedAt = 0;
       return;
     }
 
-    if (lastCameraUrl !== cameraUrl) {
-      img.src = buildNoCacheStreamUrl(cameraUrl);
-      img.style.display = "block";
+    const now = Date.now();
+    const shouldReload =
+      lastCameraUrl !== cameraUrl ||
+      !img.getAttribute("src") ||
+      img.dataset.failed === "true" ||
+      now - lastCameraAssignedAt >= CAMERA_STREAM_RELOAD_MS;
+
+    if (!shouldReload) return;
+
+    const streamUrl = buildNoCacheStreamUrl(cameraUrl);
+    const snapshotUrl = buildSnapshotUrl(cameraUrl);
+
+    img.onload = () => {
+      img.dataset.failed = "false";
       empty.style.display = "none";
-      lastCameraUrl = cameraUrl;
-    }
+      img.style.display = "block";
+    };
+
+    img.onerror = () => {
+      if (snapshotUrl && img.dataset.cameraMode !== "snapshot") {
+        img.dataset.cameraMode = "snapshot";
+        img.src = snapshotUrl;
+        lastCameraAssignedAt = Date.now();
+        return;
+      }
+      img.dataset.failed = "true";
+      img.style.display = "none";
+      empty.textContent = "카메라 영상을 불러오지 못했습니다. 스트림 또는 카메라 프록시 상태를 확인하세요.";
+      empty.style.display = "block";
+    };
+
+    img.dataset.failed = "false";
+    img.dataset.cameraMode = "stream";
+    img.src = streamUrl;
+    img.style.display = "block";
+    empty.style.display = "none";
+    lastCameraUrl = cameraUrl;
+    lastCameraAssignedAt = now;
   }
 
   function updateThresholdLabel() {
