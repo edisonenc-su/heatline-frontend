@@ -5,31 +5,6 @@ function stripTrailingSlash(url = "") {
   return String(url || "").replace(/\/+$/, "");
 }
 
-function normalizeDeviceApiBaseUrl(url = "") {
-  const normalized = stripTrailingSlash(url);
-  if (!normalized) return "";
-  if (/\/api\/v\d+$/i.test(normalized)) return normalized;
-  if (/\/api$/i.test(normalized)) return `${normalized}/v1`;
-  return `${normalized}/api/v1`;
-}
-
-function isPrivateOrLocalUrl(url = "") {
-  try {
-    const parsed = new URL(url);
-    const host = String(parsed.hostname || "").toLowerCase();
-    if (!host) return false;
-    if (host === "localhost" || host === "127.0.0.1" || host === "::1") return true;
-    if (host.endsWith('.local')) return true;
-    if (/^127\./.test(host)) return true;
-    if (/^10\./.test(host)) return true;
-    if (/^192\.168\./.test(host)) return true;
-    if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true;
-    return false;
-  } catch (_) {
-    return false;
-  }
-}
-
 function isInvalidLegacyUrl(url = "") {
   return (
     !url ||
@@ -181,43 +156,31 @@ function getRegistryHeaders(extra = {}) {
   };
 }
 
-function sanitizeHeaderValue(value, fallback = "") {
-  const raw = String(value ?? fallback);
-  return raw.replace(/[^\x20-\x7E\xA0-\xFF]/g, "").trim() || fallback;
-}
-
 function getDeviceHeaders(controller, extra = {}) {
   const session = getSession() || {};
   return {
-    "X-User-Role": sanitizeHeaderValue(session.role || "guest", "guest"),
-    "X-User-Id": sanitizeHeaderValue(String(session.user_id ?? session.userId ?? session.id ?? ""), ""),
-    "X-User-Name": sanitizeHeaderValue(session.user_name || session.username || session.fullName || session.full_name || "unknown", "unknown"),
-    "X-Customer-Id": sanitizeHeaderValue(String(session.customer_id ?? session.customerId ?? ""), ""),
-    ...(controller?.serial_no ? { "X-Controller-Serial": sanitizeHeaderValue(controller.serial_no, "") } : {}),
+    "X-User-Role": session.role || "guest",
+    "X-User-Id": String(session.user_id ?? session.userId ?? session.id ?? ""),
+    "X-User-Name": session.user_name || session.username || session.fullName || session.full_name || "unknown",
+    "X-Customer-Id": String(session.customer_id ?? session.customerId ?? ""),
+    ...(controller?.serial_no ? { "X-Controller-Serial": controller.serial_no } : {}),
     ...extra
   };
 }
 
 function getDeviceBaseUrl(controller) {
-  const rawDeviceApiBase = stripTrailingSlash(
+  return stripTrailingSlash(
     controller?.device_api_base ||
     controller?.device_api_url ||
     controller?.api_base_url ||
     ""
   );
-  const rawPublicBaseUrl = stripTrailingSlash(controller?.public_base_url || "");
-
-  const preferredBase = rawPublicBaseUrl && (!rawDeviceApiBase || isPrivateOrLocalUrl(rawDeviceApiBase))
-    ? rawPublicBaseUrl
-    : (rawDeviceApiBase || rawPublicBaseUrl);
-
-  return normalizeDeviceApiBaseUrl(preferredBase);
 }
 
 function getDeviceOrigin(controller) {
   const base = getDeviceBaseUrl(controller);
   if (!base) return "";
-  return base.replace(/\/api(?:\/v\d+)?$/i, "");
+  return base.replace(/\/api\/v\d+$/i, "");
 }
 
 function normalizeListPayload(result) {
@@ -320,15 +283,6 @@ export async function getControllerControlLogs(controllerId, params = { limit: 1
   return { data: { items: normalizeListPayload(result) } };
 }
 
-export async function getControllerWeatherSummary(controllerId) {
-  const id = validateControllerId(controllerId);
-  const result = await request(registryApiBaseUrl, `/controllers/${id}/weather-summary`, {
-    method: "GET",
-    headers: getRegistryHeaders()
-  });
-  return result?.data ?? result;
-}
-
 export function canControlController(controller, session = getSession()) {
   if (!session || !controller) return false;
   if (session.role === "admin") return true;
@@ -344,8 +298,7 @@ export async function sendControllerCommand(
   controllerId,
   { commandType, commandValue = null, reason = "", requestedBy = null, expiresInSec = 120 } = {}
 ) {
-  const id = validateControllerId(controllerId);
-  const controller = await getControllerRegistry(id);
+  const controller = await getControllerRegistry(controllerId);
   if (!canControlController(controller)) {
     throw new Error("이 장비를 제어할 권한이 없습니다.");
   }
@@ -361,13 +314,11 @@ export async function sendControllerCommand(
     }
   };
 
-  const result = await request(registryApiBaseUrl, `/controllers/${id}/commands`, {
+  return request(getDeviceBaseUrl(controller), `/commands`, {
     method: "POST",
-    headers: getRegistryHeaders(),
+    headers: getDeviceHeaders(controller),
     body
   });
-
-  return result?.data ?? result;
 }
 
 export function buildDetailCommands(controllerId, currentUser = null) {
