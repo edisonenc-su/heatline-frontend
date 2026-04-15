@@ -1,3 +1,6 @@
+cp -f detail.html detail.html.bak.$(date +%F-%H%M%S)
+
+cat > detail.html <<'EOF'
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -53,6 +56,8 @@
                     </div>
                   </div>
                 </section>
+
+                <div id="mobileRemoteControlAnchor"></div>
 
                 <section class="detail-card">
                   <div class="detail-card-header">
@@ -136,7 +141,7 @@
               </div>
 
               <div class="detail-side">
-                <section class="detail-card">
+                <section class="detail-card" id="remoteControlCard">
                   <div class="detail-card-header">
                     <h2>🎛️ 원격 제어</h2>
                     <span class="detail-card-meta">권한 있는 계정만 제어 가능</span>
@@ -183,7 +188,7 @@
                   </div>
                 </section>
 
-                <section class="detail-card">
+                <section class="detail-card" id="deviceInfoCard">
                   <div class="detail-card-header">
                     <h2>ℹ️ 장비 정보</h2>
                     <span class="detail-card-meta">중앙 등록 정보</span>
@@ -208,6 +213,7 @@
         </div>
       </div>
     </div>
+  </div>
 
   <script src="js/app.js"></script>
   <script type="module">
@@ -232,6 +238,32 @@
 
     function goBack() {
       history.back();
+    }
+
+    function relocateRemoteControlCard() {
+      const remoteCard = $("remoteControlCard");
+      const deviceInfoCard = $("deviceInfoCard");
+      const mobileAnchor = $("mobileRemoteControlAnchor");
+      const detailSide = document.querySelector(".detail-side");
+
+      if (!remoteCard || !deviceInfoCard || !mobileAnchor || !detailSide) return;
+
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+      if (isMobile) {
+        if (remoteCard.previousElementSibling !== mobileAnchor) {
+          mobileAnchor.insertAdjacentElement("afterend", remoteCard);
+        }
+        return;
+      }
+
+      if (remoteCard.parentElement !== detailSide || remoteCard.nextElementSibling !== deviceInfoCard) {
+        detailSide.insertBefore(remoteCard, deviceInfoCard);
+      }
+    }
+
+    function handleLayoutChange() {
+      relocateRemoteControlCard();
     }
 
     const commands = buildDetailCommands(controllerId);
@@ -482,10 +514,12 @@
         guardedAction("장비를 재부팅하시겠습니까?", () => commands.reboot())
       );
 
+      handleLayoutChange();
       updateThresholdLabel();
       startPolling();
     });
 
+    window.addEventListener("resize", handleLayoutChange);
     window.addEventListener("beforeunload", stopPolling);
 
     const session = window.Auth.requireAuth();
@@ -497,3 +531,4 @@
   </script>
 </body>
 </html>
+EOF
