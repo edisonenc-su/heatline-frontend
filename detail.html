@@ -1,6 +1,3 @@
-cp -f detail.html detail.html.bak.$(date +%F-%H%M%S)
-
-cat > detail.html <<'EOF'
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -13,135 +10,72 @@ cat > detail.html <<'EOF'
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .detail-layout-balanced {
-      display: grid;
-      gap: 18px;
-    }
-
-    .detail-row {
-      display: grid;
-      gap: 18px;
-      align-items: stretch;
-    }
-
+    .detail-layout-balanced { display:grid; gap:18px; }
+    .detail-row { display:grid; gap:18px; align-items:stretch; }
     .detail-row-top,
-    .detail-row-middle {
-      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
-    }
-
-    .detail-row-bottom {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .equal-card {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-
-    .equal-card .detail-card-body {
-      flex: 1;
-      min-height: 0;
-    }
-
-    .video-section.equal-card .detail-card-body {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .video-section.equal-card .camera-box {
-      flex: 1;
-      min-height: 360px;
-    }
-
-    .remote-control-card .detail-card-body,
-    .status-card .detail-card-body,
-    .info-card .detail-card-body,
-    .log-card .detail-card-body {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .remote-control-card .control-grid,
-    .status-card .metrics,
-    .info-card .kv,
-    .log-card .table-wrap {
-      flex: 1;
-    }
-
-    .status-card .metrics {
-      align-content: stretch;
-    }
-
-    .info-card .kv {
-      align-content: start;
-    }
-
-    .log-card .table-wrap table {
-      min-width: 100%;
-    }
-
+    .detail-row-middle { grid-template-columns:minmax(0, 1.6fr) minmax(320px, 1fr); }
+    .detail-row-bottom { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .equal-card { height:100%; display:flex; flex-direction:column; min-height:0; }
+    .equal-card .detail-card-body { flex:1; min-height:0; }
+    .video-section.equal-card .detail-card-body { display:flex; flex-direction:column; gap:14px; }
+    .video-stage { position:relative; border-radius:18px; overflow:hidden; background:#020817; border:1px solid rgba(148,163,184,0.14); min-height:380px; display:flex; align-items:center; justify-content:center; }
+    .camera-view { width:100%; height:100%; display:none; }
+    .camera-view.active { display:block; }
+    .camera-img, .camera-video, .camera-frame { width:100%; height:100%; border:0; background:#020817; }
+    .camera-img, .camera-video { object-fit:contain; }
+    .camera-empty { display:flex; align-items:center; justify-content:center; width:100%; min-height:280px; color:#94a3b8; font-size:14px; text-align:center; padding:24px; line-height:1.7; }
+    .stream-meta { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; }
+    .stream-meta-card { padding:12px 14px; border-radius:14px; background:rgba(15,23,42,0.62); border:1px solid rgba(148,163,184,0.14); }
+    .stream-meta-card .label { font-size:11px; color:#94a3b8; margin-bottom:5px; }
+    .stream-meta-card .value { font-size:13px; color:#fff; word-break:break-all; line-height:1.45; }
+    .stream-link-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .stream-link-row a { color:#7dd3fc; font-size:13px; word-break:break-all; }
+    .stream-helper { font-size:12px; color:#94a3b8; line-height:1.6; }
+    .detail-card-body.table-wrap { overflow:auto; }
+    .metrics { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
+    .metric { padding:14px 16px; border-radius:16px; background:rgba(15,23,42,0.62); border:1px solid rgba(148,163,184,0.14); }
+    .metric .label { color:#94a3b8; font-size:12px; margin-bottom:6px; }
+    .metric .value { color:#fff; font-size:20px; font-weight:800; line-height:1.3; }
+    .kv { display:grid; grid-template-columns:120px minmax(0, 1fr); gap:10px 16px; }
+    .kv .k { color:#94a3b8; font-size:12px; }
+    .kv .v { color:#fff; font-size:13px; line-height:1.6; word-break:break-all; }
+    .helper-box { padding:12px 14px; border-radius:14px; background:rgba(15,23,42,0.62); border:1px solid rgba(148,163,184,0.14); color:#cbd5e1; font-size:12px; line-height:1.6; }
+    .control-grid { display:grid; gap:14px; }
+    .control-block { padding:14px; border-radius:16px; background:rgba(15,23,42,0.62); border:1px solid rgba(148,163,184,0.14); }
+    .control-block h3 { margin:0 0 10px; font-size:14px; color:#fff; }
+    .control-row { display:flex; gap:10px; flex-wrap:wrap; }
+    .range-wrap { display:grid; gap:10px; }
+    .range-value { color:#cbd5e1; font-size:13px; }
+    .footer-note { margin-top:10px; color:#94a3b8; font-size:12px; line-height:1.6; }
+    .badge-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .video-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+    .video-badge.status-online { background:rgba(34,197,94,0.16); color:#86efac; }
+    .video-badge.status-offline { background:rgba(148,163,184,0.16); color:#cbd5e1; }
+    .video-badge.status-warning { background:rgba(250,204,21,0.16); color:#fde68a; }
+    .video-badge.status-error { background:rgba(239,68,68,0.16); color:#fca5a5; }
+    .video-badge.snow-on { background:rgba(56,189,248,0.16); color:#7dd3fc; }
+    .video-badge.snow-off { background:rgba(148,163,184,0.16); color:#cbd5e1; }
+    .video-badge.heater-on { background:rgba(249,115,22,0.16); color:#fdba74; }
+    .video-badge.heater-off { background:rgba(148,163,184,0.16); color:#cbd5e1; }
+    .detail-card-meta { color:#94a3b8; font-size:12px; }
+    .muted { color:#94a3b8; text-align:center; padding:18px; }
     @media (max-width: 1200px) {
-      .detail-row-top,
-      .detail-row-middle {
-        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
-      }
+      .detail-row-top, .detail-row-middle { grid-template-columns:minmax(0, 1.4fr) minmax(280px, 1fr); }
+      .stream-meta { grid-template-columns:repeat(2, minmax(0, 1fr)); }
     }
-
     @media (max-width: 980px) {
-      .detail-row-top,
-      .detail-row-middle,
-      .detail-row-bottom {
-        grid-template-columns: 1fr;
-      }
-
-      .video-section.equal-card .camera-box {
-        min-height: 280px;
-      }
+      .detail-row-top, .detail-row-middle, .detail-row-bottom { grid-template-columns:1fr; }
+      .video-stage { min-height:300px; }
     }
-
     @media (max-width: 768px) {
-      .detail-topbar {
-        align-items: flex-start;
-      }
-
-      .top-actions {
-        width: 100%;
-        display: flex;
-        gap: 12px;
-      }
-
-      .top-actions .btn {
-        flex: 1 1 0;
-      }
-
-      .video-section.equal-card .camera-box {
-        min-height: 220px;
-      }
-
-      .control-row .btn {
-        min-width: 0;
-      }
-
-      .metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+      .metrics { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .stream-meta { grid-template-columns:1fr; }
+      .video-stage { min-height:240px; }
+      .control-row .btn { min-width:0; flex:1 1 0; }
     }
-
     @media (max-width: 520px) {
-      .metrics {
-        grid-template-columns: 1fr;
-      }
-
-      .kv {
-        grid-template-columns: 110px minmax(0, 1fr);
-      }
-
-      .detail-card-body {
-        padding: 16px;
-      }
+      .metrics { grid-template-columns:1fr; }
+      .kv { grid-template-columns:100px minmax(0, 1fr); }
     }
   </style>
 </head>
@@ -151,7 +85,6 @@ cat > detail.html <<'EOF'
   <div class="app-layout">
     <div class="main-content">
       <div id="header-placeholder"></div>
-
       <div class="page-body">
         <div class="detail-page">
           <div class="detail-shell">
@@ -171,22 +104,57 @@ cat > detail.html <<'EOF'
                 <section class="detail-card video-section equal-card">
                   <div class="detail-card-header">
                     <h2>🎥 실시간 영상</h2>
-                    <span class="video-tip">HTTPS camera_url 권장</span>
+                    <span class="detail-card-meta">playback_url 기반 재생</span>
                   </div>
                   <div class="detail-card-body">
                     <div class="badge-row">
-                      <span id="badgeStatus" class="badge status-offline">상태 -</span>
-                      <span id="badgeSnow" class="badge snow-off">눈 감지 -</span>
-                      <span id="badgeHeater" class="badge heater-off">열선 -</span>
+                      <span id="badgeStatus" class="video-badge status-offline">상태 -</span>
+                      <span id="badgeSnow" class="video-badge snow-off">눈 감지 -</span>
+                      <span id="badgeHeater" class="video-badge heater-off">열선 -</span>
                     </div>
 
-                    <div class="camera-box">
-                      <img id="cameraStream" alt="실시간 영상" style="display:none;" />
-                      <div id="cameraEmpty" class="camera-empty">카메라 스트림이 등록되지 않았습니다.</div>
+                    <div class="video-stage">
+                      <img id="cameraStream" class="camera-view camera-img" alt="실시간 영상">
+                      <video id="cameraVideo" class="camera-view camera-video" controls autoplay muted playsinline></video>
+                      <iframe id="cameraFrame" class="camera-view camera-frame" allow="autoplay; fullscreen; camera; microphone"></iframe>
+                      <div id="cameraEmpty" class="camera-empty">재생 가능한 영상 URL이 없습니다.</div>
                     </div>
 
-                    <div class="helper-text">
-                      영상은 컨트롤러의 <code>camera_url</code> 값을 사용합니다. 외부 접속 환경에서는 HTTPS 스트림 주소를 사용하는 구성이 권장됩니다.
+                    <div class="stream-meta">
+                      <div class="stream-meta-card">
+                        <div class="label">입력 방식</div>
+                        <div class="value" id="streamSourceType">-</div>
+                      </div>
+                      <div class="stream-meta-card">
+                        <div class="label">재생 프로토콜</div>
+                        <div class="value" id="streamProtocol">-</div>
+                      </div>
+                      <div class="stream-meta-card">
+                        <div class="label">미디어 상태</div>
+                        <div class="value" id="streamMediaStatus">-</div>
+                      </div>
+                      <div class="stream-meta-card">
+                        <div class="label">마지막 미디어 확인</div>
+                        <div class="value" id="streamMediaLastSeen">-</div>
+                      </div>
+                    </div>
+
+                    <div class="helper-box">
+                      <div class="stream-link-row">
+                        <strong>재생 URL</strong>
+                        <a id="playbackUrlLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
+                      </div>
+                      <div class="stream-link-row" style="margin-top:8px;">
+                        <strong>원본 RTSP</strong>
+                        <span id="sourceRtspText">-</span>
+                      </div>
+                      <div class="stream-link-row" style="margin-top:8px;">
+                        <strong>스냅샷</strong>
+                        <a id="snapshotUrlLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
+                      </div>
+                      <div class="stream-helper" id="streamHelper" style="margin-top:10px;">
+                        중앙 RTSP 수신 구조에서는 raw rtsp:// 대신 브라우저 재생용 playback_url 만 사용합니다.
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -204,10 +172,7 @@ cat > detail.html <<'EOF'
                           <button class="btn btn-danger" id="btnHeatOn">열선 켜기</button>
                           <button class="btn btn-success" id="btnHeatOff">열선 끄기</button>
                         </div>
-                        <div class="footer-note">
-                          직접 열선 ON/OFF 명령은 수동 모드에서 사용하는 것을 권장합니다.
-                          다만 제어 자체를 강제 차단하지는 않습니다.
-                        </div>
+                        <div class="footer-note">직접 열선 ON/OFF 명령은 수동 모드에서 사용하는 것을 권장합니다.</div>
                       </div>
 
                       <div class="control-block">
@@ -221,10 +186,8 @@ cat > detail.html <<'EOF'
                       <div class="control-block">
                         <h3>눈 감지 임계값 변경</h3>
                         <div class="range-wrap">
-                          <input id="snowThresholdRange" type="range" min="0" max="1" step="0.01" value="0.80" />
-                          <div class="range-value">
-                            현재 설정값: <strong id="snowThresholdCurrent">0.80</strong>
-                          </div>
+                          <input id="snowThresholdRange" type="range" min="0" max="1" step="0.01" value="0.80">
+                          <div class="range-value">현재 설정값: <strong id="snowThresholdCurrent">0.80</strong></div>
                           <div class="control-row">
                             <button class="btn btn-warning" id="btnSaveThreshold">임계값 저장</button>
                           </div>
@@ -250,30 +213,12 @@ cat > detail.html <<'EOF'
                   </div>
                   <div class="detail-card-body">
                     <div class="metrics">
-                      <div class="metric">
-                        <div class="label">온도</div>
-                        <div id="temperature" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">습도</div>
-                        <div id="humidity" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">눈 감지 신뢰도</div>
-                        <div id="snowConfidence" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">눈 상태</div>
-                        <div id="snowState" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">열선 상태</div>
-                        <div id="heaterState" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">운전 모드</div>
-                        <div id="heaterMode" class="value">-</div>
-                      </div>
+                      <div class="metric"><div class="label">온도</div><div id="temperature" class="value">-</div></div>
+                      <div class="metric"><div class="label">습도</div><div id="humidity" class="value">-</div></div>
+                      <div class="metric"><div class="label">눈 감지 신뢰도</div><div id="snowConfidence" class="value">-</div></div>
+                      <div class="metric"><div class="label">눈 상태</div><div id="snowState" class="value">-</div></div>
+                      <div class="metric"><div class="label">열선 상태</div><div id="heaterState" class="value">-</div></div>
+                      <div class="metric"><div class="label">운전 모드</div><div id="heaterMode" class="value">-</div></div>
                     </div>
                   </div>
                 </section>
@@ -291,7 +236,11 @@ cat > detail.html <<'EOF'
                       <div class="k">설치 주소</div><div id="infoAddress" class="v">-</div>
                       <div class="k">설치 위치</div><div id="infoLocation" class="v">-</div>
                       <div class="k">좌표</div><div id="infoLatLng" class="v">-</div>
-                      <div class="k">카메라 URL</div><div id="infoCameraUrl" class="v">-</div>
+                      <div class="k">입력 방식</div><div id="infoVideoSourceType" class="v">-</div>
+                      <div class="k">재생 프로토콜</div><div id="infoPlaybackProtocol" class="v">-</div>
+                      <div class="k">재생 URL</div><div id="infoPlaybackUrl" class="v">-</div>
+                      <div class="k">원본 RTSP</div><div id="infoSourceRtspUrl" class="v">-</div>
+                      <div class="k">장비 API</div><div id="infoDeviceApiBase" class="v">-</div>
                       <div class="k">마지막 통신</div><div id="infoLastSeen" class="v">-</div>
                       <div class="k">AS 만료일</div><div id="infoAsExpire" class="v">-</div>
                     </div>
@@ -350,302 +299,436 @@ cat > detail.html <<'EOF'
         </div>
       </div>
     </div>
-
-    <script src="js/app.js"></script>
-    <script type="module">
-      import {
-        getDetailPageData,
-        buildDetailCommands,
-        buildNoCacheStreamUrl,
-        formatDateTime,
-        canControlController
-      } from "./js/api.js";
-
-      const qs = new URLSearchParams(window.location.search);
-      const controllerId = Number(qs.get("id"));
-
-      let detailTimer = null;
-      let lastCameraUrl = null;
-      let currentController = null;
-
-      function $(id) {
-        return document.getElementById(id);
-      }
-
-      function goBack() {
-        history.back();
-      }
-
-      const commands = buildDetailCommands(controllerId);
-
-      function setBadgeStatus(status) {
-        const el = $("badgeStatus");
-        el.className = "badge";
-
-        if (status === "online") {
-          el.classList.add("status-online");
-          el.textContent = "상태 온라인";
-        } else if (status === "warning") {
-          el.classList.add("status-warning");
-          el.textContent = "상태 경고";
-        } else if (status === "error") {
-          el.classList.add("status-error");
-          el.textContent = "상태 오류";
-        } else {
-          el.classList.add("status-offline");
-          el.textContent = "상태 오프라인";
-        }
-      }
-
-      function setBadgeSnow(detected) {
-        const el = $("badgeSnow");
-        el.className = "badge";
-
-        if (detected) {
-          el.classList.add("snow-on");
-          el.textContent = "눈 감지 감지됨";
-        } else {
-          el.classList.add("snow-off");
-          el.textContent = "눈 감지 없음";
-        }
-      }
-
-      function setBadgeHeater(on) {
-        const el = $("badgeHeater");
-        el.className = "badge";
-
-        if (on) {
-          el.classList.add("heater-on");
-          el.textContent = "열선 ON";
-        } else {
-          el.classList.add("heater-off");
-          el.textContent = "열선 OFF";
-        }
-      }
-
-      function renderCamera(cameraUrl) {
-        const img = $("cameraStream");
-        const empty = $("cameraEmpty");
-
-        if (!cameraUrl) {
-          img.style.display = "none";
-          img.removeAttribute("src");
-          empty.style.display = "block";
-          lastCameraUrl = null;
-          return;
-        }
-
-        if (lastCameraUrl !== cameraUrl) {
-          img.src = buildNoCacheStreamUrl(cameraUrl);
-          img.style.display = "block";
-          empty.style.display = "none";
-          lastCameraUrl = cameraUrl;
-        }
-      }
-
-      function updateThresholdLabel() {
-        $("snowThresholdCurrent").textContent = Number($("snowThresholdRange").value).toFixed(2);
-      }
-
-      function setControlPermission(controller) {
-        const allowed = canControlController(controller);
-        const buttons = [
-          "btnHeatOn",
-          "btnHeatOff",
-          "btnAutoMode",
-          "btnManualMode",
-          "btnSaveThreshold",
-          "btnReboot"
-        ];
-
-        buttons.forEach(id => {
-          const el = $(id);
-          if (el) el.disabled = !allowed;
-        });
-
-        if (!allowed) {
-          $("controllerSubtitle").textContent =
-            `${controller.install_location || "-"} · 조회만 가능 (제어 권한 없음)`;
-        }
-      }
-
-      function renderControlLogs(items) {
-        const tbody = $("controlLogsBody");
-
-        if (!items.length) {
-          tbody.innerHTML = `<tr><td colspan="5" class="muted">제어 이력이 없습니다.</td></tr>`;
-          return;
-        }
-
-        tbody.innerHTML = items.map(item => `
-          <tr>
-            <td>${formatDateTime(item.created_at || item.requested_at || item.finished_at)}</td>
-            <td>${item.command_type ?? "-"}</td>
-            <td>${item.command_value ?? "-"}</td>
-            <td>${item.result ?? item.status ?? "-"}</td>
-            <td>${item.note ?? item.message ?? "-"}</td>
-          </tr>
-        `).join("");
-      }
-
-      function renderEvents(items) {
-        const tbody = $("eventLogsBody");
-
-        if (!items.length) {
-          tbody.innerHTML = `<tr><td colspan="4" class="muted">이벤트 로그가 없습니다.</td></tr>`;
-          return;
-        }
-
-        tbody.innerHTML = items.map(item => `
-          <tr>
-            <td>${formatDateTime(item.occurred_at || item.created_at)}</td>
-            <td>${item.event_type ?? "-"}</td>
-            <td>${item.severity ?? "-"}</td>
-            <td>${item.message ?? "-"}</td>
-          </tr>
-        `).join("");
-      }
-
-      function renderController(c) {
-        currentController = c;
-
-        document.title = `${c.controller_name || "장비 상세"} | Heatline`;
-        $("controllerTitle").textContent = c.controller_name || `컨트롤러 #${c.id}`;
-        $("controllerSubtitle").textContent =
-          `${c.install_location || "-"} · 마지막 통신 ${formatDateTime(c.last_seen_at)}`;
-
-        setBadgeStatus(c.status);
-        setBadgeSnow(!!c.snow_detected);
-        setBadgeHeater(!!c.heater_on);
-
-        $("temperature").textContent =
-          typeof c.temperature === "number" ? `${c.temperature.toFixed(1)} °C` : "-";
-        $("humidity").textContent =
-          typeof c.humidity === "number" ? `${c.humidity.toFixed(1)} %` : "-";
-        $("snowConfidence").textContent =
-          typeof c.snow_confidence === "number" ? `${(c.snow_confidence * 100).toFixed(1)} %` : "-";
-        $("snowState").textContent = c.snow_state || "-";
-        $("heaterState").textContent = c.heater_on ? "ON" : "OFF";
-        $("heaterMode").textContent = c.heater_mode || "-";
-
-        if (typeof c.snow_threshold === "number") {
-          $("snowThresholdRange").value = c.snow_threshold.toFixed(2);
-          $("snowThresholdCurrent").textContent = c.snow_threshold.toFixed(2);
-        }
-
-        $("infoName").textContent = c.controller_name || "-";
-        $("infoSerial").textContent = c.serial_no || "-";
-        $("infoCustomer").textContent = c.customer_id ?? "-";
-        $("infoAddress").textContent = c.install_address || "-";
-        $("infoLocation").textContent = c.install_location || "-";
-        $("infoLatLng").textContent =
-          (typeof c.latitude === "number" && typeof c.longitude === "number")
-            ? `${c.latitude}, ${c.longitude}`
-            : "-";
-        $("infoCameraUrl").textContent = c.camera_url || "-";
-        $("infoLastSeen").textContent = formatDateTime(c.last_seen_at);
-        $("infoAsExpire").textContent = c.as_expire_at || "-";
-
-        renderCamera(c.camera_url);
-        setControlPermission(c);
-      }
-
-      async function fetchAll() {
-        if (!controllerId || Number.isNaN(controllerId)) {
-          alert("잘못된 접근입니다. detail.html?id={ID} 형식으로 접속하세요.");
-          return;
-        }
-
-        try {
-          const { controller, events, controlLogs } = await getDetailPageData(controllerId, {
-            eventLimit: 5,
-            controlLogLimit: 5
-          });
-
-          renderController(controller);
-          renderEvents(events);
-          renderControlLogs(controlLogs);
-        } catch (err) {
-          console.error("detail fetch error:", err);
-          alert(err.message);
-        }
-      }
-
-      async function guardedAction(question, fn) {
-        if (!currentController || !canControlController(currentController)) {
-          alert("이 장비에 대한 제어 권한이 없습니다.");
-          return;
-        }
-
-        if (!confirm(question)) return;
-
-        try {
-          await fn();
-          await fetchAll();
-        } catch (err) {
-          console.error(err);
-          alert(err.message);
-        }
-      }
-
-      function startPolling() {
-        fetchAll();
-        detailTimer = setInterval(fetchAll, 2000);
-      }
-
-      function stopPolling() {
-        if (detailTimer) clearInterval(detailTimer);
-      }
-
-      document.addEventListener("DOMContentLoaded", () => {
-        $("btnBack").addEventListener("click", goBack);
-        $("btnRefresh").addEventListener("click", fetchAll);
-        $("snowThresholdRange").addEventListener("input", updateThresholdLabel);
-
-        $("btnHeatOn").addEventListener("click", () =>
-          guardedAction("열선을 켭니다. 계속하시겠습니까?", () => commands.heatOn())
-        );
-
-        $("btnHeatOff").addEventListener("click", () =>
-          guardedAction("열선을 끕니다. 계속하시겠습니까?", () => commands.heatOff())
-        );
-
-        $("btnAutoMode").addEventListener("click", () =>
-          guardedAction("자동 모드로 변경하시겠습니까?", () => commands.setAutoMode())
-        );
-
-        $("btnManualMode").addEventListener("click", () =>
-          guardedAction("수동 모드로 변경하시겠습니까?", () => commands.setManualMode())
-        );
-
-        $("btnSaveThreshold").addEventListener("click", () => {
-          const value = Number($("snowThresholdRange").value);
-          guardedAction(
-            `눈 감지 임계값을 ${value.toFixed(2)} 로 변경하시겠습니까?`,
-            () => commands.setSnowThreshold(value)
-          );
-        });
-
-        $("btnReboot").addEventListener("click", () =>
-          guardedAction("장비를 재부팅하시겠습니까?", () => commands.reboot())
-        );
-
-        updateThresholdLabel();
-        startPolling();
-      });
-
-      window.addEventListener("beforeunload", stopPolling);
-
-      const session = window.Auth.requireAuth();
-      if (session) {
-        document.getElementById("sidebar-placeholder").innerHTML =
-          window.renderSidebar(session, "controllers");
-        document.getElementById("header-placeholder").innerHTML =
-          window.renderHeader("장비 상세", "실시간 상태 및 원격 제어", []);
-        window.startClock();
-      }
-    </script>
   </div>
+
+  <script src="js/app.js"></script>
+  <script type="module">
+    import {
+      getDetailPageData,
+      buildDetailCommands,
+      buildNoCacheStreamUrl,
+      formatDateTime,
+      formatNumber,
+      canControlController
+    } from "./js/api.js";
+
+    const qs = new URLSearchParams(window.location.search);
+    const controllerId = Number(qs.get("id"));
+    let detailTimer = null;
+    let hlsInstance = null;
+    let currentController = null;
+    let lastPlaybackKey = "";
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function goBack() {
+      window.location.href = "controllers.html";
+    }
+
+    const commands = buildDetailCommands(controllerId);
+
+    function normalizeStreamType(type = "") {
+      const value = String(type || "").trim().toLowerCase();
+      if (!value) return "mjpeg";
+      return value;
+    }
+
+    function asDisplay(value, fallback = "-") {
+      return value === undefined || value === null || value === "" ? fallback : value;
+    }
+
+    function setLink(el, url) {
+      if (!el) return;
+      if (url) {
+        el.textContent = url;
+        el.href = url;
+        el.style.pointerEvents = "auto";
+        el.style.opacity = "1";
+      } else {
+        el.textContent = "-";
+        el.href = "#";
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0.6";
+      }
+    }
+
+    function stopVideoPlayback() {
+      const video = $("cameraVideo");
+      const img = $("cameraStream");
+      const frame = $("cameraFrame");
+      [img, video, frame].forEach(el => el.classList.remove("active"));
+      if (img) img.removeAttribute("src");
+      if (frame) frame.removeAttribute("src");
+      if (video) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      }
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      lastPlaybackKey = "";
+    }
+
+    function setEmptyStream(message) {
+      stopVideoPlayback();
+      $("cameraEmpty").style.display = "flex";
+      $("cameraEmpty").textContent = message || "재생 가능한 영상 URL이 없습니다.";
+    }
+
+    async function ensureHlsLibrary() {
+      if (window.Hls) return window.Hls;
+      await new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-hls-loader="1"]');
+        if (existing) {
+          existing.addEventListener("load", () => resolve(), { once: true });
+          existing.addEventListener("error", () => reject(new Error("HLS 라이브러리를 불러오지 못했습니다.")), { once: true });
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/hls.js@latest";
+        script.async = true;
+        script.dataset.hlsLoader = "1";
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("HLS 라이브러리를 불러오지 못했습니다."));
+        document.head.appendChild(script);
+      });
+      return window.Hls;
+    }
+
+    function renderMjpeg(url) {
+      const img = $("cameraStream");
+      const empty = $("cameraEmpty");
+      const key = `mjpeg:${url}`;
+      if (lastPlaybackKey === key) return;
+      stopVideoPlayback();
+      img.src = buildNoCacheStreamUrl(url);
+      img.classList.add("active");
+      empty.style.display = "none";
+      lastPlaybackKey = key;
+    }
+
+    async function renderHls(url) {
+      const video = $("cameraVideo");
+      const empty = $("cameraEmpty");
+      const key = `hls:${url}`;
+      if (lastPlaybackKey === key) return;
+      stopVideoPlayback();
+      const finalUrl = buildNoCacheStreamUrl(url);
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = finalUrl;
+        video.classList.add("active");
+        empty.style.display = "none";
+        await video.play().catch(() => {});
+        lastPlaybackKey = key;
+        return;
+      }
+      const Hls = await ensureHlsLibrary();
+      if (!Hls?.isSupported?.()) {
+        throw new Error("현재 브라우저에서 HLS 재생을 지원하지 않습니다.");
+      }
+      hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+      hlsInstance.loadSource(finalUrl);
+      hlsInstance.attachMedia(video);
+      video.classList.add("active");
+      empty.style.display = "none";
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+      lastPlaybackKey = key;
+    }
+
+    function renderVideoFile(url) {
+      const video = $("cameraVideo");
+      const empty = $("cameraEmpty");
+      const key = `video:${url}`;
+      if (lastPlaybackKey === key) return;
+      stopVideoPlayback();
+      video.src = buildNoCacheStreamUrl(url);
+      video.classList.add("active");
+      empty.style.display = "none";
+      video.play().catch(() => {});
+      lastPlaybackKey = key;
+    }
+
+    function renderWebRtc(url) {
+      const frame = $("cameraFrame");
+      const empty = $("cameraEmpty");
+      const key = `webrtc:${url}`;
+      if (lastPlaybackKey === key) return;
+      stopVideoPlayback();
+      frame.src = url;
+      frame.classList.add("active");
+      empty.style.display = "none";
+      lastPlaybackKey = key;
+    }
+
+    async function renderPlayback(controller) {
+      const playbackUrl = controller?.playback_url || controller?.camera_url || "";
+      const playbackProtocol = normalizeStreamType(controller?.playback_protocol || controller?.stream_type);
+
+      if (!playbackUrl) {
+        setEmptyStream("재생 가능한 playback_url 이 없습니다.");
+        return;
+      }
+
+      try {
+        if (playbackProtocol === "mjpeg") {
+          renderMjpeg(playbackUrl);
+          return;
+        }
+        if (playbackProtocol === "hls") {
+          await renderHls(playbackUrl);
+          return;
+        }
+        if (["mp4", "webm", "ogg"].includes(playbackProtocol)) {
+          renderVideoFile(playbackUrl);
+          return;
+        }
+        if (playbackProtocol === "webrtc") {
+          renderWebRtc(playbackUrl);
+          return;
+        }
+
+        if (playbackUrl.includes(".m3u8")) {
+          await renderHls(playbackUrl);
+          return;
+        }
+        if (playbackUrl.includes(".mp4") || playbackUrl.includes(".webm")) {
+          renderVideoFile(playbackUrl);
+          return;
+        }
+        if (playbackUrl.includes("/webrtc") || playbackUrl.includes("whep")) {
+          renderWebRtc(playbackUrl);
+          return;
+        }
+
+        renderMjpeg(playbackUrl);
+      } catch (error) {
+        setEmptyStream(`영상 재생 준비 실패: ${error.message}`);
+      }
+    }
+
+    function setStatusBadge(status) {
+      const el = $("badgeStatus");
+      el.className = "video-badge";
+      const value = String(status || "offline").toLowerCase();
+      if (value === "online") {
+        el.classList.add("status-online");
+        el.textContent = "상태 온라인";
+      } else if (value === "warning") {
+        el.classList.add("status-warning");
+        el.textContent = "상태 경고";
+      } else if (value === "error") {
+        el.classList.add("status-error");
+        el.textContent = "상태 오류";
+      } else {
+        el.classList.add("status-offline");
+        el.textContent = "상태 오프라인";
+      }
+    }
+
+    function setSnowBadge(detected) {
+      const el = $("badgeSnow");
+      el.className = `video-badge ${detected ? "snow-on" : "snow-off"}`;
+      el.textContent = detected ? "눈 감지 감지됨" : "눈 감지 없음";
+    }
+
+    function setHeaterBadge(on) {
+      const el = $("badgeHeater");
+      el.className = `video-badge ${on ? "heater-on" : "heater-off"}`;
+      el.textContent = on ? "열선 ON" : "열선 OFF";
+    }
+
+    function updateThresholdLabel() {
+      $("snowThresholdCurrent").textContent = Number($("snowThresholdRange").value).toFixed(2);
+    }
+
+    function setControlPermission(controller) {
+      const allowed = canControlController(controller);
+      ["btnHeatOn", "btnHeatOff", "btnAutoMode", "btnManualMode", "btnSaveThreshold", "btnReboot"].forEach(id => {
+        const el = $(id);
+        if (el) el.disabled = !allowed;
+      });
+      if (!allowed) {
+        $("controllerSubtitle").textContent = `${controller.install_location || "-"} · 조회만 가능 (제어 권한 없음)`;
+      }
+    }
+
+    function renderControlLogs(items = []) {
+      const tbody = $("controlLogsBody");
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="muted">제어 이력이 없습니다.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = items.map(item => `
+        <tr>
+          <td>${formatDateTime(item.created_at || item.requested_at || item.finished_at)}</td>
+          <td>${asDisplay(item.command_type)}</td>
+          <td>${asDisplay(item.command_value)}</td>
+          <td>${asDisplay(item.result || item.status)}</td>
+          <td>${asDisplay(item.note || item.message)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderEvents(items = []) {
+      const tbody = $("eventLogsBody");
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="muted">이벤트 로그가 없습니다.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = items.map(item => `
+        <tr>
+          <td>${formatDateTime(item.occurred_at || item.created_at)}</td>
+          <td>${asDisplay(item.event_type)}</td>
+          <td>${asDisplay(item.severity)}</td>
+          <td>${asDisplay(item.message)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderController(controller) {
+      currentController = controller;
+      document.title = `${controller.controller_name || "장비 상세"} | Heatline`;
+      $("controllerTitle").textContent = controller.controller_name || `컨트롤러 #${controller.id}`;
+      $("controllerSubtitle").textContent = `${controller.install_location || "-"} · 마지막 통신 ${formatDateTime(controller.last_seen_at)}`;
+
+      setStatusBadge(controller.status);
+      setSnowBadge(!!controller.snow_detected);
+      setHeaterBadge(!!controller.heater_on);
+
+      $("temperature").textContent = typeof controller.temperature === "number" ? `${controller.temperature.toFixed(1)} °C` : "-";
+      $("humidity").textContent = typeof controller.humidity === "number" ? `${controller.humidity.toFixed(1)} %` : "-";
+      $("snowConfidence").textContent = typeof controller.snow_confidence === "number" ? `${(controller.snow_confidence * 100).toFixed(1)} %` : "-";
+      $("snowState").textContent = controller.snow_state || (controller.snow_detected ? "감지" : "없음");
+      $("heaterState").textContent = controller.heater_on ? "ON" : "OFF";
+      $("heaterMode").textContent = controller.heater_mode || "-";
+
+      if (typeof controller.snow_threshold === "number") {
+        $("snowThresholdRange").value = controller.snow_threshold.toFixed(2);
+        $("snowThresholdCurrent").textContent = controller.snow_threshold.toFixed(2);
+      }
+
+      $("streamSourceType").textContent = asDisplay(controller.video_source_type);
+      $("streamProtocol").textContent = asDisplay(controller.playback_protocol || controller.stream_type);
+      $("streamMediaStatus").textContent = asDisplay(controller.media_status || controller.status);
+      $("streamMediaLastSeen").textContent = formatDateTime(controller.media_last_seen_at || controller.last_seen_at);
+      setLink($("playbackUrlLink"), controller.playback_url || controller.camera_url || "");
+      setLink($("snapshotUrlLink"), controller.snapshot_url || "");
+      $("sourceRtspText").textContent = controller.source_rtsp_url || "-";
+      $("streamHelper").textContent = controller.video_source_type === "central_rtsp"
+        ? "중앙 서버가 RTSP를 수신하고 변환한 playback_url 을 브라우저가 재생합니다. raw rtsp:// 주소는 브라우저에서 직접 재생하지 않습니다."
+        : "Pi/장비 API 방식은 playback_url 또는 camera_url 을 통해 MJPEG/HLS 형태로 재생합니다.";
+
+      $("infoName").textContent = asDisplay(controller.controller_name);
+      $("infoSerial").textContent = asDisplay(controller.serial_no);
+      $("infoCustomer").textContent = asDisplay(controller.customer_id);
+      $("infoAddress").textContent = asDisplay(controller.install_address);
+      $("infoLocation").textContent = asDisplay(controller.install_location);
+      $("infoLatLng").textContent = (typeof controller.latitude === "number" && typeof controller.longitude === "number")
+        ? `${controller.latitude}, ${controller.longitude}`
+        : "-";
+      $("infoVideoSourceType").textContent = asDisplay(controller.video_source_type);
+      $("infoPlaybackProtocol").textContent = asDisplay(controller.playback_protocol || controller.stream_type);
+      $("infoPlaybackUrl").textContent = asDisplay(controller.playback_url || controller.camera_url);
+      $("infoSourceRtspUrl").textContent = asDisplay(controller.source_rtsp_url);
+      $("infoDeviceApiBase").textContent = asDisplay(controller.device_api_base);
+      $("infoLastSeen").textContent = formatDateTime(controller.last_seen_at);
+      $("infoAsExpire").textContent = asDisplay(controller.as_expire_at);
+
+      renderPlayback(controller);
+      setControlPermission(controller);
+    }
+
+    async function fetchAll() {
+      if (!controllerId || Number.isNaN(controllerId)) {
+        alert("잘못된 접근입니다. detail.html?id={ID} 형식으로 접속하세요.");
+        return;
+      }
+      try {
+        const { controller, events, controlLogs } = await getDetailPageData(controllerId, {
+          eventLimit: 5,
+          controlLogLimit: 5
+        });
+        renderController(controller);
+        renderEvents(events);
+        renderControlLogs(controlLogs);
+      } catch (error) {
+        console.error("detail fetch error:", error);
+        alert(error.message || "장비 상세 정보를 불러오지 못했습니다.");
+      }
+    }
+
+    async function guardedAction(question, fn) {
+      if (!currentController || !canControlController(currentController)) {
+        alert("이 장비에 대한 제어 권한이 없습니다.");
+        return;
+      }
+      if (!confirm(question)) return;
+      try {
+        await fn();
+        await fetchAll();
+      } catch (error) {
+        console.error(error);
+        alert(error.message || "명령 처리에 실패했습니다.");
+      }
+    }
+
+    function startPolling() {
+      fetchAll();
+      detailTimer = setInterval(fetchAll, 4000);
+    }
+
+    function stopPolling() {
+      if (detailTimer) clearInterval(detailTimer);
+      detailTimer = null;
+      stopVideoPlayback();
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (detailTimer) clearInterval(detailTimer);
+        detailTimer = null;
+      } else if (!detailTimer) {
+        startPolling();
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const session = window.Auth?.requireAuth?.();
+      if (!session) return;
+
+      $("sidebar-placeholder").innerHTML = window.renderSidebar(session, "controllers");
+      $("header-placeholder").innerHTML = window.renderHeader(
+        "장비 상세",
+        "중앙 등록 정보 및 원격 제어",
+        [{ type: "info", label: "상세 화면", value: controllerId || "-" }]
+      );
+      if (window.startClock) window.startClock();
+
+      $("btnBack").addEventListener("click", goBack);
+      $("btnRefresh").addEventListener("click", fetchAll);
+      $("snowThresholdRange").addEventListener("input", updateThresholdLabel);
+
+      $("btnHeatOn").addEventListener("click", () => guardedAction("열선을 켭니다. 계속하시겠습니까?", () => commands.heatOn()));
+      $("btnHeatOff").addEventListener("click", () => guardedAction("열선을 끕니다. 계속하시겠습니까?", () => commands.heatOff()));
+      $("btnAutoMode").addEventListener("click", () => guardedAction("자동 모드로 변경하시겠습니까?", () => commands.setAutoMode()));
+      $("btnManualMode").addEventListener("click", () => guardedAction("수동 모드로 변경하시겠습니까?", () => commands.setManualMode()));
+      $("btnSaveThreshold").addEventListener("click", () => {
+        const threshold = Number($("snowThresholdRange").value);
+        guardedAction(`눈 감지 임계값을 ${threshold.toFixed(2)} 로 저장하시겠습니까?`, () => commands.setSnowThreshold(threshold));
+      });
+      $("btnReboot").addEventListener("click", () => guardedAction("장비를 재부팅하시겠습니까?", () => commands.reboot()));
+
+      updateThresholdLabel();
+      startPolling();
+    });
+
+    window.addEventListener("beforeunload", stopPolling);
+  </script>
 </body>
 </html>
-EOF

@@ -175,13 +175,92 @@
             <input id="form-allow-customer-control" type="checkbox" checked>
             <label for="form-allow-customer-control">고객사 제어 허용</label>
           </div>
-          <div style="grid-column:1 / -1;">
-            <label class="form-label">카메라 URL</label>
-            <input id="form-camera-url" class="form-input" type="text" placeholder="예: http://device-ip/stream.mjpg">
+          <div style="grid-column:1 / -1; margin-top:4px; padding-top:8px; border-top:1px solid var(--border);">
+            <div class="form-label" style="font-size:14px; color:#e2e8f0; margin-bottom:10px;">영상 연결 정보</div>
+          </div>
+          <div style="grid-column:1 / -1; display:grid; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <label style="display:flex; align-items:center; gap:8px; color:#cbd5e1; font-size:14px;">
+                <input id="form-video-auto-detect" type="checkbox" checked>
+                <span>영상 방식 자동 판별</span>
+              </label>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="runVideoAutoDetect()">자동 판별</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="testVideoConnection()">연결 테스트</button>
+            </div>
+            <div>
+              <label class="form-label">영상 입력 주소</label>
+              <input id="form-video-input-url" class="form-input" type="text" placeholder="예: rtsp://192.168.0.153/live/0/MAIN 또는 http://device-ip:8000/api/v1">
+              <div class="video-form-help">RTSP 주소를 넣으면 중앙서버 RTSP 수신 방식, HTTP 장비 주소를 넣으면 기존 Pi/장비 API 방식으로 자동 분류합니다.</div>
+            </div>
+          </div>
+          <div id="video-manual-wrap" style="grid-column:1 / -1; display:none;">
+            <label class="form-label">영상 방식</label>
+            <select id="form-video-source-type" class="form-select" onchange="toggleVideoSourceSections()">
+              <option value="pi_camera">Pi 카메라 / 장비 API</option>
+              <option value="central_rtsp">중앙서버 RTSP 수신</option>
+            </select>
+          </div>
+          <div id="video-source-result" class="video-result-card" style="grid-column:1 / -1; display:none;">
+            <div class="video-result-card__title">자동 판별 결과</div>
+            <div class="video-result-grid">
+              <div>
+                <div class="video-result-label">감지 유형</div>
+                <strong id="video-detected-type">-</strong>
+              </div>
+              <div>
+                <div class="video-result-label">재생 프로토콜</div>
+                <strong id="video-detected-playback">-</strong>
+              </div>
+              <div style="grid-column:1 / -1;">
+                <div class="video-result-label">재생 URL</div>
+                <code id="video-detected-playback-url" class="video-result-code">-</code>
+              </div>
+              <div style="grid-column:1 / -1;">
+                <div class="video-result-label">상태 메시지</div>
+                <div id="video-detected-status" class="video-result-status">-</div>
+              </div>
+            </div>
+          </div>
+          <div id="video-section-pi" style="grid-column:1 / -1; display:grid; gap:14px;">
+            <div>
+              <label class="form-label">장비 API Base URL *</label>
+              <input id="form-device-api-base" class="form-input" type="text" placeholder="예: http://device-ip:8000/api/v1">
+            </div>
+            <div>
+              <label class="form-label">브라우저 재생 URL</label>
+              <input id="form-playback-url" class="form-input" type="text" placeholder="예: http://device-ip/stream.mjpg">
+            </div>
+          </div>
+          <div id="video-section-rtsp" style="grid-column:1 / -1; display:none; gap:14px;">
+            <div>
+              <label class="form-label">원본 RTSP URL *</label>
+              <input id="form-source-rtsp-url" class="form-input" type="text" placeholder="예: rtsp://192.168.0.153/live/0/MAIN">
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px;">
+              <div>
+                <label class="form-label">재생 프로토콜</label>
+                <select id="form-playback-protocol" class="form-select">
+                  <option value="webrtc">WebRTC</option>
+                  <option value="hls">HLS</option>
+                  <option value="mjpeg">MJPEG</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">RTSP Transport</label>
+                <select id="form-rtsp-transport" class="form-select">
+                  <option value="tcp">tcp</option>
+                  <option value="udp">udp</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">중앙 재생 URL</label>
+              <input id="form-playback-url-central" class="form-input" type="text" placeholder="예: https://media.heatline.kr/live/controller-101/index.m3u8">
+            </div>
           </div>
           <div style="grid-column:1 / -1;">
-            <label class="form-label">장비 API Base URL *</label>
-            <input id="form-device-api-base" class="form-input" type="text" placeholder="예: http://device-ip:8000/api/v1">
+            <label class="form-label">스냅샷 URL</label>
+            <input id="form-snapshot-url" class="form-input" type="text" placeholder="예: https://media.heatline.kr/live/controller-101/snapshot.jpg">
           </div>
           <div style="grid-column:1 / -1;">
             <label class="form-label">비고</label>
@@ -261,6 +340,13 @@
     }
     .compact-select { min-width:170px; }
     .form-textarea { min-height:100px; resize:vertical; }
+    .video-form-help { margin-top:6px; color:#94a3b8; font-size:12px; line-height:1.5; }
+    .video-result-card { padding:14px; border-radius:14px; background:rgba(8, 16, 28, 0.34); border:1px solid rgba(0, 174, 255, 0.2); }
+    .video-result-card__title { font-size:13px; color:#94a3b8; font-weight:700; margin-bottom:10px; }
+    .video-result-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+    .video-result-label { font-size:11px; color:#94a3b8; margin-bottom:4px; }
+    .video-result-code { display:block; padding:10px 12px; border-radius:10px; background:#06101c; border:1px dashed rgba(0, 174, 255, 0.28); color:#7dd3fc; line-height:1.5; word-break:break-all; }
+    .video-result-status { color:#cbd5e1; line-height:1.5; }
     .table-action-buttons { display:flex; gap:6px; flex-wrap:wrap; }
     .table-action-buttons .btn { white-space:nowrap; }
     .btn-provision-trigger {
@@ -366,6 +452,7 @@
     @media (max-width: 900px) {
       #controller-modal .modal-body > div { grid-template-columns:1fr !important; }
       .provision-result__meta { grid-template-columns:1fr; }
+      .video-result-grid { grid-template-columns:1fr; }
     }
   </style>
 
@@ -412,6 +499,121 @@
       select.value = selectedId ? String(selectedId) : '';
     }
 
+    function inferVideoSourceTypeFromController(controller = null) {
+      if (controller?.video_source_type) return controller.video_source_type;
+      if (String(controller?.source_rtsp_url || '').startsWith('rtsp://')) return 'central_rtsp';
+      if (String(controller?.camera_url || '').includes('.m3u8')) return 'central_rtsp';
+      return 'pi_camera';
+    }
+
+    function setVideoAutoDetectMode() {
+      const autoDetect = $('form-video-auto-detect')?.checked !== false;
+      $('video-manual-wrap').style.display = autoDetect ? 'none' : 'block';
+    }
+
+    function toggleVideoSourceSections(type = null) {
+      const sourceType = type || $('form-video-source-type').value || 'pi_camera';
+      $('video-section-pi').style.display = sourceType === 'pi_camera' ? 'grid' : 'none';
+      $('video-section-rtsp').style.display = sourceType === 'central_rtsp' ? 'grid' : 'none';
+    }
+
+    function setVideoDetectResult(data = {}, visible = true) {
+      const box = $('video-source-result');
+      box.style.display = visible ? 'block' : 'none';
+      $('video-detected-type').textContent = data.video_source_type || '-';
+      $('video-detected-playback').textContent = data.playback_protocol || '-';
+      $('video-detected-playback-url').textContent = data.playback_url || data.camera_url || '-';
+      $('video-detected-status').textContent = data.message || data.media_status || '-';
+    }
+
+    function getRegistryApiBaseUrl() {
+      if (window.API?.getApiBaseUrl) return window.API.getApiBaseUrl();
+      return window.HEATLINE_API_BASE_URL || localStorage.getItem('HEATLINE_API_BASE_URL') || '';
+    }
+
+    function getRegistryAuthToken() {
+      return sessionStorage.getItem('token') || sessionStorage.getItem('auth_token') || localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+    }
+
+    async function postRegistryJson(path, body) {
+      const baseUrl = String(getRegistryApiBaseUrl() || '').replace(/\/+$/, '');
+      if (!baseUrl) throw new Error('중앙 API 주소를 확인할 수 없습니다.');
+      const headers = { 'Content-Type': 'application/json' };
+      const token = getRegistryAuthToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(`${baseUrl}${path}`, { method: 'POST', headers, body: JSON.stringify(body || {}) });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || data?.success === false) {
+        throw new Error(data?.error?.message || data?.message || `HTTP ${res.status} 오류`);
+      }
+      return data?.data ?? data;
+    }
+
+    function buildVideoConfigFromForm() {
+      const autoDetect = $('form-video-auto-detect')?.checked !== false;
+      const selectedType = $('form-video-source-type')?.value || 'pi_camera';
+      const videoSourceType = autoDetect ? null : selectedType;
+      const effectiveType = videoSourceType || selectedType;
+      const playbackUrl = effectiveType === 'central_rtsp'
+        ? $('form-playback-url-central').value.trim()
+        : $('form-playback-url').value.trim();
+
+      return {
+        auto_detect: autoDetect,
+        input_url: $('form-video-input-url').value.trim() || null,
+        video_source_type: videoSourceType,
+        source_rtsp_url: $('form-source-rtsp-url').value.trim() || null,
+        device_api_base: $('form-device-api-base').value.trim() || null,
+        playback_url: playbackUrl || null,
+        playback_protocol: $('form-playback-protocol')?.value || 'mjpeg',
+        rtsp_transport: $('form-rtsp-transport')?.value || 'tcp',
+        snapshot_url: $('form-snapshot-url').value.trim() || null
+      };
+    }
+
+    async function runVideoAutoDetect() {
+      const inputUrl = $('form-video-input-url').value.trim();
+      if (!inputUrl) {
+        Utils.toast('입력 필요', '영상 입력 주소를 먼저 입력해주세요.', 'error');
+        return;
+      }
+      try {
+        const data = await postRegistryJson('/controllers/video/detect', {
+          input_url: inputUrl,
+          controller_id: editingControllerId || null,
+          serial_no: $('form-serial-no').value.trim() || null
+        });
+        $('form-video-source-type').value = data.video_source_type || 'pi_camera';
+        toggleVideoSourceSections(data.video_source_type || 'pi_camera');
+        if (data.video_source_type === 'central_rtsp') {
+          $('form-source-rtsp-url').value = data.source_rtsp_url || inputUrl;
+          $('form-playback-protocol').value = data.playback_protocol || 'webrtc';
+          $('form-playback-url-central').value = data.playback_url || '';
+        } else {
+          $('form-device-api-base').value = data.device_api_base || inputUrl;
+          $('form-playback-url').value = data.playback_url || data.camera_url || '';
+        }
+        if (data.snapshot_url) $('form-snapshot-url').value = data.snapshot_url;
+        setVideoDetectResult(data, true);
+        Utils.toast('자동 판별 완료', data.message || '영상 방식 자동 판별이 완료되었습니다.', 'success');
+      } catch (error) {
+        setVideoDetectResult({ message: error.message }, true);
+        Utils.toast('자동 판별 실패', error.message, 'error');
+      }
+    }
+
+    async function testVideoConnection() {
+      try {
+        const payload = buildVideoConfigFromForm();
+        const data = await postRegistryJson('/controllers/video/test', payload);
+        setVideoDetectResult(data, true);
+        Utils.toast('연결 테스트 완료', data.message || '영상 연결 테스트가 완료되었습니다.', 'success');
+      } catch (error) {
+        setVideoDetectResult({ message: error.message }, true);
+        Utils.toast('연결 테스트 실패', error.message, 'error');
+      }
+    }
+
     function fillControllerForm(controller = null) {
       fillCustomerOptions(controller?.customer_id || '');
       $('form-controller-name').value = controller?.controller_name || '';
@@ -423,16 +625,45 @@
       $('form-as-expire-at').value = controller?.as_expire_at || '';
       $('form-heater-mode').value = controller?.heater_mode || 'auto';
       $('form-snow-threshold').value = controller?.snow_threshold ?? 0.8;
-      $('form-camera-url').value = controller?.camera_url || '';
-      $('form-device-api-base').value = controller?.device_api_base || '';
       $('form-allow-customer-control').checked = controller?.allow_customer_control !== false;
       $('form-note').value = controller?.note || '';
+
+      const sourceType = inferVideoSourceTypeFromController(controller);
+      $('form-video-auto-detect').checked = !controller?.video_source_type;
+      $('form-video-input-url').value = controller?.source_rtsp_url || controller?.device_api_base || controller?.playback_url || controller?.camera_url || '';
+      $('form-video-source-type').value = sourceType;
+      $('form-source-rtsp-url').value = controller?.source_rtsp_url || '';
+      $('form-device-api-base').value = controller?.device_api_base || '';
+      $('form-playback-url').value = controller?.playback_url || controller?.camera_url || '';
+      $('form-playback-url-central').value = controller?.playback_url || controller?.camera_url || '';
+      $('form-playback-protocol').value = controller?.playback_protocol || controller?.stream_type || 'mjpeg';
+      $('form-rtsp-transport').value = controller?.rtsp_transport || 'tcp';
+      $('form-snapshot-url').value = controller?.snapshot_url || '';
+
+      setVideoAutoDetectMode();
+      toggleVideoSourceSections(sourceType);
+      if (controller) {
+        setVideoDetectResult({
+          video_source_type: sourceType,
+          playback_protocol: controller?.playback_protocol || controller?.stream_type || '-',
+          playback_url: controller?.playback_url || controller?.camera_url || '-',
+          message: controller?.media_status || '저장된 영상 설정입니다.'
+        }, true);
+      } else {
+        setVideoDetectResult({}, false);
+      }
     }
 
     function getControllerPayloadFromForm() {
       const latitude = $('form-latitude').value.trim();
       const longitude = $('form-longitude').value.trim();
       const thresholdRaw = $('form-snow-threshold').value.trim();
+      const video = buildVideoConfigFromForm();
+      const selectedType = video.video_source_type || $('form-video-source-type').value || 'pi_camera';
+      const playbackUrl = selectedType === 'central_rtsp'
+        ? $('form-playback-url-central').value.trim()
+        : $('form-playback-url').value.trim();
+
       return {
         customer_id: Number($('form-customer-id').value),
         controller_name: $('form-controller-name').value.trim(),
@@ -442,22 +673,39 @@
         latitude: latitude ? Number(latitude) : null,
         longitude: longitude ? Number(longitude) : null,
         as_expire_at: $('form-as-expire-at').value || null,
-        camera_url: $('form-camera-url').value.trim() || null,
-        device_api_base: $('form-device-api-base').value.trim(),
         heater_mode: $('form-heater-mode').value,
         snow_threshold: thresholdRaw ? Number(thresholdRaw) : 0.8,
         allow_customer_control: $('form-allow-customer-control').checked,
-        note: $('form-note').value.trim() || ''
+        note: $('form-note').value.trim() || '',
+        camera_url: playbackUrl || null,
+        playback_url: playbackUrl || null,
+        stream_type: video.playback_protocol || 'mjpeg',
+        playback_protocol: video.playback_protocol || 'mjpeg',
+        video_source_type: video.video_source_type,
+        source_rtsp_url: video.source_rtsp_url,
+        rtsp_transport: video.rtsp_transport,
+        snapshot_url: video.snapshot_url,
+        device_api_base: video.device_api_base,
+        input_url: video.input_url,
+        auto_detect: video.auto_detect
       };
     }
 
     function validateControllerPayload(payload) {
-      if (!payload.customer_id || !payload.controller_name || !payload.serial_no || !payload.install_address || !payload.install_location || !payload.device_api_base) {
+      if (!payload.customer_id || !payload.controller_name || !payload.serial_no || !payload.install_address || !payload.install_location) {
         throw new Error('필수 항목을 모두 입력해주세요.');
       }
       if (payload.latitude !== null && Number.isNaN(payload.latitude)) throw new Error('위도 값을 확인해주세요.');
       if (payload.longitude !== null && Number.isNaN(payload.longitude)) throw new Error('경도 값을 확인해주세요.');
       if (Number.isNaN(payload.snow_threshold)) throw new Error('눈 감지 임계값을 확인해주세요.');
+
+      const selectedType = payload.video_source_type || $('form-video-source-type').value || 'pi_camera';
+      if (selectedType === 'pi_camera' && !payload.device_api_base) {
+        throw new Error('Pi 카메라 방식은 장비 API Base URL이 필요합니다.');
+      }
+      if (selectedType === 'central_rtsp' && !payload.source_rtsp_url && !payload.input_url) {
+        throw new Error('중앙서버 RTSP 수신 방식은 RTSP URL이 필요합니다.');
+      }
     }
 
     function openControllerModal(controllerId = null) {
@@ -579,7 +827,9 @@
         }
 
         closeModal('controller-modal');
-        await loadData();
+        setVideoAutoDetectMode();
+      toggleVideoSourceSections();
+      await loadData();
       } catch (error) {
         Utils.toast('저장 실패', error.message, 'error');
       } finally {
@@ -617,6 +867,8 @@
       }
 
       $('controller-save-btn').addEventListener('click', saveController);
+      $('form-video-auto-detect').addEventListener('change', setVideoAutoDetectMode);
+      $('form-video-source-type').addEventListener('change', () => toggleVideoSourceSections());
       $('provision-issue-btn').addEventListener('click', issueProvisionKeyFromModal);
       $('provision-copy-btn').addEventListener('click', copyProvisionKeyToClipboard);
       await loadData();

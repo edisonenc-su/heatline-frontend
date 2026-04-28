@@ -70,6 +70,23 @@ function inferApiBaseFromCameraUrl(cameraUrl = "") {
   return `${stripTrailingSlash(parsed.origin)}/api/v1`;
 }
 
+function inferVideoSourceType(controller = {}) {
+  if (controller?.video_source_type) return controller.video_source_type;
+  const sourceRtspUrl = String(controller?.source_rtsp_url || "").trim().toLowerCase();
+  const inputUrl = String(controller?.input_url || "").trim().toLowerCase();
+  if (sourceRtspUrl.startsWith("rtsp://") || inputUrl.startsWith("rtsp://")) return "central_rtsp";
+  return "pi_camera";
+}
+
+function inferPlaybackProtocol(url = "", fallback = "mjpeg") {
+  const value = String(url || "").trim().toLowerCase();
+  if (!value) return fallback;
+  if (value.includes(".m3u8")) return "hls";
+  if (value.includes("/webrtc") || value.includes("whep")) return "webrtc";
+  if (value.includes(".mjpg") || value.includes("/stream")) return "mjpeg";
+  return fallback;
+}
+
 function toQueryString(params = {}) {
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -223,22 +240,44 @@ function enrichControllerEndpoints(controller = {}) {
   const inferredBase =
     ensureApiV1(directBase) ||
     inferApiBaseFromPublicBaseUrl(merged.public_base_url) ||
-    inferApiBaseFromCameraUrl(merged.camera_url);
+    inferApiBaseFromCameraUrl(merged.playback_url || merged.camera_url);
 
   if (!merged.device_api_base && inferredBase) merged.device_api_base = inferredBase;
   if (!merged.device_api_url && inferredBase) merged.device_api_url = inferredBase;
   if (!merged.api_base_url && inferredBase) merged.api_base_url = inferredBase;
 
-  if (!merged.camera_url) {
+  merged.video_source_type = inferVideoSourceType(merged);
+
+  if (!merged.playback_url) {
+    merged.playback_url =
+      ensureAbsoluteHttpUrl(merged.camera_url) ||
+      ensureAbsoluteHttpUrl(merged.stream_url) ||
+      "";
+  }
+
+  if (!merged.playback_url) {
     const origin = getUrlOrigin(inferredBase) || getUrlOrigin(merged.public_base_url);
-    if (origin) merged.camera_url = `${origin}/stream.mjpg`;
+    if (origin && merged.video_source_type === "pi_camera") {
+      merged.playback_url = `${origin}/stream.mjpg`;
+    }
+  }
+
+  if (!merged.camera_url && merged.playback_url) {
+    merged.camera_url = merged.playback_url;
   }
 
   if (!merged.public_base_url) {
-    const origin = getUrlOrigin(inferredBase) || getUrlOrigin(merged.camera_url);
+    const origin = getUrlOrigin(inferredBase) || getUrlOrigin(merged.playback_url) || getUrlOrigin(merged.camera_url);
     if (origin) merged.public_base_url = origin;
   }
 
+  if (!merged.playback_protocol) {
+    merged.playback_protocol =
+      merged.stream_type ||
+      inferPlaybackProtocol(merged.playback_url, merged.video_source_type === "central_rtsp" ? "webrtc" : "mjpeg");
+  }
+
+  merged.stream_type = merged.playback_protocol;
   return merged;
 }
 
@@ -301,10 +340,12 @@ export function validateControllerId(controllerId) {
 
 export async function getControllers(params = {}) {
   const query = toQueryString(params);
-  return request(registryApiBaseUrl, `/controllers${query}`, {
+  const result = await request(registryApiBaseUrl, `/controllers${query}`, {
     method: "GET",
     headers: getRegistryHeaders()
   });
+  const list = normalizeListPayload(result).map(enrichControllerEndpoints);
+  return Array.isArray(result) ? list : { ...(result || {}), data: list };
 }
 
 export async function getControllerRegistry(controllerId) {
@@ -312,6 +353,43 @@ export async function getControllerRegistry(controllerId) {
   const result = await request(registryApiBaseUrl, `/controllers/${id}`, {
     method: "GET",
     headers: getRegistryHeaders()
+  });
+  return enrichControllerEndpoints(result?.data ?? result);
+}
+
+export async function createController(payload = {}) {
+  const result = await request(registryApiBaseUrl, `/controllers`, {
+    method: "POST",
+    headers: getRegistryHeaders(),
+    body: payload
+  });
+  return enrichControllerEndpoints(result?.data ?? result);
+}
+
+export async function updateController(controllerId, payload = {}) {
+  const id = validateControllerId(controllerId);
+  const result = await request(registryApiBaseUrl, `/controllers/${id}`, {
+    method: "PUT",
+    headers: getRegistryHeaders(),
+    body: payload
+  });
+  return enrichControllerEndpoints(result?.data ?? result);
+}
+
+export async function detectControllerVideoType(payload = {}) {
+  const result = await request(registryApiBaseUrl, `/controllers/video/detect`, {
+    method: "POST",
+    headers: getRegistryHeaders(),
+    body: payload
+  });
+  return enrichControllerEndpoints(result?.data ?? result);
+}
+
+export async function testControllerVideoInput(payload = {}) {
+  const result = await request(registryApiBaseUrl, `/controllers/video/test`, {
+    method: "POST",
+    headers: getRegistryHeaders(),
+    body: payload
   });
   return enrichControllerEndpoints(result?.data ?? result);
 }
