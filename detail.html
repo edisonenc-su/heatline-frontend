@@ -104,7 +104,7 @@
                 <section class="detail-card video-section equal-card">
                   <div class="detail-card-header">
                     <h2>🎥 실시간 영상</h2>
-                    <span class="detail-card-meta">playback_url 기반 재생</span>
+                    <span class="detail-card-meta">camera_url 기반 재생</span>
                   </div>
                   <div class="detail-card-body">
                     <div class="badge-row">
@@ -122,7 +122,7 @@
 
                     <div class="stream-meta">
                       <div class="stream-meta-card">
-                        <div class="label">입력 방식</div>
+                        <div class="label">영상 방식</div>
                         <div class="value" id="streamSourceType">-</div>
                       </div>
                       <div class="stream-meta-card">
@@ -141,19 +141,19 @@
 
                     <div class="helper-box">
                       <div class="stream-link-row">
-                        <strong>재생 URL</strong>
-                        <a id="playbackUrlLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
+                        <strong>카메라 URL</strong>
+                        <a id="cameraUrlLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
                       </div>
                       <div class="stream-link-row" style="margin-top:8px;">
-                        <strong>원본 RTSP</strong>
-                        <span id="sourceRtspText">-</span>
+                        <strong>Public Base URL</strong>
+                        <span id="publicBaseUrlText">-</span>
                       </div>
                       <div class="stream-link-row" style="margin-top:8px;">
-                        <strong>스냅샷</strong>
-                        <a id="snapshotUrlLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
+                        <strong>장비 API Base URL</strong>
+                        <a id="deviceApiBaseLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
                       </div>
                       <div class="stream-helper" id="streamHelper" style="margin-top:10px;">
-                        중앙 RTSP 수신 구조에서는 raw rtsp:// 대신 브라우저 재생용 playback_url 만 사용합니다.
+                        라즈베리파이가 내부에서 RTSP를 받아 MJPEG/HLS로 내보내고, 브라우저는 camera_url만 재생합니다.
                       </div>
                     </div>
                   </div>
@@ -236,11 +236,11 @@
                       <div class="k">설치 주소</div><div id="infoAddress" class="v">-</div>
                       <div class="k">설치 위치</div><div id="infoLocation" class="v">-</div>
                       <div class="k">좌표</div><div id="infoLatLng" class="v">-</div>
-                      <div class="k">입력 방식</div><div id="infoVideoSourceType" class="v">-</div>
+                      <div class="k">영상 방식</div><div id="infoVideoSourceType" class="v">-</div>
                       <div class="k">재생 프로토콜</div><div id="infoPlaybackProtocol" class="v">-</div>
-                      <div class="k">재생 URL</div><div id="infoPlaybackUrl" class="v">-</div>
-                      <div class="k">원본 RTSP</div><div id="infoSourceRtspUrl" class="v">-</div>
-                      <div class="k">장비 API</div><div id="infoDeviceApiBase" class="v">-</div>
+                      <div class="k">카메라 URL</div><div id="infoCameraUrl" class="v">-</div>
+                      <div class="k">Public Base URL</div><div id="infoPublicBaseUrl" class="v">-</div>
+                      <div class="k">장비 API Base URL</div><div id="infoDeviceApiBase" class="v">-</div>
                       <div class="k">마지막 통신</div><div id="infoLastSeen" class="v">-</div>
                       <div class="k">AS 만료일</div><div id="infoAsExpire" class="v">-</div>
                     </div>
@@ -467,11 +467,11 @@
     }
 
     async function renderPlayback(controller) {
-      const playbackUrl = controller?.playback_url || controller?.camera_url || "";
-      const playbackProtocol = normalizeStreamType(controller?.playback_protocol || controller?.stream_type);
+      const playbackUrl = controller?.camera_url || controller?.playback_url || "";
+      const playbackProtocol = normalizeStreamType(controller?.stream_type || controller?.playback_protocol);
 
       if (!playbackUrl) {
-        setEmptyStream("재생 가능한 playback_url 이 없습니다.");
+        setEmptyStream("재생 가능한 camera_url 이 없습니다.");
         return;
       }
 
@@ -613,16 +613,14 @@
         $("snowThresholdCurrent").textContent = controller.snow_threshold.toFixed(2);
       }
 
-      $("streamSourceType").textContent = asDisplay(controller.video_source_type);
-      $("streamProtocol").textContent = asDisplay(controller.playback_protocol || controller.stream_type);
+      $("streamSourceType").textContent = asDisplay(controller.video_source_type || "pi_camera");
+      $("streamProtocol").textContent = asDisplay(controller.stream_type || controller.playback_protocol);
       $("streamMediaStatus").textContent = asDisplay(controller.media_status || controller.status);
       $("streamMediaLastSeen").textContent = formatDateTime(controller.media_last_seen_at || controller.last_seen_at);
-      setLink($("playbackUrlLink"), controller.playback_url || controller.camera_url || "");
-      setLink($("snapshotUrlLink"), controller.snapshot_url || "");
-      $("sourceRtspText").textContent = controller.source_rtsp_url || "-";
-      $("streamHelper").textContent = controller.video_source_type === "central_rtsp"
-        ? "중앙 서버가 RTSP를 수신하고 변환한 playback_url 을 브라우저가 재생합니다. raw rtsp:// 주소는 브라우저에서 직접 재생하지 않습니다."
-        : "Pi/장비 API 방식은 playback_url 또는 camera_url 을 통해 MJPEG/HLS 형태로 재생합니다.";
+      setLink($("cameraUrlLink"), controller.camera_url || controller.playback_url || "");
+      setLink($("deviceApiBaseLink"), controller.device_api_base || "");
+      $("publicBaseUrlText").textContent = controller.public_base_url || "-";
+      $("streamHelper").textContent = "라즈베리파이 터널 구조에서는 device_api_base 로 상태/명령을 처리하고, 브라우저 영상은 camera_url(MJPEG/HLS)로 재생합니다.";
 
       $("infoName").textContent = asDisplay(controller.controller_name);
       $("infoSerial").textContent = asDisplay(controller.serial_no);
@@ -632,10 +630,10 @@
       $("infoLatLng").textContent = (typeof controller.latitude === "number" && typeof controller.longitude === "number")
         ? `${controller.latitude}, ${controller.longitude}`
         : "-";
-      $("infoVideoSourceType").textContent = asDisplay(controller.video_source_type);
-      $("infoPlaybackProtocol").textContent = asDisplay(controller.playback_protocol || controller.stream_type);
-      $("infoPlaybackUrl").textContent = asDisplay(controller.playback_url || controller.camera_url);
-      $("infoSourceRtspUrl").textContent = asDisplay(controller.source_rtsp_url);
+      $("infoVideoSourceType").textContent = asDisplay(controller.video_source_type || "pi_camera");
+      $("infoPlaybackProtocol").textContent = asDisplay(controller.stream_type || controller.playback_protocol);
+      $("infoCameraUrl").textContent = asDisplay(controller.camera_url || controller.playback_url);
+      $("infoPublicBaseUrl").textContent = asDisplay(controller.public_base_url);
       $("infoDeviceApiBase").textContent = asDisplay(controller.device_api_base);
       $("infoLastSeen").textContent = formatDateTime(controller.last_seen_at);
       $("infoAsExpire").textContent = asDisplay(controller.as_expire_at);
@@ -705,7 +703,7 @@
       $("sidebar-placeholder").innerHTML = window.renderSidebar(session, "controllers");
       $("header-placeholder").innerHTML = window.renderHeader(
         "장비 상세",
-        "중앙 등록 정보 및 원격 제어",
+        "camera_url 기반 영상 재생 및 원격 제어",
         [{ type: "info", label: "상세 화면", value: controllerId || "-" }]
       );
       if (window.startClock) window.startClock();
