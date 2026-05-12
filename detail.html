@@ -21,13 +21,8 @@
       align-items: stretch;
     }
 
-    .detail-row-top,
-    .detail-row-middle {
-      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
-    }
-
-    .detail-row-bottom {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .detail-row-top {
+      grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.9fr);
     }
 
     .equal-card {
@@ -53,44 +48,23 @@
       min-height: 360px;
     }
 
-    .remote-control-card .detail-card-body,
-    .status-card .detail-card-body,
-    .info-card .detail-card-body,
-    .log-card .detail-card-body {
+    .remote-control-card .detail-card-body {
       display: flex;
       flex-direction: column;
     }
 
-    .remote-control-card .control-grid,
-    .status-card .metrics,
-    .info-card .kv,
-    .log-card .table-wrap {
+    .remote-control-card .control-grid {
       flex: 1;
     }
 
-    .status-card .metrics {
-      align-content: stretch;
-    }
-
-    .info-card .kv {
-      align-content: start;
-    }
-
-    .log-card .table-wrap table {
-      min-width: 100%;
-    }
-
     @media (max-width: 1200px) {
-      .detail-row-top,
-      .detail-row-middle {
-        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+      .detail-row-top {
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
       }
     }
 
     @media (max-width: 980px) {
-      .detail-row-top,
-      .detail-row-middle,
-      .detail-row-bottom {
+      .detail-row-top {
         grid-template-columns: 1fr;
       }
 
@@ -104,40 +78,12 @@
         align-items: flex-start;
       }
 
-      .top-actions {
-        width: 100%;
-        display: flex;
-        gap: 12px;
-      }
-
-      .top-actions .btn {
-        flex: 1 1 0;
-      }
-
       .video-section.equal-card .camera-box {
         min-height: 220px;
       }
 
       .control-row .btn {
         min-width: 0;
-      }
-
-      .metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 520px) {
-      .metrics {
-        grid-template-columns: 1fr;
-      }
-
-      .kv {
-        grid-template-columns: 110px minmax(0, 1fr);
-      }
-
-      .detail-card-body {
-        padding: 16px;
       }
     }
   </style>
@@ -156,10 +102,6 @@
               <div class="title-group">
                 <h1 id="controllerTitle">장비 상세</h1>
                 <p id="controllerSubtitle">컨트롤러 정보를 불러오는 중입니다.</p>
-              </div>
-              <div class="top-actions">
-                <button class="btn btn-secondary" id="btnBack">목록으로</button>
-                <button class="btn btn-primary" id="btnRefresh">새로고침</button>
               </div>
             </div>
 
@@ -206,139 +148,7 @@
                           다만 제어 자체를 강제 차단하지는 않습니다.
                         </div>
                       </div>
-
-                      <div class="control-block">
-                        <h3>모드 변경</h3>
-                        <div class="control-row">
-                          <button class="btn btn-primary" id="btnAutoMode">자동 모드</button>
-                          <button class="btn btn-secondary" id="btnManualMode">수동 모드</button>
-                        </div>
-                      </div>
-
-                      <div class="control-block">
-                        <h3>눈 감지 임계값 변경</h3>
-                        <div class="range-wrap">
-                          <input id="snowThresholdRange" type="range" min="0" max="1" step="0.01" value="0.80" />
-                          <div class="range-value">
-                            현재 설정값: <strong id="snowThresholdCurrent">0.80</strong>
-                          </div>
-                          <div class="control-row">
-                            <button class="btn btn-warning" id="btnSaveThreshold">임계값 저장</button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="control-block">
-                        <h3>장비 재부팅</h3>
-                        <div class="control-row">
-                          <button class="btn btn-danger" id="btnReboot">재부팅</button>
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                </section>
-              </div>
-
-              <div class="detail-row detail-row-middle">
-                <section class="detail-card equal-card status-card">
-                  <div class="detail-card-header">
-                    <h2>📊 실시간 상태</h2>
-                    <span class="detail-card-meta">최근 수집 센서 값</span>
-                  </div>
-                  <div class="detail-card-body">
-                    <div class="metrics">
-                      <div class="metric">
-                        <div class="label">온도</div>
-                        <div id="temperature" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">습도</div>
-                        <div id="humidity" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">눈 감지 신뢰도</div>
-                        <div id="snowConfidence" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">눈 상태</div>
-                        <div id="snowState" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">열선 상태</div>
-                        <div id="heaterState" class="value">-</div>
-                      </div>
-                      <div class="metric">
-                        <div class="label">운전 모드</div>
-                        <div id="heaterMode" class="value">-</div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section class="detail-card equal-card info-card" id="deviceInfoCard">
-                  <div class="detail-card-header">
-                    <h2>ℹ️ 장비 정보</h2>
-                    <span class="detail-card-meta">중앙 등록 정보</span>
-                  </div>
-                  <div class="detail-card-body">
-                    <div class="kv">
-                      <div class="k">장비명</div><div id="infoName" class="v">-</div>
-                      <div class="k">시리얼</div><div id="infoSerial" class="v">-</div>
-                      <div class="k">고객사 ID</div><div id="infoCustomer" class="v">-</div>
-                      <div class="k">설치 주소</div><div id="infoAddress" class="v">-</div>
-                      <div class="k">설치 위치</div><div id="infoLocation" class="v">-</div>
-                      <div class="k">좌표</div><div id="infoLatLng" class="v">-</div>
-                      <div class="k">카메라 URL</div><div id="infoCameraUrl" class="v">-</div>
-                      <div class="k">마지막 통신</div><div id="infoLastSeen" class="v">-</div>
-                      <div class="k">AS 만료일</div><div id="infoAsExpire" class="v">-</div>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <div class="detail-row detail-row-bottom">
-                <section class="detail-card equal-card log-card">
-                  <div class="detail-card-header">
-                    <h2>🧾 최근 제어 이력</h2>
-                    <span class="detail-card-meta">최근 5건</span>
-                  </div>
-                  <div class="detail-card-body table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>시간</th>
-                          <th>명령</th>
-                          <th>값</th>
-                          <th>결과</th>
-                          <th>메모</th>
-                        </tr>
-                      </thead>
-                      <tbody id="controlLogsBody">
-                        <tr><td colspan="5" class="muted">불러오는 중...</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-
-                <section class="detail-card equal-card log-card">
-                  <div class="detail-card-header">
-                    <h2>🔔 최근 이벤트 로그</h2>
-                    <span class="detail-card-meta">최근 5건</span>
-                  </div>
-                  <div class="detail-card-body table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>시간</th>
-                          <th>유형</th>
-                          <th>심각도</th>
-                          <th>메시지</th>
-                        </tr>
-                      </thead>
-                      <tbody id="eventLogsBody">
-                        <tr><td colspan="4" class="muted">불러오는 중...</td></tr>
-                      </tbody>
-                    </table>
                   </div>
                 </section>
               </div>
@@ -369,14 +179,16 @@
         return document.getElementById(id);
       }
 
-      function goBack() {
-        history.back();
+      function setText(id, value) {
+        const el = $(id);
+        if (el) el.textContent = value;
       }
 
       const commands = buildDetailCommands(controllerId);
 
       function setBadgeStatus(status) {
         const el = $("badgeStatus");
+        if (!el) return;
         el.className = "badge";
 
         if (status === "online") {
@@ -396,6 +208,7 @@
 
       function setBadgeSnow(detected) {
         const el = $("badgeSnow");
+        if (!el) return;
         el.className = "badge";
 
         if (detected) {
@@ -409,6 +222,7 @@
 
       function setBadgeHeater(on) {
         const el = $("badgeHeater");
+        if (!el) return;
         el.className = "badge";
 
         if (on) {
@@ -423,6 +237,7 @@
       function renderCamera(cameraUrl) {
         const img = $("cameraStream");
         const empty = $("cameraEmpty");
+        if (!img || !empty) return;
 
         if (!cameraUrl) {
           img.style.display = "none";
@@ -440,109 +255,28 @@
         }
       }
 
-      function updateThresholdLabel() {
-        $("snowThresholdCurrent").textContent = Number($("snowThresholdRange").value).toFixed(2);
-      }
-
       function setControlPermission(controller) {
         const allowed = canControlController(controller);
-        const buttons = [
-          "btnHeatOn",
-          "btnHeatOff",
-          "btnAutoMode",
-          "btnManualMode",
-          "btnSaveThreshold",
-          "btnReboot"
-        ];
-
-        buttons.forEach(id => {
+        ["btnHeatOn", "btnHeatOff"].forEach(id => {
           const el = $(id);
           if (el) el.disabled = !allowed;
         });
 
         if (!allowed) {
-          $("controllerSubtitle").textContent =
-            `${controller.install_location || "-"} · 조회만 가능 (제어 권한 없음)`;
+          setText("controllerSubtitle", `${controller.install_location || "-"} · 조회만 가능 (제어 권한 없음)`);
         }
-      }
-
-      function renderControlLogs(items) {
-        const tbody = $("controlLogsBody");
-
-        if (!items.length) {
-          tbody.innerHTML = `<tr><td colspan="5" class="muted">제어 이력이 없습니다.</td></tr>`;
-          return;
-        }
-
-        tbody.innerHTML = items.map(item => `
-          <tr>
-            <td>${formatDateTime(item.created_at || item.requested_at || item.finished_at)}</td>
-            <td>${item.command_type ?? "-"}</td>
-            <td>${item.command_value ?? "-"}</td>
-            <td>${item.result ?? item.status ?? "-"}</td>
-            <td>${item.note ?? item.message ?? "-"}</td>
-          </tr>
-        `).join("");
-      }
-
-      function renderEvents(items) {
-        const tbody = $("eventLogsBody");
-
-        if (!items.length) {
-          tbody.innerHTML = `<tr><td colspan="4" class="muted">이벤트 로그가 없습니다.</td></tr>`;
-          return;
-        }
-
-        tbody.innerHTML = items.map(item => `
-          <tr>
-            <td>${formatDateTime(item.occurred_at || item.created_at)}</td>
-            <td>${item.event_type ?? "-"}</td>
-            <td>${item.severity ?? "-"}</td>
-            <td>${item.message ?? "-"}</td>
-          </tr>
-        `).join("");
       }
 
       function renderController(c) {
         currentController = c;
 
         document.title = `${c.controller_name || "장비 상세"} | Heatline`;
-        $("controllerTitle").textContent = c.controller_name || `컨트롤러 #${c.id}`;
-        $("controllerSubtitle").textContent =
-          `${c.install_location || "-"} · 마지막 통신 ${formatDateTime(c.last_seen_at)}`;
+        setText("controllerTitle", c.controller_name || `컨트롤러 #${c.id}`);
+        setText("controllerSubtitle", `${c.install_location || "-"} · 마지막 통신 ${formatDateTime(c.last_seen_at)}`);
 
         setBadgeStatus(c.status);
         setBadgeSnow(!!c.snow_detected);
         setBadgeHeater(!!c.heater_on);
-
-        $("temperature").textContent =
-          typeof c.temperature === "number" ? `${c.temperature.toFixed(1)} °C` : "-";
-        $("humidity").textContent =
-          typeof c.humidity === "number" ? `${c.humidity.toFixed(1)} %` : "-";
-        $("snowConfidence").textContent =
-          typeof c.snow_confidence === "number" ? `${(c.snow_confidence * 100).toFixed(1)} %` : "-";
-        $("snowState").textContent = c.snow_state || "-";
-        $("heaterState").textContent = c.heater_on ? "OFF" : "ON";
-        $("heaterMode").textContent = c.heater_mode || "-";
-
-        if (typeof c.snow_threshold === "number") {
-          $("snowThresholdRange").value = c.snow_threshold.toFixed(2);
-          $("snowThresholdCurrent").textContent = c.snow_threshold.toFixed(2);
-        }
-
-        $("infoName").textContent = c.controller_name || "-";
-        $("infoSerial").textContent = c.serial_no || "-";
-        $("infoCustomer").textContent = c.customer_id ?? "-";
-        $("infoAddress").textContent = c.install_address || "-";
-        $("infoLocation").textContent = c.install_location || "-";
-        $("infoLatLng").textContent =
-          (typeof c.latitude === "number" && typeof c.longitude === "number")
-            ? `${c.latitude}, ${c.longitude}`
-            : "-";
-        $("infoCameraUrl").textContent = c.camera_url || "-";
-        $("infoLastSeen").textContent = formatDateTime(c.last_seen_at);
-        $("infoAsExpire").textContent = c.as_expire_at || "-";
-
         renderCamera(c.camera_url);
         setControlPermission(c);
       }
@@ -554,14 +288,11 @@
         }
 
         try {
-          const { controller, events, controlLogs } = await getDetailPageData(controllerId, {
+          const { controller } = await getDetailPageData(controllerId, {
             eventLimit: 5,
             controlLogLimit: 5
           });
-
           renderController(controller);
-          renderEvents(events);
-          renderControlLogs(controlLogs);
         } catch (err) {
           console.error("detail fetch error:", err);
           alert(err.message);
@@ -595,39 +326,21 @@
       }
 
       document.addEventListener("DOMContentLoaded", () => {
-        $("btnBack").addEventListener("click", goBack);
-        $("btnRefresh").addEventListener("click", fetchAll);
-        $("snowThresholdRange").addEventListener("input", updateThresholdLabel);
+        const btnHeatOn = $("btnHeatOn");
+        const btnHeatOff = $("btnHeatOff");
 
-        $("btnHeatOn").addEventListener("click", () =>
-          guardedAction("열선을 켭니다. 계속하시겠습니까?", () => commands.heatOn())
-        );
-
-        $("btnHeatOff").addEventListener("click", () =>
-          guardedAction("열선을 끕니다. 계속하시겠습니까?", () => commands.heatOff())
-        );
-
-        $("btnAutoMode").addEventListener("click", () =>
-          guardedAction("자동 모드로 변경하시겠습니까?", () => commands.setAutoMode())
-        );
-
-        $("btnManualMode").addEventListener("click", () =>
-          guardedAction("수동 모드로 변경하시겠습니까?", () => commands.setManualMode())
-        );
-
-        $("btnSaveThreshold").addEventListener("click", () => {
-          const value = Number($("snowThresholdRange").value);
-          guardedAction(
-            `눈 감지 임계값을 ${value.toFixed(2)} 로 변경하시겠습니까?`,
-            () => commands.setSnowThreshold(value)
+        if (btnHeatOn) {
+          btnHeatOn.addEventListener("click", () =>
+            guardedAction("열선을 켭니다. 계속하시겠습니까?", () => commands.heatOn())
           );
-        });
+        }
 
-        $("btnReboot").addEventListener("click", () =>
-          guardedAction("장비를 재부팅하시겠습니까?", () => commands.reboot())
-        );
+        if (btnHeatOff) {
+          btnHeatOff.addEventListener("click", () =>
+            guardedAction("열선을 끕니다. 계속하시겠습니까?", () => commands.heatOff())
+          );
+        }
 
-        updateThresholdLabel();
         startPolling();
       });
 
@@ -643,5 +356,6 @@
       }
     </script>
   </div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
