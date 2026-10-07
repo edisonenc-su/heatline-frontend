@@ -3,12 +3,319 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0d1b2a">
-  <title>장비 목록 - 도로 열선 통합관제 시스템</title>
+  <meta name="theme-color" content="#0A1120">
+  <title>장비 목록 - HEAT-LINE 통합관제</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ===== HEAT-LINE v2 Controllers Theme (scoped, body.v2-theme 전용) ===== */
+    body.v2-theme {
+      --v2-bg: #0A1120;
+      --v2-bg-2: #111B2E;
+      --v2-panel: #1F2B41;
+      --v2-panel-2: #1A2235;
+      --v2-border: #2A3650;
+      --v2-text: #EEF2F8;
+      --v2-text-dim: #C5CDDB;
+      --v2-text-mute: #96A2B8;
+      --v2-amber: #F3A73B;
+      --v2-amber-ink: #1A1200;
+      --v2-mint: #5BD3A6;
+      --v2-red: #F07070;
+
+      --bg: var(--v2-bg);
+      --bg-dark: var(--v2-bg);
+      --bg-secondary: var(--v2-bg-2);
+      --bg-card: var(--v2-panel);
+      --panel: var(--v2-panel);
+      --card: var(--v2-panel);
+      --card-bg: var(--v2-panel);
+      --border: var(--v2-border);
+      --text: var(--v2-text);
+      --text-primary: var(--v2-text);
+      --text-secondary: var(--v2-text-dim);
+      --text-muted: var(--v2-text-mute);
+      --accent: var(--v2-amber);
+      --primary: var(--v2-amber);
+
+      background: var(--v2-bg);
+      color: var(--v2-text);
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body.v2-theme .app-layout,
+    body.v2-theme .main-content,
+    body.v2-theme .page-body {
+      background: var(--v2-bg);
+      color: var(--v2-text);
+    }
+
+    body.v2-theme .sidebar {
+      background: var(--v2-bg-2);
+      border-right: 1px solid var(--v2-border);
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme .sidebar a,
+    body.v2-theme .sidebar .nav-item {
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme .sidebar a:hover,
+    body.v2-theme .sidebar .nav-item:hover,
+    body.v2-theme .sidebar .nav-item.active {
+      background: var(--v2-panel);
+      color: var(--v2-amber);
+    }
+    body.v2-theme .app-header,
+    body.v2-theme .header {
+      background: var(--v2-bg-2);
+      border-bottom: 1px solid var(--v2-border);
+      color: var(--v2-text);
+    }
+
+    /* 필터 툴바 / 테이블 카드 */
+    body.v2-theme .filter-toolbar.controllers-filter-toolbar {
+      background: var(--v2-panel) !important;
+      border: 1px solid var(--v2-border) !important;
+      color: var(--v2-text);
+    }
+    body.v2-theme .search-box input {
+      background: var(--v2-bg);
+      border: 1px solid var(--v2-border);
+      color: var(--v2-text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      outline: none;
+    }
+    body.v2-theme .search-box input::placeholder { color: var(--v2-text-mute); }
+    body.v2-theme .search-box input:focus { border-color: var(--v2-amber); }
+
+    body.v2-theme .table-section {
+      background: var(--v2-panel);
+      border: 1px solid var(--v2-border);
+      border-radius: 14px;
+      color: var(--v2-text);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    }
+    body.v2-theme .table-header h2 { color: var(--v2-text); }
+    body.v2-theme .table-header a { color: var(--v2-mint) !important; }
+    body.v2-theme thead th {
+      background: var(--v2-panel-2);
+      color: var(--v2-text-mute);
+      border-bottom: 1px solid var(--v2-border);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+    body.v2-theme tbody td {
+      border-bottom: 1px solid var(--v2-border);
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme tbody tr:hover { background: rgba(91,211,166,0.04); }
+
+    /* 폼 컨트롤 v2 */
+    body.v2-theme .form-label { display:block; font-size:13px; color:var(--v2-text-mute); margin-bottom:6px; font-weight:600; }
+    body.v2-theme .video-form-help { margin-top:6px; color:var(--v2-text-mute); font-size:12px; line-height:1.5; }
+    body.v2-theme .video-form-help code { color:var(--v2-mint); }
+    body.v2-theme .form-input,
+    body.v2-theme .form-select,
+    body.v2-theme .form-textarea {
+      width:100%; background:var(--v2-bg); border:1px solid var(--v2-border); color:var(--v2-text);
+      border-radius:10px; padding:11px 12px; outline:none; font-size:14px;
+    }
+    body.v2-theme .form-input:focus,
+    body.v2-theme .form-select:focus,
+    body.v2-theme .form-textarea:focus {
+      border-color: var(--v2-amber);
+      box-shadow: 0 0 0 3px rgba(243,167,59,0.12);
+    }
+    body.v2-theme .compact-select { min-width:170px; }
+    body.v2-theme .form-textarea { min-height:100px; resize:vertical; }
+
+    /* 버튼 v2 */
+    body.v2-theme .btn-primary {
+      background: var(--v2-amber);
+      color: var(--v2-amber-ink);
+      border: none;
+      font-weight: 700;
+    }
+    body.v2-theme .btn-primary:hover { filter: brightness(1.08); }
+    body.v2-theme .btn-secondary {
+      background: var(--v2-panel-2);
+      color: var(--v2-text-dim);
+      border: 1px solid var(--v2-border);
+    }
+    body.v2-theme .btn-secondary:hover { border-color: var(--v2-amber); color: var(--v2-amber); }
+    body.v2-theme .btn-danger {
+      background: var(--v2-red);
+      color: #1A0A0A;
+      border: none;
+      font-weight: 700;
+    }
+    body.v2-theme .btn-warning {
+      background: var(--v2-amber);
+      color: var(--v2-amber-ink);
+      border: none;
+      font-weight: 700;
+    }
+    body.v2-theme .table-action-buttons { display:flex; gap:6px; flex-wrap:wrap; }
+    body.v2-theme .table-action-buttons .btn { white-space:nowrap; }
+    body.v2-theme .btn-provision-trigger {
+      box-shadow: 0 8px 18px rgba(243, 167, 59, 0.18);
+    }
+
+    /* 배지 v2 톤 */
+    body.v2-theme .badge { border-radius: 999px; }
+    body.v2-theme .badge-online {
+      background: rgba(91,211,166,0.14);
+      color: var(--v2-mint);
+      border: 1px solid rgba(91,211,166,0.35);
+    }
+    body.v2-theme .badge-warning {
+      background: rgba(243,167,59,0.14);
+      color: var(--v2-amber);
+      border: 1px solid rgba(243,167,59,0.4);
+    }
+    body.v2-theme .badge-danger {
+      background: rgba(240,112,112,0.14);
+      color: var(--v2-red);
+      border: 1px solid rgba(240,112,112,0.4);
+    }
+    body.v2-theme .badge-offline {
+      background: rgba(150,162,184,0.12);
+      color: var(--v2-text-mute);
+      border: 1px solid rgba(150,162,184,0.3);
+    }
+
+    /* 모달 v2 */
+    body.v2-theme .modal-backdrop { background: rgba(10,17,32,0.72); }
+    body.v2-theme .modal-box {
+      background: var(--v2-panel);
+      border: 1px solid var(--v2-border);
+      color: var(--v2-text);
+      border-radius: 14px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    }
+    body.v2-theme .modal-header { border-bottom: 1px solid var(--v2-border); }
+    body.v2-theme .modal-title { color: var(--v2-text); }
+    body.v2-theme .modal-close { color: var(--v2-text-mute); }
+    body.v2-theme .confirm-modal { color: var(--v2-text-dim); }
+    body.v2-theme .modal-footer { border-top: 1px solid var(--v2-border); }
+
+    /* 프로비전 모달 v2 */
+    body.v2-theme .provision-modal-body { display:grid; gap:14px; }
+    body.v2-theme .provision-modal-summary {
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid rgba(243, 167, 59, 0.28);
+      background:linear-gradient(180deg, rgba(243,167,59,0.12), rgba(26,34,53,0.6));
+    }
+    body.v2-theme .provision-modal-summary__label {
+      font-size:12px;
+      color:var(--v2-amber);
+      font-weight:700;
+      margin-bottom:6px;
+      letter-spacing:0.04em;
+    }
+    body.v2-theme .provision-modal-summary__value {
+      font-size:18px;
+      font-weight:800;
+      color:var(--v2-text);
+      line-height:1.35;
+    }
+    body.v2-theme .provision-modal-summary__sub {
+      margin-top:6px;
+      font-size:13px;
+      color:var(--v2-text-dim);
+      font-family:monospace;
+    }
+    body.v2-theme .provision-modal-field { display:grid; gap:6px; }
+    body.v2-theme .provision-modal-notice {
+      padding:12px 14px;
+      border-radius:12px;
+      background:rgba(17, 27, 46, 0.72);
+      border:1px solid var(--v2-border);
+      color:var(--v2-text-dim);
+      font-size:13px;
+      line-height:1.55;
+    }
+    body.v2-theme .provision-result {
+      display:grid;
+      gap:12px;
+      padding:14px;
+      border-radius:14px;
+      background:rgba(10, 17, 32, 0.5);
+      border:1px solid rgba(91, 211, 166, 0.25);
+    }
+    body.v2-theme .provision-result__header {
+      font-size:13px;
+      color:var(--v2-text-mute);
+      font-weight:700;
+    }
+    body.v2-theme .provision-result__key-row {
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    body.v2-theme .provision-result__key-row code {
+      flex:1 1 240px;
+      display:block;
+      padding:12px 14px;
+      border-radius:12px;
+      background:#05080F;
+      border:1px dashed rgba(91, 211, 166, 0.35);
+      color:var(--v2-mint);
+      font-size:14px;
+      font-weight:700;
+      line-height:1.5;
+      word-break:break-all;
+    }
+    body.v2-theme .provision-result__meta {
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:10px;
+    }
+    body.v2-theme .provision-result__meta-item {
+      display:grid;
+      gap:4px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(238,242,248,0.04);
+      border:1px solid rgba(238,242,248,0.07);
+    }
+    body.v2-theme .provision-result__meta-item span {
+      font-size:11px;
+      color:var(--v2-text-mute);
+    }
+    body.v2-theme .provision-result__meta-item strong {
+      color:var(--v2-text);
+      font-size:13px;
+      line-height:1.45;
+      word-break:break-word;
+    }
+
+    /* 모바일 카드 v2 */
+    body.v2-theme .mobile-record-card {
+      background: var(--v2-panel);
+      border: 1px solid var(--v2-border);
+      color: var(--v2-text);
+      border-radius: 12px;
+    }
+    body.v2-theme .mobile-record-card__title { color: var(--v2-text); }
+    body.v2-theme .mobile-record-card__sub,
+    body.v2-theme .mobile-record-card__meta { color: var(--v2-text-mute); }
+    body.v2-theme .mobile-summary-chip { background: var(--v2-panel-2); border: 1px solid var(--v2-border); }
+    body.v2-theme .mobile-summary-chip .label,
+    body.v2-theme .mobile-record-item .label { color: var(--v2-text-mute); }
+    body.v2-theme .mobile-summary-chip .value,
+    body.v2-theme .mobile-record-item .value { color: var(--v2-text); }
+
+    @media (max-width: 900px) {
+      #controller-modal .modal-body > div { grid-template-columns:1fr !important; }
+      .provision-result__meta { grid-template-columns:1fr; }
+    }
+  </style>
 </head>
-<body>
+<body class="v2-theme">
   <div id="sidebar-placeholder"></div>
 
   <div class="app-layout">
@@ -54,7 +361,7 @@
           <div class="filter-toolbar__spacer controllers-filter-actions" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <button class="btn btn-secondary btn-sm" onclick="resetFilters()">필터 초기화</button>
             <button id="admin-add-btn" class="btn btn-primary btn-sm" style="display:none;" onclick="openControllerModal()">➕ 장비 등록</button>
-            <span id="result-count" class="controllers-result-count" style="display:flex;align-items:center;font-size:13px;color:#94a3b8;padding:0 4px;"></span>
+            <span id="result-count" class="controllers-result-count" style="display:flex;align-items:center;font-size:13px;color:#96A2B8;padding:0 4px;"></span>
           </div>
         </div>
 
@@ -83,14 +390,14 @@
                 </tr>
               </thead>
               <tbody id="controllers-tbody">
-                <tr><td colspan="10" style="text-align:center;padding:40px;color:#64748b;"><div class="loading-spinner" style="margin:0 auto 10px"></div><br>로딩 중...</td></tr>
+                <tr><td colspan="10" style="text-align:center;padding:40px;color:#96A2B8;"><div class="loading-spinner" style="margin:0 auto 10px"></div><br>로딩 중...</td></tr>
               </tbody>
             </table>
           </div>
 
           <div id="controllers-mobile-list" class="mobile-record-list"></div>
 
-          <div id="empty-state" class="hidden" style="padding:60px 20px;text-align:center;color:#64748b;">
+          <div id="empty-state" class="hidden" style="padding:60px 20px;text-align:center;color:#96A2B8;">
             <div style="font-size:48px;margin-bottom:12px;">📭</div>
             <div style="font-size:16px;font-weight:600;margin-bottom:8px;">장비가 없습니다</div>
             <div style="font-size:14px;">검색 조건을 변경해보세요.</div>
@@ -254,124 +561,6 @@
       </div>
     </div>
   </div>
-
-  <style>
-    .form-label { display:block; font-size:13px; color:#94a3b8; margin-bottom:6px; font-weight:600; }
-    .video-form-help { margin-top:6px; color:#94a3b8; font-size:12px; line-height:1.5; }
-    .video-form-help code { color:#e2e8f0; }
-    .form-input, .form-select, .form-textarea {
-      width:100%; background:var(--bg-dark); border:1px solid var(--border); color:var(--text-primary);
-      border-radius:10px; padding:11px 12px; outline:none; font-size:14px;
-    }
-    .compact-select { min-width:170px; }
-    .form-textarea { min-height:100px; resize:vertical; }
-    .table-action-buttons { display:flex; gap:6px; flex-wrap:wrap; }
-    .table-action-buttons .btn { white-space:nowrap; }
-    .btn-provision-trigger {
-      box-shadow: 0 8px 18px rgba(245, 158, 11, 0.18);
-    }
-    .provision-modal-body {
-      display:grid;
-      gap:14px;
-    }
-    .provision-modal-summary {
-      padding:14px 16px;
-      border-radius:14px;
-      border:1px solid rgba(245, 158, 11, 0.22);
-      background:linear-gradient(180deg, rgba(245,158,11,0.12), rgba(15,23,42,0.28));
-    }
-    .provision-modal-summary__label {
-      font-size:12px;
-      color:#fbbf24;
-      font-weight:700;
-      margin-bottom:6px;
-      letter-spacing:0.04em;
-    }
-    .provision-modal-summary__value {
-      font-size:18px;
-      font-weight:800;
-      color:#fff;
-      line-height:1.35;
-    }
-    .provision-modal-summary__sub {
-      margin-top:6px;
-      font-size:13px;
-      color:#cbd5e1;
-      font-family:monospace;
-    }
-    .provision-modal-field {
-      display:grid;
-      gap:6px;
-    }
-    .provision-modal-notice {
-      padding:12px 14px;
-      border-radius:12px;
-      background:rgba(15, 23, 42, 0.72);
-      border:1px solid rgba(148, 163, 184, 0.18);
-      color:#cbd5e1;
-      font-size:13px;
-      line-height:1.55;
-    }
-    .provision-result {
-      display:grid;
-      gap:12px;
-      padding:14px;
-      border-radius:14px;
-      background:rgba(8, 16, 28, 0.34);
-      border:1px solid rgba(0, 174, 255, 0.2);
-    }
-    .provision-result__header {
-      font-size:13px;
-      color:#94a3b8;
-      font-weight:700;
-    }
-    .provision-result__key-row {
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    .provision-result__key-row code {
-      flex:1 1 240px;
-      display:block;
-      padding:12px 14px;
-      border-radius:12px;
-      background:#06101c;
-      border:1px dashed rgba(0, 174, 255, 0.28);
-      color:#7dd3fc;
-      font-size:14px;
-      font-weight:700;
-      line-height:1.5;
-      word-break:break-all;
-    }
-    .provision-result__meta {
-      display:grid;
-      grid-template-columns:repeat(3, minmax(0, 1fr));
-      gap:10px;
-    }
-    .provision-result__meta-item {
-      display:grid;
-      gap:4px;
-      padding:10px 12px;
-      border-radius:12px;
-      background:rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.06);
-    }
-    .provision-result__meta-item span {
-      font-size:11px;
-      color:#94a3b8;
-    }
-    .provision-result__meta-item strong {
-      color:#fff;
-      font-size:13px;
-      line-height:1.45;
-      word-break:break-word;
-    }
-    @media (max-width: 900px) {
-      #controller-modal .modal-body > div { grid-template-columns:1fr !important; }
-      .provision-result__meta { grid-template-columns:1fr; }
-    }
-  </style>
 
   <script src="js/app.js"></script>
   <script>
@@ -837,19 +1026,19 @@
           <tr onclick="location.href='detail.html?id=${ctrl.id}'" style="cursor:pointer;">
             <td>
               <div style="font-weight:700;">${ctrl.controller_name || '-'}</div>
-              <div style="font-size:12px;color:#94a3b8;font-family:monospace;">${ctrl.serial_no || '-'}</div>
+              <div style="font-size:12px;color:#96A2B8;font-family:monospace;">${ctrl.serial_no || '-'}</div>
             </td>
             ${isAdmin ? `<td>${customerNameById(ctrl.customer_id)}</td>` : ''}
             <td>
               <div>${ctrl.install_location || '-'}</div>
-              <div style="font-size:12px;color:#94a3b8;">${ctrl.install_address || '-'}</div>
+              <div style="font-size:12px;color:#96A2B8;">${ctrl.install_address || '-'}</div>
             </td>
             <td>${Utils.getStatusBadge(ctrl.status)}</td>
             <td>${ctrl.snow_detected ? '❄️ 감지' : '✅ 없음'}</td>
             <td>${ctrl.heater_on ? '🔥 ON' : 'OFF'}</td>
             <td>${temp}</td>
             <td>${renderAsBadge(ctrl)}</td>
-            <td style="font-size:12px;color:#64748b;">${Utils.timeAgo(ctrl.last_seen_at)}</td>
+            <td style="font-size:12px;color:#96A2B8;">${Utils.timeAgo(ctrl.last_seen_at)}</td>
             ${isAdmin ? `
               <td onclick="event.stopPropagation();">
                 <div class="table-action-buttons">
@@ -869,5 +1058,6 @@
 
     init();
   </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
