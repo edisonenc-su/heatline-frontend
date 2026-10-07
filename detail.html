@@ -344,6 +344,35 @@
       border: none;
       font-weight: 700;
     }
+
+    /* 영상 전체화면 버튼 + 전체화면 모드 */
+    .cam-fullscreen-btn {
+      background: var(--v2-panel-2, #1A2235);
+      border: 1px solid var(--v2-border, #2A3650);
+      color: var(--v2-text-dim, #C5CDDB);
+      border-radius: 8px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: border-color .15s, color .15s;
+    }
+    .cam-fullscreen-btn:hover { border-color: var(--v2-amber, #F3A73B); color: var(--v2-amber, #F3A73B); }
+    .camera-box.cam-fullscreen {
+      position: fixed; inset: 0; z-index: 9999;
+      border-radius: 0; border: none; min-height: 0 !important;
+    }
+    .camera-box.cam-fullscreen #cameraStream { object-fit: contain; }
+    .camera-box.cam-fullscreen .cam-fs-exit {
+      position: absolute; top: 16px; right: 16px; z-index: 10001;
+      background: rgba(10,17,32,0.8); color: #EEF2F8;
+      border: 1px solid #2A3650; border-radius: 8px;
+      padding: 8px 14px; font-size: 13px; cursor: pointer; font-family: inherit;
+    }
+    .cam-fs-exit { display: none; }
+    .camera-box.cam-fullscreen .cam-fs-exit { display: block; }
   </style>
 </head>
 <body class="v2-theme">
@@ -368,7 +397,10 @@
                 <section class="detail-card video-section equal-card">
                   <div class="detail-card-header">
                     <h2>🎥 실시간 영상</h2>
-                    <span class="video-tip">HTTPS camera_url 권장</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <span class="video-tip">HTTPS camera_url 권장</span>
+                      <button type="button" class="cam-fullscreen-btn" id="btnFullscreen" onclick="toggleCameraFullscreen()">⛶ 전체화면</button>
+                    </div>
                   </div>
                   <div class="detail-card-body">
                     <div class="badge-row">
@@ -377,7 +409,8 @@
                       <span id="badgeHeater" class="badge heater-off">열선 -</span>
                     </div>
 
-                    <div class="camera-box">
+                    <div class="camera-box" id="cameraBox">
+                      <button type="button" class="cam-fs-exit" id="btnFsExit" onclick="toggleCameraFullscreen()">✕ 전체화면 종료</button>
                       <img id="cameraStream" alt="실시간 영상" style="display:none;" />
                       <div id="cameraEmpty" class="camera-empty">카메라 스트림이 등록되지 않았습니다.</div>
                     </div>
@@ -513,6 +546,39 @@
         }
       }
 
+      // 영상 전체화면 토글 (Fullscreen API + 실패 시 CSS fixed 폴백)
+      async function toggleCameraFullscreen() {
+        const box = $("cameraBox");
+        if (!box) return;
+        try {
+          if (!document.fullscreenElement) {
+            if (box.requestFullscreen) await box.requestFullscreen();
+            box.classList.add("cam-fullscreen");
+          } else {
+            await document.exitFullscreen();
+            box.classList.remove("cam-fullscreen");
+          }
+        } catch (_) {
+          // Fullscreen API 실패 시 CSS 폴백만 토글
+          box.classList.toggle("cam-fullscreen");
+        }
+      }
+
+      document.addEventListener("fullscreenchange", () => {
+        const box = $("cameraBox");
+        if (box && !document.fullscreenElement) box.classList.remove("cam-fullscreen");
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          const box = $("cameraBox");
+          if (box && box.classList.contains("cam-fullscreen") && !document.fullscreenElement) {
+            box.classList.remove("cam-fullscreen");
+          }
+        }
+      });
+
+      window.toggleCameraFullscreen = toggleCameraFullscreen;
       function renderCamera(cameraUrl) {
         const img = $("cameraStream");
         const empty = $("cameraEmpty");
@@ -639,6 +705,7 @@
     </script>
   </div>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
