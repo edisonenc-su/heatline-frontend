@@ -396,7 +396,7 @@
 
 
    function renderSidebar(session, current = "dashboard") {
-    // v2 상단 메뉴바 — 좌측 사이드바 대신 최상단 가로 네비게이션
+    // v2 상단 메뉴바 — 목표 시안: 로고+메뉴 좌측 정렬, 우측엔 관할 필 버튼 + 아바타만
     const legacyKeyMap = {
       dashboard: "dashboard",
       controllers: "mgmt_controllers",
@@ -420,106 +420,127 @@
       ...(session.role === "admin" ? [["mgmt_customers", "customers.html", "고객사 관리"]] : [])
     ];
 
+    const userName = escapeHtml(session.fullName || session.username || "사용자");
+    const roleLabel = session.role === "admin" ? "관리자" : "고객사 사용자";
+    const initial = escapeHtml((session.fullName || session.username || "U").slice(0, 1).toUpperCase());
+    const avatarClass = session.role === "admin" ? "" : " customer";
+
+    // 드롭다운 바깥 클릭 닫기 (innerHTML 스크립트는 실행 안 되므로 함수 본문에서 1회 바인딩)
+    if (!window.__hlTopnavCloseBound) {
+      window.__hlTopnavCloseBound = true;
+      document.addEventListener("click", function (e) {
+        const w = document.querySelector(".hl-user-menu-wrap");
+        if (w && !w.contains(e.target)) w.classList.remove("open");
+      });
+    }
+
     return `
       <style>
         .hl-topnav {
           position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-          height: 64px;
+          height: 60px;
           background: #0A1120;
-          border-bottom: 1px solid #2A3650;
-          display: flex; align-items: center; gap: 24px;
-          padding: 0 24px;
+          border-bottom: 1px solid #1F2B41;
+          display: flex; align-items: center;
+          padding: 0 20px;
           font-family: 'Noto Sans KR', sans-serif;
         }
         .hl-topnav .brand {
-          font-size: 18px; font-weight: 800; color: #EEF2F8;
-          letter-spacing: 0.08em; cursor: pointer; flex-shrink: 0;
+          font-size: 19px; font-weight: 800; color: #EEF2F8;
+          letter-spacing: 0.02em; cursor: pointer; margin-right: 18px; flex-shrink: 0;
+          line-height: 1;
         }
         .hl-topnav .brand em { font-style: normal; color: #F3A73B; }
-        .hl-topnav nav {
-          display: flex; gap: 4px; flex: 1; justify-content: center; min-width: 0;
-        }
+        .hl-topnav nav { display: flex; align-items: center; gap: 2px; min-width: 0; }
         .hl-topnav nav a {
           display: inline-flex; align-items: center;
-          padding: 8px 14px; border-radius: 8px;
-          font-size: 14px; font-weight: 600;
-          color: #C5CDDB; text-decoration: none;
+          padding: 7px 13px; border-radius: 999px;
+          font-size: 13.5px; font-weight: 600;
+          color: #96A2B8; text-decoration: none;
           transition: background 0.15s, color 0.15s;
           white-space: nowrap;
         }
-        .hl-topnav nav a:hover { background: #1F2B41; color: #EEF2F8; }
-        .hl-topnav nav a.active {
-          background: rgba(243,167,59,0.14); color: #F3A73B;
-          border: 1px solid rgba(243,167,59,0.35);
+        .hl-topnav nav a:hover { color: #EEF2F8; background: #111B2E; }
+        .hl-topnav nav a.active { background: #F3A73B; color: #1A1200; }
+        .hl-topnav .right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .hl-site-pill {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: #111B2E; border: 1px solid #2A3650; border-radius: 999px;
+          padding: 7px 14px; font-size: 12.5px; color: #C5CDDB;
+          cursor: pointer; white-space: nowrap; font-family: inherit;
         }
-        .hl-topnav .right {
-          display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-        }
-        .hl-topnav .site-picker {
-          background: #1F2B41; border: 1px solid #2A3650; border-radius: 8px;
-          color: #EEF2F8; padding: 7px 12px; font-size: 13px; font-weight: 600;
-          cursor: pointer; white-space: nowrap;
-        }
-        .hl-topnav .user-info { display: flex; align-items: center; gap: 8px; }
-        .hl-topnav .user-avatar {
-          width: 32px; height: 32px; border-radius: 50%;
-          background: #F3A73B; color: #1A1200;
+        .hl-site-pill:hover { border-color: #F3A73B; }
+        .hl-site-pill b { color: #EEF2F8; font-weight: 600; }
+        .hl-user-menu-wrap { position: relative; }
+        .hl-avatar-btn {
+          width: 34px; height: 34px; border-radius: 50%;
+          border: 2px solid #2A3650; background: #F3A73B; color: #1A1200;
+          font-weight: 800; font-size: 13px; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 800;
+          font-family: inherit;
         }
-        .hl-topnav .user-avatar.customer { background: #5BD3A6; }
-        .hl-topnav .user-meta { line-height: 1.2; }
-        .hl-topnav .user-name { font-size: 13px; font-weight: 700; color: #EEF2F8; }
-        .hl-topnav .user-role { font-size: 11px; color: #96A2B8; }
-        .hl-topnav .btn-logout {
-          background: none; border: 1px solid #2A3650; border-radius: 8px;
-          color: #96A2B8; padding: 6px 10px; font-size: 12px; cursor: pointer;
+        .hl-avatar-btn.customer { background: #5BD3A6; color: #0A1A14; }
+        .hl-user-menu {
+          position: absolute; top: 44px; right: 0; min-width: 190px;
+          background: #1F2B41; border: 1px solid #2A3650; border-radius: 12px;
+          padding: 6px; display: none;
+          box-shadow: 0 12px 32px rgba(0,0,0,0.45); z-index: 1001;
         }
-        .hl-topnav .btn-logout:hover { border-color: #F07070; color: #F07070; }
-        .hl-topnav .mgmt-links { display: flex; gap: 6px; margin-left: 8px; }
-        .hl-topnav .mgmt-links a {
-          font-size: 11px; color: #96A2B8; text-decoration: none;
-          padding: 4px 8px; border-radius: 6px;
+        .hl-user-menu-wrap.open .hl-user-menu { display: block; }
+        .hl-user-menu .who { padding: 8px 12px 6px; font-size: 11px; color: #96A2B8; }
+        .hl-user-menu .who b { color: #EEF2F8; font-size: 12.5px; }
+        .hl-user-menu a, .hl-user-menu button {
+          display: block; width: 100%; text-align: left;
+          background: none; border: none; color: #C5CDDB;
+          font-size: 13px; padding: 9px 12px; border-radius: 8px;
+          text-decoration: none; cursor: pointer; font-family: inherit;
+          box-sizing: border-box;
         }
-        .hl-topnav .mgmt-links a:hover { background: #1F2B41; color: #EEF2F8; }
-        .hl-topnav-spacer { height: 64px; }
-        @media (max-width: 900px) {
-          .hl-topnav { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 12px; }
-          .hl-topnav-spacer { height: 120px; }
-          .hl-topnav nav { order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; }
-          .hl-topnav .user-meta { display: none; }
-        }
+        .hl-user-menu a:hover, .hl-user-menu button:hover { background: #111B2E; color: #EEF2F8; }
+        .hl-user-menu .divider { height: 1px; background: #2A3650; margin: 6px 4px; }
+        .hl-user-menu .logout:hover { color: #F07070; }
+        .hl-topnav-spacer { height: 60px; }
+
+        /* 목표 형태: 기존 상단 헤더/브랜드 스트립/사이드바/하단 탭 숨김 */
+        body .top-header { display: none !important; }
+        body .v2-dash-strip { display: none !important; }
         body .sidebar, body .sidebar-overlay, body .mobile-bottom-nav { display: none !important; }
         body .app-layout, body .main-content { margin-left: 0 !important; padding-left: 0 !important; }
+
+        @media (max-width: 900px) {
+          .hl-topnav { height: auto; flex-wrap: wrap; padding: 10px 14px; gap: 8px; }
+          .hl-topnav .brand { margin-right: 8px; }
+          .hl-topnav nav { order: 3; width: 100%; overflow-x: auto; }
+          .hl-topnav-spacer { height: 108px; }
+        }
       </style>
 
       <div class="hl-topnav">
         <div class="brand" onclick="location.href='v2-dashboard.html'">HEAT<em>—</em>LINE.</div>
         <nav>
           ${mainItems.map(([key, href, label]) => `
-            <a href="${href}" class="${activeKey === key ? 'active' : ''}">${label}</a>
-          `).join('')}
+            <a href="${href}" class="${activeKey === key ? "active" : ""}">${label}</a>
+          `).join("")}
         </nav>
         <div class="right">
-          <button class="site-picker" type="button">📍 관할 현장 선택</button>
-          <div class="user-info">
-            <div class="user-avatar ${session.role === 'admin' ? 'admin' : 'customer'}">
-              ${escapeHtml((session.fullName || session.username || 'U').slice(0, 1).toUpperCase())}
-            </div>
-            <div class="user-meta">
-              <div class="user-name">${escapeHtml(session.fullName || session.username || '사용자')}</div>
-              <div class="user-role">${session.role === 'admin' ? '관리자' : '고객사 사용자'}</div>
+          <button class="hl-site-pill" type="button">📍 관할 <b>전체 현장</b></button>
+          <div class="hl-user-menu-wrap">
+            <button class="hl-avatar-btn${avatarClass}" type="button"
+              onclick="this.parentElement.classList.toggle('open')" aria-label="계정 메뉴">${initial}</button>
+            <div class="hl-user-menu">
+              <div class="who"><b>${userName}</b> · ${roleLabel}</div>
+              <div class="divider"></div>
+              ${mgmtItems.map(([key, href, label]) => `
+                <a href="${href}">${label}</a>
+              `).join("")}
+              <div class="divider"></div>
+              <button class="logout" onclick="Auth.logout()">로그아웃</button>
             </div>
           </div>
-          <button class="btn-logout" onclick="Auth.logout()">로그아웃</button>
-        </div>
-        <div class="mgmt-links">
-          ${mgmtItems.map(([key, href, label]) => `
-            <a href="${href}" class="${activeKey === key ? 'active' : ''}">${label}</a>
-          `).join('')}
         </div>
       </div>
       <div class="hl-topnav-spacer"></div>
+      <span id="header-clock" style="display:none"></span>
     `;
   }
 
