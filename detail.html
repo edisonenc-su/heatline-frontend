@@ -373,6 +373,37 @@
     }
     .cam-fs-exit { display: none; }
     .camera-box.cam-fullscreen .cam-fs-exit { display: block; }
+
+    /* 전체화면 오버레이: 상태 배지 + 제어 버튼 */
+    .cam-overlay { display: none; }
+    .camera-box.cam-fullscreen .cam-overlay { display: block; }
+    .cam-overlay-badges {
+      position: absolute; top: 16px; left: 16px; z-index: 10001;
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .cam-overlay-badges .badge {
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+      font-size: 13px;
+      padding: 7px 14px;
+    }
+    .cam-overlay-controls {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 10001; display: flex; gap: 10px;
+    }
+    .cam-overlay-controls .btn {
+      padding: 11px 22px; font-size: 14px; font-weight: 700;
+      border-radius: 10px; cursor: pointer; font-family: inherit;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      transition: filter .15s, transform .05s;
+    }
+    .cam-overlay-controls .btn:active { transform: translateY(1px); }
+    .cam-overlay-controls .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+    .cam-overlay-controls .fs-heat-on { background: rgba(91,211,166,0.9); color: #0A1A14; border: none; }
+    .cam-overlay-controls .fs-heat-on:hover:not(:disabled) { filter: brightness(1.08); }
+    .cam-overlay-controls .fs-heat-off { background: rgba(240,112,112,0.9); color: #1A0A0A; border: none; }
+    .cam-overlay-controls .fs-heat-off:hover:not(:disabled) { filter: brightness(1.08); }
   </style>
 </head>
 <body class="v2-theme">
@@ -411,6 +442,17 @@
 
                     <div class="camera-box" id="cameraBox">
                       <button type="button" class="cam-fs-exit" id="btnFsExit" onclick="toggleCameraFullscreen()">✕ 전체화면 종료</button>
+                      <div class="cam-overlay">
+                        <div class="cam-overlay-badges">
+                          <span id="fsBadgeStatus" class="badge status-offline">상태 -</span>
+                          <span id="fsBadgeSnow" class="badge snow-off">눈 감지 -</span>
+                          <span id="fsBadgeHeater" class="badge heater-off">열선 -</span>
+                        </div>
+                        <div class="cam-overlay-controls">
+                          <button type="button" class="btn fs-heat-off" id="fsBtnHeatOff">열선 끄기</button>
+                          <button type="button" class="btn fs-heat-on" id="fsBtnHeatOn">열선 켜기</button>
+                        </div>
+                      </div>
                       <img id="cameraStream" alt="실시간 영상" style="display:none;" />
                       <div id="cameraEmpty" class="camera-empty">카메라 스트림이 등록되지 않았습니다.</div>
                     </div>
@@ -579,6 +621,42 @@
       });
 
       window.toggleCameraFullscreen = toggleCameraFullscreen;
+      // 전체화면 오버레이 동기화 (원본 배지/버튼 상태를 그대로 복사)
+      function syncFsOverlay() {
+        const pairs = [
+          ["badgeStatus", "fsBadgeStatus"],
+          ["badgeSnow", "fsBadgeSnow"],
+          ["badgeHeater", "fsBadgeHeater"]
+        ];
+        pairs.forEach(([srcId, dstId]) => {
+          const s = $(srcId);
+          const d = $(dstId);
+          if (s && d) {
+            d.className = s.className;
+            d.textContent = s.textContent;
+          }
+        });
+
+        // 원본 제어 버튼의 활성/비활성 상태를 오버레이 버튼에도 반영
+        const btnPairs = [
+          ["btnHeatOn", "fsBtnHeatOn"],
+          ["btnHeatOff", "fsBtnHeatOff"]
+        ];
+        btnPairs.forEach(([srcId, dstId]) => {
+          const s = $(srcId);
+          const d = $(dstId);
+          if (s && d) d.disabled = !!s.disabled;
+        });
+      }
+
+      // 오버레이 제어 버튼 -> 원본 버튼 클릭으로 위임 (확인 절차/권한 체크 포함 그대로 실행됨)
+      function bindFsOverlayControls() {
+        const on = $("fsBtnHeatOn");
+        const off = $("fsBtnHeatOff");
+        if (on) on.addEventListener("click", () => { const b = $("btnHeatOn"); if (b && !b.disabled) b.click(); });
+        if (off) off.addEventListener("click", () => { const b = $("btnHeatOff"); if (b && !b.disabled) b.click(); });
+      }
+
       function renderCamera(cameraUrl) {
         const img = $("cameraStream");
         const empty = $("cameraEmpty");
@@ -625,6 +703,7 @@
         renderCamera(c.camera_url);
         setControlPermission(c);
         moveHeaderExtras();
+        syncFsOverlay();
       }
 
       async function fetchAll() {
@@ -688,6 +767,7 @@
         }
 
         moveHeaderExtras();
+        bindFsOverlayControls();
         startPolling();
       });
 
