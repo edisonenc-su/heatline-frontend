@@ -347,18 +347,6 @@
     async getCustomers() {
       return normalizeList(await request("/customers"));
     },
-    async createCustomer(payload) {
-      const result = await request("/customers", { method: "POST", body: payload });
-      return result?.data ?? result;
-    },
-    async updateCustomer(id, payload) {
-      const result = await request(`/customers/${id}`, { method: "PUT", body: payload });
-      return result?.data ?? result;
-    },
-    async deleteCustomer(id) {
-      const result = await request(`/customers/${id}`, { method: "DELETE" });
-      return result?.data ?? result;
-    },
     async getControllers(session = null) {
       const params = {};
       if (session && session.role !== "admin") params.customer_id = session.customer_id;
@@ -392,38 +380,6 @@
     async updateController(id, payload) {
       const result = await request(`/controllers/${id}`, { method: "PUT", body: payload });
       return result?.data ?? result;
-    },
-    async issueProvisionKey(id, payload = {}) {
-      const result = await request(`/controllers/${id}/provision-key`, { method: "POST", body: payload });
-      return result?.data ?? result;
-    },
-    async deleteController(id) {
-      const result = await request(`/controllers/${id}`, { method: "DELETE" });
-      return result?.data ?? result;
-    },
-    async getControllerManualSchedules(id) {
-      const result = await request(`/controllers/${id}/manual-schedules`);
-      return result?.data?.items ?? result?.items ?? [];
-    },
-    async getControllerManualScheduleSummary(id) {
-      const result = await request(`/controllers/${id}/manual-schedules/summary`);
-      return result?.data ?? result;
-    },
-    async createControllerManualSchedule(id, payload) {
-      const result = await request(`/controllers/${id}/manual-schedules`, { method: "POST", body: payload });
-      return result?.data ?? result;
-    },
-    async updateControllerManualSchedule(id, scheduleId, payload) {
-      const result = await request(`/controllers/${id}/manual-schedules/${scheduleId}`, { method: "PUT", body: payload });
-      return result?.data ?? result;
-    },
-    async deleteControllerManualSchedule(id, scheduleId) {
-      const result = await request(`/controllers/${id}/manual-schedules/${scheduleId}`, { method: "DELETE" });
-      return result?.data ?? result;
-    },
-    async syncControllerManualSchedules(id) {
-      const result = await request(`/controllers/${id}/manual-schedules/sync`, { method: "POST" });
-      return result?.data ?? result;
     }
   };
 
@@ -438,151 +394,178 @@
     }
   };
 
-  function isMobileViewport() {
-    return window.matchMedia("(max-width: 768px)").matches;
-  }
 
-  function setSidebarOpen(open) {
-    const sidebar = document.getElementById("app-sidebar");
-    const overlay = document.getElementById("sidebar-overlay");
+   function renderSidebar(session, current = "dashboard") {
+    // v2 상단 메뉴바 — 좌측 사이드바 대신 최상단 가로 네비게이션
+    const legacyKeyMap = {
+      dashboard: "dashboard",
+      controllers: "mgmt_controllers",
+      logs: "mgmt_logs",
+      events: "history",
+      customers: "mgmt_customers"
+    };
+    const activeKey = legacyKeyMap[current] || current;
 
-    if (sidebar) sidebar.classList.toggle("open", !!open);
-    if (overlay) overlay.classList.toggle("show", !!open);
+    const mainItems = [
+      ["dashboard", "v2-dashboard.html", "통합 대시보드"],
+      ["monitoring", "v2-site-monitoring.html", "현장 모니터링"],
+      ["schedule", "v2-schedule-all.html", "예약 제어"],
+      ["energy", "v2-energy.html", "에너지 관리"],
+      ["history", "v2-history-all.html", "제어·이벤트 이력"]
+    ];
 
-    if (isMobileViewport()) {
-      document.body.classList.toggle("sidebar-open", !!open);
-      document.body.style.overflow = open ? "hidden" : "";
-    } else {
-      document.body.classList.remove("sidebar-open");
-      document.body.style.overflow = "";
-    }
-  }
-
-  function openSidebar() {
-    if (!isMobileViewport()) return;
-    setSidebarOpen(true);
-  }
-
-  function closeSidebar() {
-    setSidebarOpen(false);
-  }
-
-  function toggleSidebar() {
-    const sidebar = document.getElementById("app-sidebar");
-    if (!isMobileViewport()) return;
-    setSidebarOpen(!(sidebar && sidebar.classList.contains("open")));
-  }
-
-  function handleSidebarNavClick() {
-    if (isMobileViewport()) closeSidebar();
-    return true;
-  }
-
-  window.addEventListener("resize", () => {
-    if (!isMobileViewport()) {
-      setSidebarOpen(false);
-    }
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeSidebar();
-  });
-
-  function renderSidebar(session, current = "dashboard") {
-    const items = [
-      ["dashboard", "dashboard.html", "📊", "대시보드"],
-      ["controllers", "controllers.html", "🖥️", "장비 목록"],
-      ["manual-schedules", "schedules.html", "🗓️", "수동 스케줄"],
-      ["logs", "logs.html", "📜", "제어 로그"],
-      ["events", "events.html", "🔔", "이벤트"],
-      ...(session.role === "admin" ? [["customers", "customers.html", "🏢", "고객사 관리"]] : [])
+    const mgmtItems = [
+      ["mgmt_controllers", "controllers.html", "장비 관리"],
+      ["mgmt_logs", "logs.html", "로그 / 이력"],
+      ...(session.role === "admin" ? [["mgmt_customers", "customers.html", "고객사 관리"]] : [])
     ];
 
     return `
-      <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
-      <aside id="app-sidebar" class="sidebar" aria-label="주 메뉴">
-        <div class="sidebar-header">
-          <div class="sidebar-logo">
-            <span class="logo-icon">🛣️</span>
-            <div>
-              <div class="logo-text">Heatline 통합관제</div>
-              <div class="logo-sub">도로 열선 관제 시스템</div>
+      <style>
+        .hl-topnav {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+          height: 64px;
+          background: #0A1120;
+          border-bottom: 1px solid #2A3650;
+          display: flex; align-items: center; gap: 24px;
+          padding: 0 24px;
+          font-family: 'Noto Sans KR', sans-serif;
+        }
+        .hl-topnav .brand {
+          font-size: 18px; font-weight: 800; color: #EEF2F8;
+          letter-spacing: 0.08em; cursor: pointer; flex-shrink: 0;
+        }
+        .hl-topnav .brand em { font-style: normal; color: #F3A73B; }
+        .hl-topnav nav {
+          display: flex; gap: 4px; flex: 1; justify-content: center; min-width: 0;
+        }
+        .hl-topnav nav a {
+          display: inline-flex; align-items: center;
+          padding: 8px 14px; border-radius: 8px;
+          font-size: 14px; font-weight: 600;
+          color: #C5CDDB; text-decoration: none;
+          transition: background 0.15s, color 0.15s;
+          white-space: nowrap;
+        }
+        .hl-topnav nav a:hover { background: #1F2B41; color: #EEF2F8; }
+        .hl-topnav nav a.active {
+          background: rgba(243,167,59,0.14); color: #F3A73B;
+          border: 1px solid rgba(243,167,59,0.35);
+        }
+        .hl-topnav .right {
+          display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+        }
+        .hl-topnav .site-picker {
+          background: #1F2B41; border: 1px solid #2A3650; border-radius: 8px;
+          color: #EEF2F8; padding: 7px 12px; font-size: 13px; font-weight: 600;
+          cursor: pointer; white-space: nowrap;
+        }
+        .hl-topnav .user-info { display: flex; align-items: center; gap: 8px; }
+        .hl-topnav .user-avatar {
+          width: 32px; height: 32px; border-radius: 50%;
+          background: #F3A73B; color: #1A1200;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px; font-weight: 800;
+        }
+        .hl-topnav .user-avatar.customer { background: #5BD3A6; }
+        .hl-topnav .user-meta { line-height: 1.2; }
+        .hl-topnav .user-name { font-size: 13px; font-weight: 700; color: #EEF2F8; }
+        .hl-topnav .user-role { font-size: 11px; color: #96A2B8; }
+        .hl-topnav .btn-logout {
+          background: none; border: 1px solid #2A3650; border-radius: 8px;
+          color: #96A2B8; padding: 6px 10px; font-size: 12px; cursor: pointer;
+        }
+        .hl-topnav .btn-logout:hover { border-color: #F07070; color: #F07070; }
+        .hl-topnav .mgmt-links { display: flex; gap: 6px; margin-left: 8px; }
+        .hl-topnav .mgmt-links a {
+          font-size: 11px; color: #96A2B8; text-decoration: none;
+          padding: 4px 8px; border-radius: 6px;
+        }
+        .hl-topnav .mgmt-links a:hover { background: #1F2B41; color: #EEF2F8; }
+        .hl-topnav-spacer { height: 64px; }
+        @media (max-width: 900px) {
+          .hl-topnav { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 12px; }
+          .hl-topnav-spacer { height: 120px; }
+          .hl-topnav nav { order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; }
+          .hl-topnav .user-meta { display: none; }
+        }
+        body .sidebar, body .sidebar-overlay, body .mobile-bottom-nav { display: none !important; }
+        body .app-layout, body .main-content { margin-left: 0 !important; padding-left: 0 !important; }
+      </style>
+
+      <div class="hl-topnav">
+        <div class="brand" onclick="location.href='v2-dashboard.html'">HEAT<em>—</em>LINE.</div>
+        <nav>
+          ${mainItems.map(([key, href, label]) => `
+            <a href="${href}" class="${activeKey === key ? 'active' : ''}">${label}</a>
+          `).join('')}
+        </nav>
+        <div class="right">
+          <button class="site-picker" type="button">📍 관할 현장 선택</button>
+          <div class="user-info">
+            <div class="user-avatar ${session.role === 'admin' ? 'admin' : 'customer'}">
+              ${escapeHtml((session.fullName || session.username || 'U').slice(0, 1).toUpperCase())}
+            </div>
+            <div class="user-meta">
+              <div class="user-name">${escapeHtml(session.fullName || session.username || '사용자')}</div>
+              <div class="user-role">${session.role === 'admin' ? '관리자' : '고객사 사용자'}</div>
             </div>
           </div>
+          <button class="btn-logout" onclick="Auth.logout()">로그아웃</button>
         </div>
-
-        <div class="sidebar-user">
-          <div class="user-avatar ${session.role === "admin" ? "admin" : "customer"}">${escapeHtml((session.fullName || session.username || "사").slice(0, 1))}</div>
-          <div class="user-info">
-            <div class="user-name">${escapeHtml(session.fullName || session.username || "사용자")}</div>
-            <div class="user-role">${session.role === "admin" ? "관리자" : "고객사 사용자"}</div>
-          </div>
+        <div class="mgmt-links">
+          ${mgmtItems.map(([key, href, label]) => `
+            <a href="${href}" class="${activeKey === key ? 'active' : ''}">${label}</a>
+          `).join('')}
         </div>
-
-        <nav class="sidebar-nav">
-          <div class="nav-section-title">메뉴</div>
-          ${items.map(([key, href, icon, label]) => `
-            <a href="${href}" class="nav-item ${current === key ? "active" : ""}" onclick="return handleSidebarNavClick(event)">
-              <span class="nav-icon">${icon}</span>
-              <span>${label}</span>
-            </a>
-          `).join("")}
-        </nav>
-
-        <div class="sidebar-footer">
-          <button onclick="Auth.logout()" class="btn btn-secondary btn-block">로그아웃</button>
-        </div>
-      </aside>
+      </div>
+      <div class="hl-topnav-spacer"></div>
     `;
   }
 
-  function renderHeader(title, subtitle = "", stats = []) {
-    const dotClassMap = {
-      online: "dot-online",
-      offline: "dot-offline",
-      warning: "dot-warning",
-      danger: "dot-danger",
-      info: "dot-online"
-    };
 
+
+  function renderHeader(title, subtitle = "", stats = []) {
     return `
       <header class="top-header">
         <button class="menu-toggle" type="button" aria-label="메뉴 열기" onclick="toggleSidebar()">☰</button>
         <div class="header-title">
           ${escapeHtml(title)}
-          ${subtitle ? `<span>${escapeHtml(subtitle)}</span>` : ""}
+          ${subtitle ? `<span>${escapeHtml(subtitle)}</span>` : ''}
         </div>
         <div class="header-actions">
           ${stats.map((item) => `
-            <div class="header-stat">
-              <span class="dot ${dotClassMap[item.type] || "dot-online"}"></span>
-              <span>${escapeHtml(item.label)} ${escapeHtml(item.value)}</span>
-            </div>
+            <span class="header-stat">
+              <span class="dot dot-${escapeHtml(item.type || 'online')}"></span>
+              <strong>${escapeHtml(item.label)}</strong>
+              <span>${escapeHtml(item.value)}</span>
+            </span>
           `).join("")}
-          <span id="header-clock" style="font-size:13px;color:#94a3b8"></span>
+          <span id="header-clock" style="font-size:13px;color:#d7e4f3"></span>
         </div>
       </header>
     `;
   }
 
-  function renderStatsCards(stats, session) {
+
+  function renderStatsCards(stats = {}, session = {}) {
     const cards = [
-      ["total", "📦", stats.total, "전체 장비"],
-      ["online", "🟢", stats.online, "온라인"],
-      ["warning", "🟡", stats.warning + stats.error, "주의/오류"],
-      ["danger", "🛠️", stats.asUrgent, "AS 임박"],
-      ["info", "🔥", stats.heaterOn, "히터 작동"],
-      ["info", "❄️", stats.snowDetected, "눈 감지"]
+      ["total", "📦", stats.total ?? 0, "전체 장비"],
+      ["online", "🟢", stats.online ?? 0, "온라인"],
+      ["warning", "🟡", (stats.warning ?? 0) + (stats.error ?? 0), "주의/오류"],
+      ["danger", "🛠️", stats.asUrgent ?? 0, "AS 임박"],
+      ["info", "🔥", stats.heaterOn ?? 0, "히터 작동"],
+      ["info", "❄️", stats.snowDetected ?? 0, "눈 감지"]
     ];
 
     return `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
+      <div class="stats-grid" style="margin-bottom:24px">
         ${cards.map(([klass, icon, value, label]) => `
           <div class="stat-card ${klass}">
             <div class="stat-icon">${icon}</div>
             <div class="stat-value">${value}</div>
             <div class="stat-label">${label}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:8px">${session.role === 'admin' ? '전체 관제 기준' : '내 장비 기준'}</div>
+            <div style="font-size:11px;color:#a9bdd2;margin-top:8px">${session.role === 'admin' ? '전체 관제 기준' : '내 장비 기준'}</div>
           </div>
         `).join("")}
       </div>
@@ -596,19 +579,19 @@
       <tr onclick="location.href='detail.html?id=${ctrl.id}'" style="cursor:pointer">
         <td>
           <div style="font-weight:700">${escapeHtml(ctrl.controller_name || "-")}</div>
-          <div style="font-size:12px;color:#94a3b8">${escapeHtml(ctrl.serial_no || "-")}</div>
+          <div style="font-size:12px;color:#d7e4f3">${escapeHtml(ctrl.serial_no || "-")}</div>
         </td>
         ${isAdmin ? `<td>${escapeHtml(customer?.company_name || String(ctrl.customer_id || '-'))}</td>` : ""}
         <td>
           <div>${escapeHtml(ctrl.install_location || "-")}</div>
-          <div style="font-size:12px;color:#94a3b8">${escapeHtml(ctrl.install_address || "-")}</div>
+          <div style="font-size:12px;color:#d7e4f3">${escapeHtml(ctrl.install_address || "-")}</div>
         </td>
         <td>${getStatusBadge(ctrl.status)}</td>
         <td>${ctrl.snow_detected ? '❄️ 감지' : '✅ 없음'}</td>
         <td>${ctrl.heater_on ? '🔥 ON' : 'OFF'}</td>
         <td>${temp}</td>
         <td>${getAsBadge(ctrl.as_expire_at)}</td>
-        <td style="font-size:12px;color:#64748b">${timeAgo(ctrl.last_seen_at)}</td>
+        <td style="font-size:12px;color:#a9bdd2">${timeAgo(ctrl.last_seen_at)}</td>
       </tr>
     `;
   }
@@ -624,6 +607,7 @@
       const el = document.getElementById("header-clock");
       if (el) el.textContent = new Date().toLocaleString("ko-KR");
     };
+    initResponsiveNavigation();
     update();
     if (clockTimer) clearInterval(clockTimer);
     clockTimer = setInterval(update, 1000);
@@ -645,12 +629,12 @@
       online: '#10b981',
       warning: '#f59e0b',
       error: '#ef4444',
-      offline: '#64748b'
+      offline: '#a9bdd2'
     };
     const marker = L.circleMarker([ctrl.latitude, ctrl.longitude], {
       radius: 9,
-      color: colorMap[ctrl.status] || '#64748b',
-      fillColor: colorMap[ctrl.status] || '#64748b',
+      color: colorMap[ctrl.status] || '#a9bdd2',
+      fillColor: colorMap[ctrl.status] || '#a9bdd2',
       fillOpacity: 0.9,
       weight: 2
     }).addTo(map);
@@ -667,6 +651,66 @@
     return marker;
   }
 
+
+  function syncSidebarState(open) {
+    const sidebar = document.getElementById("app-sidebar");
+    const overlay = document.querySelector(".sidebar-overlay");
+    if (sidebar) sidebar.classList.toggle("open", !!open);
+    if (overlay) overlay.classList.toggle("show", !!open);
+    document.body.classList.toggle("sidebar-open", !!open);
+  }
+
+  function openSidebar() {
+    syncSidebarState(true);
+  }
+
+  function closeSidebar() {
+    syncSidebarState(false);
+  }
+
+  function toggleSidebar() {
+    const sidebar = document.getElementById("app-sidebar");
+    const willOpen = !(sidebar && sidebar.classList.contains("open"));
+    syncSidebarState(willOpen);
+  }
+
+  function initResponsiveNavigation() {
+    const sidebar = document.getElementById("app-sidebar");
+    const overlay = document.querySelector(".sidebar-overlay");
+
+    if (sidebar && !sidebar.dataset.mobileBound) {
+      sidebar.dataset.mobileBound = "1";
+      sidebar.addEventListener("click", (event) => {
+        if (window.innerWidth > 768) return;
+        if (event.target.closest("a") || event.target.closest("button")) {
+          closeSidebar();
+        }
+      });
+    }
+
+    if (overlay && !overlay.dataset.mobileBound) {
+      overlay.dataset.mobileBound = "1";
+      overlay.addEventListener("click", closeSidebar);
+    }
+
+    if (!window.__heatlineResponsiveNavBound) {
+      window.__heatlineResponsiveNavBound = true;
+      window.addEventListener("resize", () => {
+        if (window.innerWidth > 768) {
+          closeSidebar();
+        }
+      }, { passive: true });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeSidebar();
+      });
+    }
+
+    if (window.innerWidth > 768) {
+      closeSidebar();
+    }
+  }
+
   window.APP_TABLES = APP_TABLES;
   window.Auth = Auth;
   window.API = API;
@@ -674,6 +718,7 @@
   window.Utils = Utils;
   window.renderSidebar = renderSidebar;
   window.renderHeader = renderHeader;
+  window.escapeHtml = escapeHtml;
   window.renderStatsCards = renderStatsCards;
   window.renderControllerRow = renderControllerRow;
   window.closeModal = closeModal;
@@ -683,5 +728,5 @@
   window.openSidebar = openSidebar;
   window.closeSidebar = closeSidebar;
   window.toggleSidebar = toggleSidebar;
-  window.handleSidebarNavClick = handleSidebarNavClick;
+  window.initResponsiveNavigation = initResponsiveNavigation;
 })();
