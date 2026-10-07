@@ -396,15 +396,42 @@
 
 
   function renderSidebar(session, current = "dashboard") {
-    const items = [
-      ["dashboard", "dashboard.html", "📊", "대시보드"],
-      ["controllers", "controllers.html", "🖥️", "장비 목록"],
-      ["logs", "logs.html", "📜", "로그 / 이력"],
-      ["events", "events.html", "🔔", "이벤트"],
-      ...(session.role === "admin" ? [["customers", "customers.html", "🏢", "고객사 관리"]] : [])
+    // v2 디자인 메뉴 구성 (첨부 시안: 통합 대시보드 / 현장 모니터링 / 예약 제어 / 에너지 관리 / 제어·이벤트 이력)
+    const legacyKeyMap = {
+      dashboard: "dashboard",
+      controllers: "mgmt_controllers",
+      logs: "mgmt_logs",
+      events: "history",
+      customers: "mgmt_customers"
+    };
+    const activeKey = legacyKeyMap[current] || current;
+
+    const mainItems = [
+      ["dashboard", "v2-dashboard.html", "🏠", "통합 대시보드"],
+      ["monitoring", "v2-site-monitoring.html", "🖥️", "현장 모니터링"],
+      ["schedule", "v2-schedule-all.html", "🗓️", "예약 제어"],
+      ["energy", "v2-energy.html", "⚡", "에너지 관리"],
+      ["history", "v2-history-all.html", "📜", "제어·이벤트 이력"]
     ];
 
-    const mobileItems = items.slice(0, 4);
+    const mgmtItems = [
+      ["mgmt_controllers", "controllers.html", "🧰", "장비 관리"],
+      ["mgmt_logs", "logs.html", "📄", "로그 / 이력"],
+      ...(session.role === "admin" ? [["mgmt_customers", "customers.html", "🏢", "고객사 관리"]] : [])
+    ];
+
+    const mobileItems = [
+      ["dashboard", "v2-dashboard.html", "🏠", "대시보드"],
+      ["monitoring", "v2-site-monitoring.html", "🖥️", "모니터링"],
+      ["schedule", "v2-schedule-all.html", "🗓️", "예약"],
+      ["history", "v2-history-all.html", "📜", "이력"]
+    ];
+
+    const navLink = ([key, href, icon, label]) => `
+            <a href="${href}" class="nav-item ${activeKey === key ? 'active' : ''}" data-nav-key="${key}">
+              <span class="nav-icon">${icon}</span>
+              <span>${label}</span>
+            </a>`;
 
     return `
       <div class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -413,8 +440,8 @@
           <div class="sidebar-logo">
             <span class="logo-icon">🛣️</span>
             <div>
-              <div class="logo-text">Heatline</div>
-              <div class="logo-sub">Mobile WebApp</div>
+              <div class="logo-text">HEAT—LINE.</div>
+              <div class="logo-sub">통합관제 시스템</div>
             </div>
           </div>
         </div>
@@ -430,13 +457,10 @@
         </div>
 
         <nav class="sidebar-nav">
-          <div class="nav-section-title">Main Menu</div>
-          ${items.map(([key, href, icon, label]) => `
-            <a href="${href}" class="nav-item ${current === key ? 'active' : ''}" data-nav-key="${key}">
-              <span class="nav-icon">${icon}</span>
-              <span>${label}</span>
-            </a>
-          `).join("")}
+          <div class="nav-section-title">현장 관제</div>
+          ${mainItems.map(navLink).join("")}
+          <div class="nav-section-title" style="margin-top:14px;">시스템 관리</div>
+          ${mgmtItems.map(navLink).join("")}
         </nav>
 
         <div class="sidebar-footer">
@@ -446,9 +470,9 @@
 
       <nav class="mobile-bottom-nav" aria-label="모바일 하단 메뉴">
         ${mobileItems.map(([key, href, icon, label]) => `
-          <button class="mobile-bottom-nav__item ${current === key ? 'active' : ''}" onclick="location.href='${href}'" aria-label="${label}">
+          <button class="mobile-bottom-nav__item ${activeKey === key ? 'active' : ''}" onclick="location.href='${href}'" aria-label="${label}">
             <span class="mobile-bottom-nav__icon">${icon}</span>
-            <span class="mobile-bottom-nav__label">${label.replace(' / ', '/')}</span>
+            <span class="mobile-bottom-nav__label">${label}</span>
           </button>
         `).join("")}
       </nav>
