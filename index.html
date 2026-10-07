@@ -6,16 +6,387 @@
     name="viewport"
     content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   />
-  <meta name="theme-color" content="#223652" />
+  <meta name="theme-color" content="#0A1120" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>로그인 - 도로 열선 통합관제 시스템</title>
+  <title>로그인 - HEAT-LINE 통합관제</title>
 
   <link
     href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
   <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    /* ===== HEAT-LINE v2 Login Theme (scoped overrides) ===== */
+    :root {
+      --v2-bg: #0A1120;
+      --v2-bg-2: #111B2E;
+      --v2-panel: #1F2B41;
+      --v2-panel-2: #1A2235;
+      --v2-border: #2A3650;
+      --v2-text: #EEF2F8;
+      --v2-text-dim: #C5CDDB;
+      --v2-text-mute: #96A2B8;
+      --v2-amber: #F3A73B;
+      --v2-amber-ink: #1A1200;
+      --v2-mint: #5BD3A6;
+      --v2-red: #F07070;
+    }
+
+    body.login-webapp.login-webapp-v3 {
+      background: var(--v2-bg);
+      color: var(--v2-text);
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      min-height: calc(var(--vh, 1vh) * 100);
+    }
+
+    .login-page-v3 {
+      position: relative;
+      min-height: 100vh;
+      min-height: calc(var(--vh, 1vh) * 100);
+      overflow: hidden;
+    }
+
+    /* 배경 애니메이션 (기존 road-line 재활용, v2 톤 재조정) */
+    .login-bg-animation {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 20% 10%, rgba(91,211,166,0.08), transparent 55%),
+                  radial-gradient(ellipse at 80% 90%, rgba(243,167,59,0.08), transparent 55%),
+                  var(--v2-bg);
+      overflow: hidden;
+      z-index: 0;
+    }
+    .login-bg-animation .road-line {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(91,211,166,0.5), transparent);
+      border-radius: 2px;
+      opacity: 0.45;
+      animation: v2-slide linear infinite;
+    }
+    .login-bg-animation .road-line:nth-child(odd) {
+      background: linear-gradient(90deg, transparent, rgba(243,167,59,0.45), transparent);
+    }
+    @keyframes v2-slide {
+      0%   { transform: translateX(-120%); }
+      100% { transform: translateX(120vw); }
+    }
+
+    .login-shell-v3 {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      width: 100%;
+      min-height: 100vh;
+      min-height: calc(var(--vh, 1vh) * 100);
+    }
+
+    /* ---- 좌측 브랜드 히어로 ---- */
+    .login-hero-v3 {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 64px 72px;
+      background: linear-gradient(160deg, var(--v2-bg) 0%, var(--v2-bg-2) 55%, var(--v2-panel-2) 100%);
+      border-right: 1px solid var(--v2-border);
+    }
+    .login-hero-v3__badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 6px 12px;
+      border: 1px solid var(--v2-border);
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--v2-text-mute);
+      text-transform: uppercase;
+    }
+    .login-hero-v3__brand {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .login-hero-v3__icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+    .login-hero-v3__brand h1 {
+      font-size: 44px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--v2-text);
+    }
+    .login-hero-v3__brand h1 em {
+      font-style: normal;
+      color: var(--v2-amber);
+    }
+    .login-hero-v3__brand p {
+      margin-top: 14px;
+      color: var(--v2-text-mute);
+      font-size: 15px;
+      line-height: 1.8;
+      max-width: 440px;
+    }
+    .login-hero-v3__brand p strong {
+      color: var(--v2-mint);
+      font-weight: 600;
+    }
+    .login-hero-v3__meta {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--v2-text-mute);
+      text-transform: uppercase;
+    }
+
+    /* ---- 우측 로그인 카드 ---- */
+    .login-card-v3 {
+      background: var(--v2-bg-2);
+      padding: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+    }
+    .login-card-v3 > * { width: 100%; max-width: 400px; }
+
+    .login-logo.login-logo-v3 {
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .login-logo-v3 .logo-icon { font-size: 28px; }
+    .login-logo-v3 h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--v2-text);
+      margin: 10px 0 6px 0;
+    }
+    .login-logo-v3 .subtitle {
+      color: var(--v2-text-mute);
+      font-size: 13px;
+    }
+
+    .alert.alert-danger {
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--v2-red);
+      background: rgba(240,112,112,0.08);
+      border: 1px solid rgba(240,112,112,0.3);
+      border-radius: 8px;
+    }
+    .hidden { display: none !important; }
+
+    #login-form .form-group { margin-bottom: 14px; }
+    #login-form .form-label {
+      display: block;
+      font-size: 12px;
+      color: var(--v2-text-dim);
+      margin-bottom: 6px;
+      letter-spacing: 0.04em;
+    }
+    #login-form .form-control {
+      width: 100%;
+      background: var(--v2-bg);
+      border: 1px solid var(--v2-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--v2-text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      font-family: inherit;
+    }
+    #login-form .form-control::placeholder { color: #5a6a85; }
+    #login-form .form-control:focus {
+      border-color: var(--v2-amber);
+      box-shadow: 0 0 0 3px rgba(243,167,59,0.15);
+    }
+
+    #login-form .btn-primary {
+      width: 100%;
+      margin-top: 6px;
+      background: var(--v2-amber);
+      color: var(--v2-amber-ink);
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.15s ease, transform 0.05s ease;
+      font-family: inherit;
+    }
+    #login-form .btn-primary:hover { filter: brightness(1.08); }
+    #login-form .btn-primary:active { transform: translateY(1px); }
+    #login-form .btn-primary:disabled { opacity: 0.6; cursor: wait; }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(0,0,0,0.25);
+      border-top-color: var(--v2-amber-ink);
+      border-radius: 50%;
+      animation: v2-spin 0.7s linear infinite;
+      vertical-align: -2px;
+      margin-right: 6px;
+    }
+    @keyframes v2-spin { to { transform: rotate(360deg); } }
+
+    /* ---- 빠른 안내 ---- */
+    .login-quick-note-v3 {
+      margin-top: 20px;
+      padding: 12px 14px;
+      background: var(--v2-panel);
+      border: 1px solid var(--v2-border);
+      border-radius: 10px;
+    }
+    .login-quick-note-v3__title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--v2-mint);
+      margin-bottom: 4px;
+      letter-spacing: 0.04em;
+    }
+    .login-quick-note-v3__text {
+      font-size: 12px;
+      color: var(--v2-text-dim);
+      line-height: 1.6;
+    }
+
+    /* ---- 데모 계정 ---- */
+    .login-demo.login-demo-v3 {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--v2-panel);
+      border: 1px solid var(--v2-border);
+      border-radius: 12px;
+    }
+    .login-demo-v3 h4 {
+      font-size: 13px;
+      color: var(--v2-text);
+      margin: 0 0 10px 0;
+      font-weight: 700;
+    }
+    .demo-account.demo-account-v3 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: var(--v2-bg);
+      border: 1px solid var(--v2-border);
+      border-radius: 8px;
+      color: var(--v2-text-dim);
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+      font-family: inherit;
+      text-align: left;
+    }
+    .demo-account-v3:hover {
+      border-color: var(--v2-amber);
+      background: var(--v2-panel-2);
+    }
+    .demo-account-v3:last-child { margin-bottom: 0; }
+    .demo-account-v3 .demo-id {
+      color: var(--v2-text);
+      font-weight: 600;
+    }
+    .demo-account-v3 .demo-pw {
+      color: var(--v2-text-mute);
+      margin-left: 4px;
+    }
+    .demo-account-v3 .demo-role {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .demo-account-v3 .demo-role.admin {
+      background: rgba(243,167,59,0.15);
+      color: var(--v2-amber);
+      border: 1px solid rgba(243,167,59,0.4);
+    }
+    .demo-account-v3 .demo-role.customer {
+      background: rgba(91,211,166,0.12);
+      color: var(--v2-mint);
+      border: 1px solid rgba(91,211,166,0.35);
+    }
+
+    /* ---- 메타/버전 ---- */
+    .login-meta-v3 {
+      margin-top: 18px;
+      padding: 12px 14px;
+      background: var(--v2-panel-2);
+      border: 1px solid var(--v2-border);
+      border-radius: 10px;
+    }
+    .login-meta-v3__row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--v2-text-mute);
+      padding: 4px 0;
+    }
+    .login-meta-v3__row strong {
+      color: var(--v2-text-dim);
+      font-weight: 600;
+    }
+
+    .login-version.login-version-v3 {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--v2-text-mute);
+      line-height: 1.8;
+    }
+    .login-version-v3 a {
+      color: var(--v2-mint);
+      text-decoration: none;
+    }
+    .login-version-v3 a:hover { text-decoration: underline; }
+
+    /* ---- 토스트 ---- */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ---- 반응형 ---- */
+    @media (max-width: 860px) {
+      .login-shell-v3 { grid-template-columns: 1fr; }
+      .login-hero-v3 {
+        padding: 32px 24px;
+        gap: 24px;
+        border-right: none;
+        border-bottom: 1px solid var(--v2-border);
+      }
+      .login-hero-v3__brand h1 { font-size: 32px; }
+      .login-card-v3 { padding: 28px 20px; }
+    }
+    @media (max-width: 480px) {
+      .login-hero-v3 { padding: 24px 20px; }
+      .login-hero-v3__brand h1 { font-size: 26px; }
+      .login-hero-v3__brand p { font-size: 13px; }
+      .login-card-v3 { padding: 24px 16px; }
+    }
+  </style>
 </head>
 <body class="webapp-enabled login-webapp login-webapp-v3">
   <main class="login-page login-page-v3">
@@ -23,130 +394,140 @@
 
     <section class="login-shell-v3" aria-label="로그인 화면">
       <div class="login-hero-v3">
-        <div class="login-hero-v3__badge">모바일 웹앱</div>
+        <div class="login-hero-v3__badge">MULTI-SITE CONTROL · HEAT-LINE v2</div>
 
         <div class="login-hero-v3__brand">
           <span class="login-hero-v3__icon">🛣️</span>
           <div>
-            <h1>Heatline</h1>
-            <p>도로 열선 통합관제 시스템</p>
+            <h1>HEAT<em>—</em>LINE.<br>도로열선 통합 관제</h1>
+            <p>
+              <strong>현장 모니터링</strong> · <strong>예약 제어</strong> ·
+              <strong>에너지 관리</strong> · <strong>제어·이벤트 이력</strong>을
+              <br>하나의 대시보드에서 통합 관리합니다.
+            </p>
           </div>
+        </div>
+
+        <div class="login-hero-v3__meta">
+          © 2026 HEAT-LINE 통합관제 시스템
         </div>
       </div>
 
       <div class="login-card-v3">
-        <div class="login-logo login-logo-v3">
-          <span class="logo-icon">🛣️</span>
-          <h2>로그인</h2>
-          <p class="subtitle">현장 관제 화면으로 바로 이동합니다</p>
-        </div>
-
-        <div id="login-alert" class="alert alert-danger hidden"></div>
-
-        <form id="login-form" onsubmit="handleLogin(event)">
-          <div class="form-group">
-            <label class="form-label" for="username">아이디</label>
-            <input
-              type="text"
-              id="username"
-              class="form-control"
-              placeholder="아이디를 입력하세요"
-              autocomplete="username"
-              required
-            />
+        <div>
+          <div class="login-logo login-logo-v3">
+            <span class="logo-icon">🛣️</span>
+            <h2>관리자 로그인</h2>
+            <p class="subtitle">현장 관제 화면으로 바로 이동합니다</p>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="password">비밀번호</label>
-            <input
-              type="password"
-              id="password"
-              class="form-control"
-              placeholder="비밀번호를 입력하세요"
-              autocomplete="current-password"
-              required
-            />
-          </div>
+          <div id="login-alert" class="alert alert-danger hidden"></div>
 
-          <button type="submit" class="btn btn-primary" id="login-btn">
-            🔐 로그인
-          </button>
-        </form>
-
-        <div class="login-quick-note-v3">
-          <div class="login-quick-note-v3__title">빠른 안내</div>
-          <div class="login-quick-note-v3__text">
-            로그인 후에는 하단 메뉴 기반의 모바일 관제 화면으로 이동합니다.
-          </div>
-        </div>
-
-        <div class="login-demo login-demo-v3">
-          <h4>🧪 데모 계정</h4>
-
-          <button
-            type="button"
-            class="demo-account demo-account-v3"
-            onclick="fillDemo('admin','admin1234')"
-          >
-            <div>
-              <span class="demo-id">admin</span>
-              <span class="demo-pw">/ admin1234</span>
+          <form id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label class="form-label" for="username">아이디</label>
+              <input
+                type="text"
+                id="username"
+                class="form-control"
+                placeholder="아이디를 입력하세요"
+                autocomplete="username"
+                required
+              />
             </div>
-            <span class="demo-role admin">관리자</span>
-          </button>
 
-          <button
-            type="button"
-            class="demo-account demo-account-v3"
-            onclick="fillDemo('kangwon','kw1234')"
-          >
-            <div>
-              <span class="demo-id">kangwon</span>
-              <span class="demo-pw">/ kw1234</span>
+            <div class="form-group">
+              <label class="form-label" for="password">비밀번호</label>
+              <input
+                type="password"
+                id="password"
+                class="form-control"
+                placeholder="비밀번호를 입력하세요"
+                autocomplete="current-password"
+                required
+              />
             </div>
-            <span class="demo-role customer">강원지사</span>
-          </button>
 
-          <button
-            type="button"
-            class="demo-account demo-account-v3"
-            onclick="fillDemo('seoul','se1234')"
-          >
-            <div>
-              <span class="demo-id">seoul</span>
-              <span class="demo-pw">/ se1234</span>
+            <button type="submit" class="btn btn-primary" id="login-btn">
+              🔐 로그인
+            </button>
+          </form>
+
+          <div class="login-quick-note-v3">
+            <div class="login-quick-note-v3__title">빠른 안내</div>
+            <div class="login-quick-note-v3__text">
+              로그인 후에는 하단 메뉴 기반의 모바일 관제 화면으로 이동합니다.
             </div>
-            <span class="demo-role customer">서울시 도로교통과</span>
-          </button>
-
-          <button
-            type="button"
-            class="demo-account demo-account-v3"
-            onclick="fillDemo('busan','bs1234')"
-          >
-            <div>
-              <span class="demo-id">busan</span>
-              <span class="demo-pw">/ bs1234</span>
-            </div>
-            <span class="demo-role customer">부산광역시 도로과</span>
-          </button>
-        </div>
-
-        <div class="login-meta-v3">
-          <div class="login-meta-v3__row">
-            <span>접속 환경</span>
-            <strong>모바일 최적화</strong>
           </div>
-          <div class="login-meta-v3__row">
-            <span>화면 구조</span>
-            <strong>웹앱 스타일</strong>
-          </div>
-        </div>
 
-        <div class="login-version login-version-v3">
-          v1.0.0 &nbsp;|&nbsp; © 2026 도로 열선 통합관제 시스템
-          <br />
-          <a href="#" onclick="resetDB(); return false;">데모 데이터 초기화</a>
+          <div class="login-demo login-demo-v3">
+            <h4>🧪 데모 계정</h4>
+
+            <button
+              type="button"
+              class="demo-account demo-account-v3"
+              onclick="fillDemo('admin','admin1234')"
+            >
+              <div>
+                <span class="demo-id">admin</span>
+                <span class="demo-pw">/ admin1234</span>
+              </div>
+              <span class="demo-role admin">관리자</span>
+            </button>
+
+            <button
+              type="button"
+              class="demo-account demo-account-v3"
+              onclick="fillDemo('kangwon','kw1234')"
+            >
+              <div>
+                <span class="demo-id">kangwon</span>
+                <span class="demo-pw">/ kw1234</span>
+              </div>
+              <span class="demo-role customer">강원지사</span>
+            </button>
+
+            <button
+              type="button"
+              class="demo-account demo-account-v3"
+              onclick="fillDemo('seoul','se1234')"
+            >
+              <div>
+                <span class="demo-id">seoul</span>
+                <span class="demo-pw">/ se1234</span>
+              </div>
+              <span class="demo-role customer">서울시 도로교통과</span>
+            </button>
+
+            <button
+              type="button"
+              class="demo-account demo-account-v3"
+              onclick="fillDemo('busan','bs1234')"
+            >
+              <div>
+                <span class="demo-id">busan</span>
+                <span class="demo-pw">/ bs1234</span>
+              </div>
+              <span class="demo-role customer">부산광역시 도로과</span>
+            </button>
+          </div>
+
+          <div class="login-meta-v3">
+            <div class="login-meta-v3__row">
+              <span>접속 환경</span>
+              <strong>모바일 최적화</strong>
+            </div>
+            <div class="login-meta-v3__row">
+              <span>화면 구조</span>
+              <strong>웹앱 스타일</strong>
+            </div>
+          </div>
+
+          <div class="login-version login-version-v3">
+            v2.0.0 &nbsp;|&nbsp; © 2026 HEAT-LINE 통합관제 시스템
+            <br />
+            <a href="#" onclick="resetDB(); return false;">데모 데이터 초기화</a>
+          </div>
         </div>
       </div>
     </section>
@@ -193,7 +574,8 @@
       const container = document.getElementById("bgAnimation");
       if (!container) return;
 
-      container.innerHTML = "";
+      // 기존 road-line 요소만 비우고 그라데이션 배경은 CSS 그대로 유지
+      container.querySelectorAll('.road-line').forEach(el => el.remove());
       const count = window.innerWidth <= 768 ? 4 : 7;
 
       for (let i = 0; i < count; i++) {
@@ -276,5 +658,6 @@
       }
     }
   </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
