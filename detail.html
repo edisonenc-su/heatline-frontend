@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#223652">
+  <meta name="theme-color" content="#0A1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>장비 상세 - 도로 열선 통합관제 시스템</title>
+  <title>장비 상세 - HEAT-LINE 통합관제</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
@@ -101,9 +101,9 @@
     .remote-clock-slot #header-clock {
       display: inline-flex !important;
       font-size: 12px !important;
-      color: #dbe7ff !important;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #C5CDDB !important;
+      background: rgba(91, 211, 166, 0.08);
+      border: 1px solid rgba(91, 211, 166, 0.25);
       border-radius: 8px;
       padding: 6px 10px;
       min-height: 18px;
@@ -116,9 +116,9 @@
       margin: 0;
       width: 100%;
       font-size: 12px;
-      color: #dbe7ff;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #C5CDDB;
+      background: rgba(238, 242, 248, 0.05);
+      border: 1px solid #2A3650;
       border-radius: 8px;
       padding: 6px 10px;
       text-align: right;
@@ -163,9 +163,190 @@
         min-width: 0;
       }
     }
+
+    /* ===== HEAT-LINE v2 Detail Theme (scoped, body.v2-theme 전용) ===== */
+    body.v2-theme {
+      --v2-bg: #0A1120;
+      --v2-bg-2: #111B2E;
+      --v2-panel: #1F2B41;
+      --v2-panel-2: #1A2235;
+      --v2-border: #2A3650;
+      --v2-text: #EEF2F8;
+      --v2-text-dim: #C5CDDB;
+      --v2-text-mute: #96A2B8;
+      --v2-amber: #F3A73B;
+      --v2-amber-ink: #1A1200;
+      --v2-mint: #5BD3A6;
+      --v2-red: #F07070;
+
+      --bg: var(--v2-bg);
+      --bg-secondary: var(--v2-bg-2);
+      --panel: var(--v2-panel);
+      --card: var(--v2-panel);
+      --card-bg: var(--v2-panel);
+      --border: var(--v2-border);
+      --text: var(--v2-text);
+      --text-primary: var(--v2-text);
+      --text-secondary: var(--v2-text-dim);
+      --text-muted: var(--v2-text-mute);
+      --accent: var(--v2-amber);
+      --primary: var(--v2-amber);
+
+      background: var(--v2-bg);
+      color: var(--v2-text);
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body.v2-theme .app-layout,
+    body.v2-theme .main-content,
+    body.v2-theme .page-body {
+      background: var(--v2-bg);
+      color: var(--v2-text);
+    }
+
+    body.v2-theme .sidebar {
+      background: var(--v2-bg-2);
+      border-right: 1px solid var(--v2-border);
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme .sidebar a,
+    body.v2-theme .sidebar .nav-item {
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme .sidebar a:hover,
+    body.v2-theme .sidebar .nav-item:hover,
+    body.v2-theme .sidebar .nav-item.active {
+      background: var(--v2-panel);
+      color: var(--v2-amber);
+    }
+    body.v2-theme .app-header,
+    body.v2-theme .header {
+      background: var(--v2-bg-2);
+      border-bottom: 1px solid var(--v2-border);
+      color: var(--v2-text);
+    }
+
+    body.v2-theme .detail-topbar .title-group h1,
+    body.v2-theme #controllerTitle {
+      color: var(--v2-text);
+    }
+
+    body.v2-theme .detail-card {
+      background: var(--v2-panel);
+      border: 1px solid var(--v2-border);
+      border-radius: 14px;
+      color: var(--v2-text);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    }
+    body.v2-theme .detail-card-header {
+      border-bottom: 1px solid var(--v2-border);
+    }
+    body.v2-theme .detail-card-header h2 { color: var(--v2-text); }
+    body.v2-theme .detail-card-meta { color: var(--v2-text-mute); }
+    body.v2-theme .video-tip { color: var(--v2-text-mute); }
+
+    /* 상태 배지 v2 톤 */
+    body.v2-theme .badge { border-radius: 999px; }
+    body.v2-theme .badge.status-online {
+      background: rgba(91,211,166,0.14);
+      color: var(--v2-mint);
+      border: 1px solid rgba(91,211,166,0.35);
+    }
+    body.v2-theme .badge.status-warning {
+      background: rgba(243,167,59,0.14);
+      color: var(--v2-amber);
+      border: 1px solid rgba(243,167,59,0.4);
+    }
+    body.v2-theme .badge.status-error {
+      background: rgba(240,112,112,0.14);
+      color: var(--v2-red);
+      border: 1px solid rgba(240,112,112,0.4);
+    }
+    body.v2-theme .badge.status-offline {
+      background: rgba(150,162,184,0.12);
+      color: var(--v2-text-mute);
+      border: 1px solid rgba(150,162,184,0.3);
+    }
+    body.v2-theme .badge.snow-on {
+      background: rgba(91,211,166,0.14);
+      color: var(--v2-mint);
+      border: 1px solid rgba(91,211,166,0.35);
+    }
+    body.v2-theme .badge.snow-off {
+      background: rgba(150,162,184,0.12);
+      color: var(--v2-text-mute);
+      border: 1px solid rgba(150,162,184,0.3);
+    }
+    body.v2-theme .badge.heater-on {
+      background: rgba(243,167,59,0.14);
+      color: var(--v2-amber);
+      border: 1px solid rgba(243,167,59,0.4);
+    }
+    body.v2-theme .badge.heater-off {
+      background: rgba(150,162,184,0.12);
+      color: var(--v2-text-mute);
+      border: 1px solid rgba(150,162,184,0.3);
+    }
+
+    /* 카메라 영역 */
+    body.v2-theme .camera-box {
+      background: var(--v2-bg);
+      border: 1px solid var(--v2-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    body.v2-theme #cameraStream {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #05080F;
+    }
+    body.v2-theme .camera-empty { color: var(--v2-text-mute); }
+    body.v2-theme .helper-text { color: var(--v2-text-mute); }
+    body.v2-theme .helper-text code {
+      color: var(--v2-mint);
+      background: rgba(91,211,166,0.08);
+      padding: 1px 6px;
+      border-radius: 6px;
+    }
+
+    /* 원격 제어 */
+    body.v2-theme .control-block h3 { color: var(--v2-text); }
+    body.v2-theme .footer-note { color: var(--v2-text-mute); }
+    body.v2-theme .btn-danger {
+      background: var(--v2-red);
+      color: #1A0A0A;
+      border: none;
+      font-weight: 700;
+    }
+    body.v2-theme .btn-danger:hover { filter: brightness(1.08); }
+    body.v2-theme .btn-success {
+      background: var(--v2-mint);
+      color: #0A1A14;
+      border: none;
+      font-weight: 700;
+    }
+    body.v2-theme .btn-success:hover { filter: brightness(1.08); }
+    body.v2-theme .btn-danger:disabled,
+    body.v2-theme .btn-success:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: none;
+    }
+    body.v2-theme .btn-secondary {
+      background: var(--v2-panel-2);
+      color: var(--v2-text-dim);
+      border: 1px solid var(--v2-border);
+    }
+    body.v2-theme .btn-primary {
+      background: var(--v2-amber);
+      color: var(--v2-amber-ink);
+      border: none;
+      font-weight: 700;
+    }
   </style>
 </head>
-<body>
+<body class="v2-theme">
   <div id="sidebar-placeholder"></div>
 
   <div class="app-layout">
@@ -458,5 +639,6 @@
     </script>
   </div>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
