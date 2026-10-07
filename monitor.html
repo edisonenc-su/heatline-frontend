@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A1120">
+<title>현장 모니터링 - HEAT-LINE 통합관제</title>
+<style>
+  body{margin:0;background:#0A1120;color:#96A2B8;font-family:-apple-system,'Noto Sans KR',sans-serif;
+    display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:14px}
+</style>
+</head>
+<body>
+  <div>첫 번째 등록 장비의 상세 화면으로 이동 중...</div>
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const session = Auth.requireAuth();
+      if (!session) return;
+      try {
+        const list = await API.getControllers(session);
+        if (Array.isArray(list) && list.length > 0) {
+          location.href = 'detail.html?id=' + list[0].id;
+          return;
+        }
+      } catch (e) { console.warn(e); }
+      location.href = 'controllers.html';
+    })();
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
