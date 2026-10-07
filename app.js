@@ -395,8 +395,8 @@
   };
 
 
-  function renderSidebar(session, current = "dashboard") {
-    // v2 디자인 메뉴 구성 (첨부 시안: 통합 대시보드 / 현장 모니터링 / 예약 제어 / 에너지 관리 / 제어·이벤트 이력)
+   function renderSidebar(session, current = "dashboard") {
+    // v2 상단 메뉴바 — 좌측 사이드바 대신 최상단 가로 네비게이션
     const legacyKeyMap = {
       dashboard: "dashboard",
       controllers: "mgmt_controllers",
@@ -407,77 +407,123 @@
     const activeKey = legacyKeyMap[current] || current;
 
     const mainItems = [
-      ["dashboard", "v2-dashboard.html", "🏠", "통합 대시보드"],
-      ["monitoring", "v2-site-monitoring.html", "🖥️", "현장 모니터링"],
-      ["schedule", "v2-schedule-all.html", "🗓️", "예약 제어"],
-      ["energy", "v2-energy.html", "⚡", "에너지 관리"],
-      ["history", "v2-history-all.html", "📜", "제어·이벤트 이력"]
+      ["dashboard", "v2-dashboard.html", "통합 대시보드"],
+      ["monitoring", "v2-site-monitoring.html", "현장 모니터링"],
+      ["schedule", "v2-schedule-all.html", "예약 제어"],
+      ["energy", "v2-energy.html", "에너지 관리"],
+      ["history", "v2-history-all.html", "제어·이벤트 이력"]
     ];
 
     const mgmtItems = [
-      ["mgmt_controllers", "controllers.html", "🧰", "장비 관리"],
-      ["mgmt_logs", "logs.html", "📄", "로그 / 이력"],
-      ...(session.role === "admin" ? [["mgmt_customers", "customers.html", "🏢", "고객사 관리"]] : [])
+      ["mgmt_controllers", "controllers.html", "장비 관리"],
+      ["mgmt_logs", "logs.html", "로그 / 이력"],
+      ...(session.role === "admin" ? [["mgmt_customers", "customers.html", "고객사 관리"]] : [])
     ];
-
-    const mobileItems = [
-      ["dashboard", "v2-dashboard.html", "🏠", "대시보드"],
-      ["monitoring", "v2-site-monitoring.html", "🖥️", "모니터링"],
-      ["schedule", "v2-schedule-all.html", "🗓️", "예약"],
-      ["history", "v2-history-all.html", "📜", "이력"]
-    ];
-
-    const navLink = ([key, href, icon, label]) => `
-            <a href="${href}" class="nav-item ${activeKey === key ? 'active' : ''}" data-nav-key="${key}">
-              <span class="nav-icon">${icon}</span>
-              <span>${label}</span>
-            </a>`;
 
     return `
-      <div class="sidebar-overlay" onclick="closeSidebar()"></div>
-      <aside class="sidebar" id="app-sidebar" aria-label="주 메뉴">
-        <div class="sidebar-header">
-          <div class="sidebar-logo">
-            <span class="logo-icon">🛣️</span>
-            <div>
-              <div class="logo-text">HEAT—LINE.</div>
-              <div class="logo-sub">통합관제 시스템</div>
+      <style>
+        .hl-topnav {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+          height: 64px;
+          background: #0A1120;
+          border-bottom: 1px solid #2A3650;
+          display: flex; align-items: center; gap: 24px;
+          padding: 0 24px;
+          font-family: 'Noto Sans KR', sans-serif;
+        }
+        .hl-topnav .brand {
+          font-size: 18px; font-weight: 800; color: #EEF2F8;
+          letter-spacing: 0.08em; cursor: pointer; flex-shrink: 0;
+        }
+        .hl-topnav .brand em { font-style: normal; color: #F3A73B; }
+        .hl-topnav nav {
+          display: flex; gap: 4px; flex: 1; justify-content: center; min-width: 0;
+        }
+        .hl-topnav nav a {
+          display: inline-flex; align-items: center;
+          padding: 8px 14px; border-radius: 8px;
+          font-size: 14px; font-weight: 600;
+          color: #C5CDDB; text-decoration: none;
+          transition: background 0.15s, color 0.15s;
+          white-space: nowrap;
+        }
+        .hl-topnav nav a:hover { background: #1F2B41; color: #EEF2F8; }
+        .hl-topnav nav a.active {
+          background: rgba(243,167,59,0.14); color: #F3A73B;
+          border: 1px solid rgba(243,167,59,0.35);
+        }
+        .hl-topnav .right {
+          display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+        }
+        .hl-topnav .site-picker {
+          background: #1F2B41; border: 1px solid #2A3650; border-radius: 8px;
+          color: #EEF2F8; padding: 7px 12px; font-size: 13px; font-weight: 600;
+          cursor: pointer; white-space: nowrap;
+        }
+        .hl-topnav .user-info {
+          display: flex; align-items: center; gap: 8px;
+        }
+        .hl-topnav .user-avatar {
+          width: 32px; height: 32px; border-radius: 50%;
+          background: #F3A73B; color: #1A1200;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px; font-weight: 800;
+        }
+        .hl-topnav .user-avatar.customer { background: #5BD3A6; }
+        .hl-topnav .user-meta { line-height: 1.2; }
+        .hl-topnav .user-name { font-size: 13px; font-weight: 700; color: #EEF2F8; }
+        .hl-topnav .user-role { font-size: 11px; color: #96A2B8; }
+        .hl-topnav .btn-logout {
+          background: none; border: 1px solid #2A3650; border-radius: 8px;
+          color: #96A2B8; padding: 6px 10px; font-size: 12px; cursor: pointer;
+        }
+        .hl-topnav .btn-logout:hover { border-color: #F07070; color: #F07070; }
+        .hl-topnav .mgmt-links {
+          display: flex; gap: 6px; margin-left: 8px;
+        }
+        .hl-topnav .mgmt-links a {
+          font-size: 11px; color: #96A2B8; text-decoration: none;
+          padding: 4px 8px; border-radius: 6px;
+        }
+        .hl-topnav .mgmt-links a:hover { background: #1F2B41; color: #EEF2F8; }
+        body { padding-top: 64px !important; }
+        @media (max-width: 900px) {
+          .hl-topnav { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 12px; }
+          body { padding-top: 120px !important; }
+          .hl-topnav nav { order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; }
+          .hl-topnav .user-meta { display: none; }
+        }
+      </style>
+
+      <div class="hl-topnav">
+        <div class="brand" onclick="location.href='v2-dashboard.html'">HEAT<em>—</em>LINE.</div>
+        <nav>
+          ${mainItems.map(([key, href, label]) => `
+            <a href="${href}" class="${activeKey === key ? 'active' : ''}">${label}</a>
+          `).join('')}
+        </nav>
+        <div class="right">
+          <button class="site-picker" type="button">📍 관할 현장 선택</button>
+          <div class="user-info">
+            <div class="user-avatar ${session.role === 'admin' ? 'admin' : 'customer'}">
+              ${escapeHtml((session.fullName || session.username || 'U').slice(0, 1).toUpperCase())}
+            </div>
+            <div class="user-meta">
+              <div class="user-name">${escapeHtml(session.fullName || session.username || '사용자')}</div>
+              <div class="user-role">${session.role === 'admin' ? '관리자' : '고객사 사용자'}</div>
             </div>
           </div>
+          <button class="btn-logout" onclick="Auth.logout()">로그아웃</button>
         </div>
-
-        <div class="sidebar-user">
-          <div class="user-avatar ${session.role === 'admin' ? 'admin' : 'customer'}">
-            ${escapeHtml((session.fullName || session.username || 'U').slice(0, 1).toUpperCase())}
-          </div>
-          <div class="user-info">
-            <div class="user-name">${escapeHtml(session.fullName || session.username || '사용자')}</div>
-            <div class="user-role">${session.role === 'admin' ? '관리자' : '고객사 사용자'}</div>
-          </div>
+        <div class="mgmt-links">
+          ${mgmtItems.map(([key, href, label]) => `
+            <a href="${href}" class="${activeKey === key ? 'active' : ''}">${label}</a>
+          `).join('')}
         </div>
-
-        <nav class="sidebar-nav">
-          <div class="nav-section-title">현장 관제</div>
-          ${mainItems.map(navLink).join("")}
-          <div class="nav-section-title" style="margin-top:14px;">시스템 관리</div>
-          ${mgmtItems.map(navLink).join("")}
-        </nav>
-
-        <div class="sidebar-footer">
-          <button onclick="Auth.logout()" class="btn btn-secondary btn-block">로그아웃</button>
-        </div>
-      </aside>
-
-      <nav class="mobile-bottom-nav" aria-label="모바일 하단 메뉴">
-        ${mobileItems.map(([key, href, icon, label]) => `
-          <button class="mobile-bottom-nav__item ${activeKey === key ? 'active' : ''}" onclick="location.href='${href}'" aria-label="${label}">
-            <span class="mobile-bottom-nav__icon">${icon}</span>
-            <span class="mobile-bottom-nav__label">${label}</span>
-          </button>
-        `).join("")}
-      </nav>
+      </div>
     `;
   }
+
 
 
   function renderHeader(title, subtitle = "", stats = []) {
