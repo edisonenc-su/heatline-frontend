@@ -404,6 +404,42 @@
     .cam-overlay-controls .fs-heat-on:hover:not(:disabled) { filter: brightness(1.08); }
     .cam-overlay-controls .fs-heat-off { background: rgba(240,112,112,0.9); color: #1A0A0A; border: none; }
     .cam-overlay-controls .fs-heat-off:hover:not(:disabled) { filter: brightness(1.08); }
+
+    /* 전체화면 전용 인페이지 확인창 (네이티브 confirm은 전체화면을 해제하므로 대체) */
+    .cam-fs-confirm {
+      position: absolute; inset: 0; z-index: 10002;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(10,17,32,0.55); backdrop-filter: blur(3px);
+    }
+    .cam-fs-confirm.show { display: flex; }
+    .cam-fs-confirm .box {
+      background: #1F2B41; border: 1px solid #2A3650; border-radius: 14px;
+      padding: 22px 24px; min-width: 280px; max-width: 86%;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5); text-align: center;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .cam-fs-confirm .msg { font-size: 15px; font-weight: 600; color: #EEF2F8; margin-bottom: 18px; line-height: 1.6; }
+    .cam-fs-confirm .row { display: flex; gap: 10px; justify-content: center; }
+    .cam-fs-confirm .row button {
+      padding: 10px 22px; border-radius: 10px; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit; border: none; transition: filter .15s;
+    }
+    .cam-fs-confirm .row button:hover { filter: brightness(1.08); }
+    .cam-fs-confirm .fs-ok { background: #F3A73B; color: #1A1200; }
+    .cam-fs-confirm .fs-cancel { background: #1A2235; color: #C5CDDB; border: 1px solid #2A3650; }
+
+    /* 전체화면 결과 토스트 (alert 대체) */
+    .cam-fs-toast {
+      position: absolute; top: 64px; left: 50%; transform: translateX(-50%) translateY(-8px);
+      z-index: 10002; display: none;
+      background: rgba(31,43,65,0.95); border: 1px solid #2A3650; border-radius: 10px;
+      color: #EEF2F8; font-size: 13px; font-weight: 600;
+      padding: 10px 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      opacity: 0; transition: opacity .2s, transform .2s;
+      font-family: 'Noto Sans KR', sans-serif; white-space: nowrap;
+    }
+    .cam-fs-toast.show { display: block; opacity: 1; transform: translateX(-50%) translateY(0); }
+    .cam-fs-toast.err { border-color: rgba(240,112,112,0.5); color: #F07070; }
   </style>
 </head>
 <body class="v2-theme">
@@ -452,6 +488,16 @@
                           <button type="button" class="btn fs-heat-off" id="fsBtnHeatOff">열선 끄기</button>
                           <button type="button" class="btn fs-heat-on" id="fsBtnHeatOn">열선 켜기</button>
                         </div>
+                        <div class="cam-fs-confirm" id="fsConfirm">
+                          <div class="box">
+                            <div class="msg" id="fsConfirmMsg"></div>
+                            <div class="row">
+                              <button type="button" class="fs-cancel" id="fsConfirmCancel">취소</button>
+                              <button type="button" class="fs-ok" id="fsConfirmOk">확인</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="cam-fs-toast" id="fsToast"></div>
                       </div>
                       <img id="cameraStream" alt="실시간 영상" style="display:none;" />
                       <div id="cameraEmpty" class="camera-empty">카메라 스트림이 등록되지 않았습니다.</div>
@@ -649,12 +695,63 @@
         });
       }
 
-      // 오버레이 제어 버튼 -> 원본 버튼 클릭으로 위임 (확인 절차/권한 체크 포함 그대로 실행됨)
+      // 전체화면 전용 인페이지 확인창 (네이티브 confirm은 전체화면을 해제하므로 사용 금지)
+      function fsConfirm(message) {
+        return new Promise((resolve) => {
+          const layer = $("fsConfirm");
+          const msg = $("fsConfirmMsg");
+          const ok = $("fsConfirmOk");
+          const cancel = $("fsConfirmCancel");
+          if (!layer || !msg || !ok || !cancel) { resolve(true); return; }
+          msg.textContent = message;
+          layer.classList.add("show");
+          const done = (val) => {
+            layer.classList.remove("show");
+            ok.onclick = null; cancel.onclick = null;
+            resolve(val);
+          };
+          ok.onclick = () => done(true);
+          cancel.onclick = () => done(false);
+        });
+      }
+
+      // 전체화면 전용 토스트 (네이티브 alert 대체)
+      function fsToast(message, isError = false) {
+        const el = $("fsToast");
+        if (!el) return;
+        el.textContent = message;
+        el.classList.toggle("err", !!isError);
+        el.classList.add("show");
+        clearTimeout(el.__t);
+        el.__t = setTimeout(() => el.classList.remove("show"), 2600);
+      }
+
+      // 전체화면에서의 열선 제어 — 확인/결과를 인페이지 UI로 처리해 전체화면 유지
+      async function fsHeatAction(kind) {
+        if (!currentController || !canControlController(currentController)) {
+          fsToast("이 장비에 대한 제어 권한이 없습니다.", true);
+          return;
+        }
+        const isOn = kind === "on";
+        const ok = await fsConfirm(isOn ? "열선을 켭니다. 계속하시겠습니까?" : "열선을 끕니다. 계속하시겠습니까?");
+        if (!ok) return;
+        try {
+          if (isOn) await commands.heatOn();
+          else await commands.heatOff();
+          fsToast(isOn ? "열선 켜기 명령을 보냈습니다." : "열선 끄기 명령을 보냈습니다.");
+          await fetchAll();
+        } catch (err) {
+          console.error(err);
+          fsToast(err.message || "명령 처리에 실패했습니다.", true);
+        }
+      }
+
+      // 오버레이 제어 버튼 -> 전체화면 전용 인페이지 경로로 연결
       function bindFsOverlayControls() {
         const on = $("fsBtnHeatOn");
         const off = $("fsBtnHeatOff");
-        if (on) on.addEventListener("click", () => { const b = $("btnHeatOn"); if (b && !b.disabled) b.click(); });
-        if (off) off.addEventListener("click", () => { const b = $("btnHeatOff"); if (b && !b.disabled) b.click(); });
+        if (on) on.addEventListener("click", () => fsHeatAction("on"));
+        if (off) off.addEventListener("click", () => fsHeatAction("off"));
       }
 
       function renderCamera(cameraUrl) {
