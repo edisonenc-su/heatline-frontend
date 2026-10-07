@@ -460,9 +460,7 @@
           color: #EEF2F8; padding: 7px 12px; font-size: 13px; font-weight: 600;
           cursor: pointer; white-space: nowrap;
         }
-        .hl-topnav .user-info {
-          display: flex; align-items: center; gap: 8px;
-        }
+        .hl-topnav .user-info { display: flex; align-items: center; gap: 8px; }
         .hl-topnav .user-avatar {
           width: 32px; height: 32px; border-radius: 50%;
           background: #F3A73B; color: #1A1200;
@@ -478,21 +476,21 @@
           color: #96A2B8; padding: 6px 10px; font-size: 12px; cursor: pointer;
         }
         .hl-topnav .btn-logout:hover { border-color: #F07070; color: #F07070; }
-        .hl-topnav .mgmt-links {
-          display: flex; gap: 6px; margin-left: 8px;
-        }
+        .hl-topnav .mgmt-links { display: flex; gap: 6px; margin-left: 8px; }
         .hl-topnav .mgmt-links a {
           font-size: 11px; color: #96A2B8; text-decoration: none;
           padding: 4px 8px; border-radius: 6px;
         }
         .hl-topnav .mgmt-links a:hover { background: #1F2B41; color: #EEF2F8; }
-        body { padding-top: 64px !important; }
+        .hl-topnav-spacer { height: 64px; }
         @media (max-width: 900px) {
           .hl-topnav { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 12px; }
-          body { padding-top: 120px !important; }
+          .hl-topnav-spacer { height: 120px; }
           .hl-topnav nav { order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; }
           .hl-topnav .user-meta { display: none; }
         }
+        body .sidebar, body .sidebar-overlay, body .mobile-bottom-nav { display: none !important; }
+        body .app-layout, body .main-content { margin-left: 0 !important; padding-left: 0 !important; }
       </style>
 
       <div class="hl-topnav">
@@ -521,6 +519,7 @@
           `).join('')}
         </div>
       </div>
+      <div class="hl-topnav-spacer"></div>
     `;
   }
 
