@@ -3,17 +3,225 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0d1b2a">
+  <meta name="theme-color" content="#0A1120">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <!-- manifest.webmanifest 응답이 비정상일 때 콘솔 오류를 줄이기 위해 대시보드에서는 임시 비활성화 -->
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>대시보드 - 도로 열선 통합관제 시스템</title>
+  <title>대시보드 - HEAT-LINE 통합관제</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css?v=20260406-3">
+
+  <style>
+    /* ===== HEAT-LINE v2 Dashboard Theme (scoped overrides, body.v2-theme 전용) ===== */
+    body.v2-theme {
+      /* v2 팔레트 */
+      --v2-bg: #0A1120;
+      --v2-bg-2: #111B2E;
+      --v2-panel: #1F2B41;
+      --v2-panel-2: #1A2235;
+      --v2-border: #2A3650;
+      --v2-text: #EEF2F8;
+      --v2-text-dim: #C5CDDB;
+      --v2-text-mute: #96A2B8;
+      --v2-amber: #F3A73B;
+      --v2-amber-ink: #1A1200;
+      --v2-mint: #5BD3A6;
+      --v2-red: #F07070;
+
+      /* 기존 style.css 변수 재정의 (정의된 변수만 이 페이지에서 적용됨) */
+      --bg: var(--v2-bg);
+      --bg-secondary: var(--v2-bg-2);
+      --panel: var(--v2-panel);
+      --card: var(--v2-panel);
+      --card-bg: var(--v2-panel);
+      --border: var(--v2-border);
+      --text: var(--v2-text);
+      --text-primary: var(--v2-text);
+      --text-secondary: var(--v2-text-dim);
+      --text-muted: var(--v2-text-mute);
+      --accent: var(--v2-amber);
+      --primary: var(--v2-amber);
+
+      background: var(--v2-bg);
+      color: var(--v2-text);
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body.v2-theme .app-layout,
+    body.v2-theme .main-content,
+    body.v2-theme .page-body {
+      background: var(--v2-bg);
+      color: var(--v2-text);
+    }
+
+    /* 사이드바 / 헤더 (style.css 클래스명 기준 — 실제 클래스가 다르면 미세조정 필요) */
+    body.v2-theme .sidebar {
+      background: var(--v2-bg-2);
+      border-right: 1px solid var(--v2-border);
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme .sidebar a,
+    body.v2-theme .sidebar .nav-item {
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme .sidebar a:hover,
+    body.v2-theme .sidebar .nav-item:hover,
+    body.v2-theme .sidebar .nav-item.active {
+      background: var(--v2-panel);
+      color: var(--v2-amber);
+    }
+    body.v2-theme .app-header,
+    body.v2-theme .header {
+      background: var(--v2-bg-2);
+      border-bottom: 1px solid var(--v2-border);
+      color: var(--v2-text);
+    }
+
+    /* 카드/패널 공통 */
+    body.v2-theme .map-section,
+    body.v2-theme .table-section {
+      background: var(--v2-panel);
+      border: 1px solid var(--v2-border);
+      border-radius: 14px;
+      color: var(--v2-text);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    }
+    body.v2-theme .map-header h2,
+    body.v2-theme .table-header h2 {
+      color: var(--v2-text);
+      font-weight: 700;
+    }
+    body.v2-theme .table-header span,
+    body.v2-theme .table-header a {
+      color: var(--v2-mint) !important;
+    }
+
+    /* 긴급 알림 배너 — v2 레드 톤 (인라인 스타일보다 우선) */
+    body.v2-theme .dashboard-alert {
+      background: rgba(240,112,112,0.10) !important;
+      border: 1px solid rgba(240,112,112,0.35) !important;
+      border-radius: 12px;
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme .dashboard-alert strong { color: var(--v2-red); }
+    body.v2-theme .dashboard-alert__close { color: var(--v2-text-mute) !important; }
+
+    /* 지도 */
+    body.v2-theme #map {
+      border: 1px solid var(--v2-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    /* v2 다크 지도 톤 (타일 필터 — 원치 않으면 이 블록만 삭제) */
+    body.v2-theme .leaflet-tile-pane {
+      filter: brightness(0.85) grayscale(0.9) invert(0.92) brightness(0.62) contrast(1.15) hue-rotate(190deg) saturate(0.45);
+    }
+    body.v2-theme .leaflet-container {
+      background: var(--v2-bg-2);
+      font-family: inherit;
+    }
+    body.v2-theme .leaflet-popup-content-wrapper,
+    body.v2-theme .leaflet-popup-tip {
+      background: var(--v2-panel);
+      color: var(--v2-text);
+      border: 1px solid var(--v2-border);
+    }
+    body.v2-theme .dashboard-map-legend { color: var(--v2-text-dim); }
+
+    /* 리스트 (주의 장비 / 이벤트) */
+    body.v2-theme .log-list .log-item,
+    body.v2-theme .log-item {
+      border-bottom: 1px solid var(--v2-border);
+      color: var(--v2-text);
+    }
+    body.v2-theme .log-item:hover { background: rgba(91,211,166,0.05); }
+    body.v2-theme .log-item .log-msg { color: var(--v2-text); }
+    body.v2-theme .log-item .log-meta { color: var(--v2-text-mute); }
+
+    /* 테이블 */
+    body.v2-theme table { color: var(--v2-text); }
+    body.v2-theme thead th {
+      background: var(--v2-panel-2);
+      color: var(--v2-text-mute);
+      border-bottom: 1px solid var(--v2-border);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+    body.v2-theme tbody td {
+      border-bottom: 1px solid var(--v2-border);
+      color: var(--v2-text-dim);
+    }
+    body.v2-theme tbody tr:hover { background: rgba(91,211,166,0.04); }
+
+    /* 버튼 v2 */
+    body.v2-theme .btn-primary {
+      background: var(--v2-amber);
+      color: var(--v2-amber-ink);
+      border: none;
+      font-weight: 700;
+    }
+    body.v2-theme .btn-primary:hover { filter: brightness(1.08); }
+    body.v2-theme .btn-secondary {
+      background: var(--v2-panel-2);
+      color: var(--v2-text-dim);
+      border: 1px solid var(--v2-border);
+    }
+    body.v2-theme .btn-secondary:hover { border-color: var(--v2-amber); color: var(--v2-amber); }
+    body.v2-theme .btn-danger {
+      background: var(--v2-red);
+      color: #1A0A0A;
+      border: none;
+      font-weight: 700;
+    }
+
+    /* 확인 모달 v2 */
+    body.v2-theme .modal-backdrop { background: rgba(10,17,32,0.72); }
+    body.v2-theme .modal-box {
+      background: var(--v2-panel);
+      border: 1px solid var(--v2-border);
+      color: var(--v2-text);
+      border-radius: 14px;
+    }
+    body.v2-theme .modal-header { border-bottom: 1px solid var(--v2-border); }
+    body.v2-theme .modal-title { color: var(--v2-text); }
+    body.v2-theme .modal-close { color: var(--v2-text-mute); }
+    body.v2-theme .confirm-modal { color: var(--v2-text-dim); }
+    body.v2-theme .modal-footer { border-top: 1px solid var(--v2-border); }
+
+    /* v2 상단 브랜드 스트립 */
+    .v2-dash-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 14px 18px;
+      background: linear-gradient(90deg, var(--v2-bg-2), var(--v2-panel-2));
+      border: 1px solid var(--v2-border);
+      border-radius: 12px;
+    }
+    .v2-dash-strip .brand {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--v2-text);
+    }
+    .v2-dash-strip .brand em { font-style: normal; color: var(--v2-amber); }
+    .v2-dash-strip .meta {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--v2-text-mute);
+      text-transform: uppercase;
+    }
+    @media (max-width: 640px) {
+      .v2-dash-strip { flex-direction: column; align-items: flex-start; gap: 4px; }
+      body.v2-theme .dashboard-quick-sections { grid-template-columns: 1fr !important; }
+    }
+  </style>
 </head>
-<body>
+<body class="v2-theme">
   <div id="sidebar-placeholder"></div>
 
   <div class="app-layout">
@@ -21,10 +229,16 @@
       <div id="header-placeholder"></div>
 
       <div class="page-body">
+        <!-- v2 브랜드 스트립 -->
+        <div class="v2-dash-strip">
+          <span class="brand">HEAT<em>—</em>LINE. <span style="font-weight:500;letter-spacing:0.02em">통합 대시보드</span></span>
+          <span class="meta">MULTI-SITE CONTROL · HEAT-LINE v2</span>
+        </div>
+
         <!-- 이벤트 알림 배너 -->
         <div id="alert-banner" class="hidden dashboard-alert" style="
-          background: rgba(239,68,68,0.1);
-          border: 1px solid rgba(239,68,68,0.3);
+          background: rgba(240,112,112,0.1);
+          border: 1px solid rgba(240,112,112,0.35);
           border-radius: 12px;
           padding: 12px 20px;
           margin-bottom: 20px;
@@ -36,7 +250,7 @@
           <span style="font-size:20px">🚨</span>
           <div id="alert-text" class="dashboard-alert__text" style="flex:1"></div>
           <button onclick="document.getElementById('alert-banner').classList.add('hidden')" class="dashboard-alert__close"
-                  style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px">✕</button>
+                  style="background:none;border:none;color:#96A2B8;cursor:pointer;font-size:18px">✕</button>
         </div>
 
         <!-- 지도 -->
@@ -45,10 +259,10 @@
             <h2>🗺️ 전국 제어기 설치 현황</h2>
             <div class="dashboard-map-toolbar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
               <div class="dashboard-map-legend" style="display:flex;gap:8px;align-items:center;font-size:13px">
-                <div style="width:12px;height:12px;border-radius:50%;background:#10b981"></div> 온라인
-                <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;margin-left:6px"></div> 경고
-                <div style="width:12px;height:12px;border-radius:50%;background:#64748b;margin-left:6px"></div> 오프라인
-                <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;margin-left:6px"></div> 오류
+                <div style="width:12px;height:12px;border-radius:50%;background:#5BD3A6"></div> 온라인
+                <div style="width:12px;height:12px;border-radius:50%;background:#F3A73B;margin-left:6px"></div> 경고
+                <div style="width:12px;height:12px;border-radius:50%;background:#96A2B8;margin-left:6px"></div> 오프라인
+                <div style="width:12px;height:12px;border-radius:50%;background:#F07070;margin-left:6px"></div> 오류
               </div>
               <button class="btn btn-secondary btn-sm" onclick="resetMapView()">
                 🔄 전체 보기
@@ -64,10 +278,10 @@
           <div class="table-section">
             <div class="table-header">
               <h2>⚠️ 주의 장비</h2>
-              <a href="controllers.html" style="font-size:13px;color:#00aeff">전체 보기 →</a>
+              <a href="controllers.html" style="font-size:13px;color:#5BD3A6">전체 보기 →</a>
             </div>
             <div id="warning-list" class="dashboard-warning-list" style="padding:0 0 8px">
-              <div style="padding:20px;text-align:center;color:#64748b;font-size:14px">로딩 중...</div>
+              <div style="padding:20px;text-align:center;color:#96A2B8;font-size:14px">로딩 중...</div>
             </div>
           </div>
 
@@ -75,10 +289,10 @@
           <div class="table-section">
             <div class="table-header">
               <h2>🔔 최근 이벤트</h2>
-              <a href="events.html" style="font-size:13px;color:#00aeff">전체 보기 →</a>
+              <a href="events.html" style="font-size:13px;color:#5BD3A6">전체 보기 →</a>
             </div>
             <div id="event-list" class="log-list dashboard-event-list" style="padding:0 16px">
-              <div style="padding:20px;text-align:center;color:#64748b;font-size:14px">로딩 중...</div>
+              <div style="padding:20px;text-align:center;color:#96A2B8;font-size:14px">로딩 중...</div>
             </div>
           </div>
         </div>
@@ -87,7 +301,7 @@
         <div class="table-section" id="as-section">
           <div class="table-header">
             <h2>📅 AS 만료 임박 장비</h2>
-            <span style="font-size:13px;color:#94a3b8">90일 이내 만료 장비</span>
+            <span style="font-size:13px;color:#96A2B8">90일 이내 만료 장비</span>
           </div>
           <div class="table-responsive">
             <table>
@@ -102,7 +316,7 @@
                 </tr>
               </thead>
               <tbody id="as-table-body">
-                <tr><td colspan="6" style="text-align:center;padding:20px;color:#64748b">로딩 중...</td></tr>
+                <tr><td colspan="6" style="text-align:center;padding:20px;color:#96A2B8">로딩 중...</td></tr>
               </tbody>
             </table>
           </div>
@@ -148,13 +362,13 @@
 
     function showDashboardError(message) {
       const safeMessage = escapeHtml(message || '대시보드 데이터를 불러오지 못했습니다.');
-      setSectionMessage('warning-list', `<div style="padding:20px;text-align:center;color:#ef4444;font-size:14px">${safeMessage}</div>`);
-      setSectionMessage('event-list', `<div style="padding:20px;text-align:center;color:#ef4444;font-size:14px">${safeMessage}</div>`);
+      setSectionMessage('warning-list', `<div style="padding:20px;text-align:center;color:#F07070;font-size:14px">${safeMessage}</div>`);
+      setSectionMessage('event-list', `<div style="padding:20px;text-align:center;color:#F07070;font-size:14px">${safeMessage}</div>`);
 
       const tbody = document.getElementById('as-table-body');
       if (tbody) {
         const colspan = session && session.role === 'admin' ? 6 : 5;
-        tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center;padding:20px;color:#ef4444">${safeMessage}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center;padding:20px;color:#F07070">${safeMessage}</td></tr>`;
       }
 
       const banner = document.getElementById('alert-banner');
@@ -317,7 +531,7 @@
 
       if (warnings.length === 0) {
         container.innerHTML = `
-          <div style="padding:24px;text-align:center;color:#10b981;font-size:14px">
+          <div style="padding:24px;text-align:center;color:#5BD3A6;font-size:14px">
             ✅ 이상 장비 없음
           </div>`;
         return;
@@ -331,16 +545,16 @@
             border-bottom:1px solid var(--border);
             cursor:pointer;
             transition:background 0.15s;
-          " onmouseover="this.style.background='rgba(255,255,255,0.03)'"
+          " onmouseover="this.style.background='rgba(91,211,166,0.05)'"
              onmouseout="this.style.background='transparent'">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
               <span style="font-weight:600;font-size:14px">${ctrl.controller_name}</span>
               ${Utils.getStatusBadge(ctrl.status)}
             </div>
-            <div style="font-size:12px;color:#94a3b8">
+            <div style="font-size:12px;color:#96A2B8">
               ${customer ? customer.company_name + ' · ' : ''}${ctrl.install_location || ctrl.install_address || '-'}
             </div>
-            <div style="font-size:12px;color:#64748b;margin-top:2px">
+            <div style="font-size:12px;color:#96A2B8;margin-top:2px">
               마지막 접속: ${Utils.timeAgo(ctrl.last_seen_at)}
             </div>
           </div>
@@ -349,8 +563,8 @@
 
       if (warnings.length > 5) {
         container.innerHTML += `
-          <div style="padding:12px 20px;text-align:center;font-size:13px;color:#64748b">
-            외 ${warnings.length - 5}개 더 있음 · <a href="controllers.html" style="color:#00aeff">전체 보기</a>
+          <div style="padding:12px 20px;text-align:center;font-size:13px;color:#96A2B8">
+            외 ${warnings.length - 5}개 더 있음 · <a href="controllers.html" style="color:#5BD3A6">전체 보기</a>
           </div>
         `;
       }
@@ -361,7 +575,7 @@
       const container = document.getElementById('event-list');
 
       if (events.length === 0) {
-        container.innerHTML = `<div style="padding:20px;text-align:center;color:#64748b;font-size:14px">이벤트 없음</div>`;
+        container.innerHTML = `<div style="padding:20px;text-align:center;color:#96A2B8;font-size:14px">이벤트 없음</div>`;
         return;
       }
 
@@ -381,7 +595,7 @@
       container.innerHTML = events.map(evt => {
         const ctrl = ctrl_map[evt.controller_id];
         const icon = evtIcons[evt.event_type] || '📌';
-        const colorMap = { info: '#10b981', warning: '#f59e0b', critical: '#ef4444' };
+        const colorMap = { info: '#5BD3A6', warning: '#F3A73B', critical: '#F07070' };
         return `
           <div class="log-item" onclick="location.href='detail.html?id=${evt.controller_id}'" style="cursor:pointer">
             <div class="log-icon">${icon}</div>
@@ -389,7 +603,7 @@
               <div class="log-msg">${evt.message || evt.event_type}</div>
               <div class="log-meta">
                 ${ctrl ? ctrl.controller_name + ' · ' : ''}
-                <span style="color:${colorMap[evt.severity] || '#94a3b8'}">${evt.severity || 'info'}</span>
+                <span style="color:${colorMap[evt.severity] || '#96A2B8'}">${evt.severity || 'info'}</span>
               </div>
             </div>
           </div>
@@ -409,7 +623,7 @@
       const isAdmin = session.role === 'admin';
 
       if (urgent.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="text-align:center;padding:24px;color:#10b981">✅ AS 만료 임박 장비 없음</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="text-align:center;padding:24px;color:#5BD3A6">✅ AS 만료 임박 장비 없음</td></tr>`;
         return;
       }
 
@@ -417,17 +631,17 @@
         const customer = allCustomers.find(c => c.id === ctrl.customer_id);
         const days = Utils.calcAsRemaining(ctrl.as_expire_at);
         const asStatus = Utils.getAsStatus(days);
-        const asColor = asStatus === 'good' ? '#10b981' : asStatus === 'caution' ? '#f59e0b' : '#ef4444';
+        const asColor = asStatus === 'good' ? '#5BD3A6' : asStatus === 'caution' ? '#F3A73B' : '#F07070';
         const asText = days < 0 ? `만료 ${Math.abs(days)}일 경과` : `${days}일 잔여`;
 
         return `
           <tr onclick="location.href='detail.html?id=${ctrl.id}'" style="cursor:pointer">
             <td>
               <div style="font-weight:600">${ctrl.controller_name}</div>
-              <div style="font-size:12px;color:#94a3b8">${ctrl.serial_no || ''}</div>
+              <div style="font-size:12px;color:#96A2B8">${ctrl.serial_no || ''}</div>
             </td>
             ${isAdmin ? `<td style="font-size:13px">${customer ? customer.company_name : '-'}</td>` : ''}
-            <td style="font-size:13px;color:#94a3b8">${Utils.formatDate(ctrl.installed_at)}</td>
+            <td style="font-size:13px;color:#96A2B8">${Utils.formatDate(ctrl.installed_at)}</td>
             <td style="font-size:13px">${Utils.formatDate(ctrl.as_expire_at)}</td>
             <td>
               <span class="as-badge ${asStatus === 'expired' ? 'urgent' : asStatus}" style="color:${asColor}">
@@ -442,5 +656,6 @@
 
     init();
   </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
