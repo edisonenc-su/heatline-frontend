@@ -387,6 +387,18 @@
     init() {
       return true;
     },
+    async deleteController(id) {
+      return request(`/controllers/${id}`, { method: "DELETE" });
+    },
+
+    async issueProvisionKey(id, { ttl_minutes = 30 } = {}) {
+      const result = await request(`/controllers/${id}/provision-key`, {
+        method: "POST",
+        body: { ttl_minutes }
+      });
+      return result?.data || result;
+    },
+
     reset() {
       clearToken();
       clearSession();
@@ -408,7 +420,7 @@
 
     const mainItems = [
       ["dashboard", "v2-dashboard.html", "통합 대시보드"],
-      ["monitoring", "controllers.html", "현장 모니터링"],
+      ["monitoring", "monitor.html", "현장 모니터링"],
       ["schedule", "schedules.html", "예약 제어"],
       ["energy", "v2-energy.html", "에너지 관리"],
       ["history", "control-history.html", "제어·이벤트 이력"]
