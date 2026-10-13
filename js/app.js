@@ -408,7 +408,7 @@
 
     const mainItems = [
       ["dashboard", "v2-dashboard.html", "통합 대시보드"],
-      ["monitoring", "monitor.html", "현장 모니터링"],
+      ["monitoring", "controllers.html", "현장 모니터링"],
       ["schedule", "schedules.html", "예약 제어"],
       ["energy", "v2-energy.html", "에너지 관리"],
       ["history", "control-history.html", "제어·이벤트 이력"]
